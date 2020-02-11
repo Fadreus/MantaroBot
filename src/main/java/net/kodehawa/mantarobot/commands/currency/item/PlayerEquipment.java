@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2016-2018 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
  *
- * Mantaro is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ *  Mantaro is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * Mantaro is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ *
  */
 
 package net.kodehawa.mantarobot.commands.currency.item;
@@ -19,19 +20,20 @@ package net.kodehawa.mantarobot.commands.currency.item;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
 import net.kodehawa.mantarobot.commands.currency.item.special.FishRod;
+import net.kodehawa.mantarobot.commands.currency.item.special.Pickaxe;
+import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
 
 import java.beans.ConstructorProperties;
 import java.util.Map;
 import java.util.function.Predicate;
 
 public class PlayerEquipment {
-    @Getter
     //int = itemId
     private Map<EquipmentType, Integer> equipment;
-    @Getter
     private Map<EquipmentType, PotionEffect> effects;
+    //TODO: handle seasons!
+    private Map<EquipmentType, Integer> durability;
 
     @JsonCreator
     @ConstructorProperties({"equipment, effects"})
@@ -47,6 +49,8 @@ public class PlayerEquipment {
             return false;
 
         equipment.put(type, Items.idOf(item));
+        if(item instanceof Breakable) //should always be?
+            durability.put(type, ((Breakable) item).getMaxDurability());
         return true;
     }
 
@@ -63,6 +67,7 @@ public class PlayerEquipment {
     @JsonIgnore
     public void resetOfType(EquipmentType type) {
         equipment.remove(type);
+        durability.remove(type);
     }
 
     @JsonIgnore
@@ -117,18 +122,52 @@ public class PlayerEquipment {
         return null;
     }
 
-    public enum EquipmentType {
-        ROD(item -> item instanceof FishRod, 0), PICK(item -> item.getItemType() == ItemType.MINE_PICK || item.getItemType() == ItemType.MINE_RARE_PICK, 0),
-        POTION(item -> item.getItemType() == ItemType.POTION, 1), BUFF(item -> item.getItemType() == ItemType.BUFF, 1);
+    @JsonIgnore
+    public int reduceDurability(EquipmentType type, int amount) {
+        return durability.computeIfPresent(type, (t, a) -> a - amount);
+    }
 
-        @Getter
+    public Map<EquipmentType, Integer> getEquipment() {
+        return this.equipment;
+    }
+
+    public Map<EquipmentType, PotionEffect> getEffects() {
+        return this.effects;
+    }
+
+    public Map<EquipmentType, Integer> getDurability() {
+        return durability;
+    }
+
+    public enum EquipmentType {
+        ROD(FishRod.class::isInstance, 0),
+        PICK(item -> item.getItemType() == ItemType.MINE_PICK || item.getItemType() == ItemType.MINE_RARE_PICK, 0),
+        POTION(item -> item.getItemType() == ItemType.POTION, 1),
+        BUFF(item -> item.getItemType() == ItemType.BUFF, 1);
+
         private Predicate<Item> predicate;
-        @Getter
         private int type;
 
         EquipmentType(Predicate<Item> predicate, int type) {
             this.predicate = predicate;
             this.type = type;
+        }
+
+        public Predicate<Item> getPredicate() {
+            return this.predicate;
+        }
+
+        public int getType() {
+            return this.type;
+        }
+
+        public static EquipmentType fromString(String text) {
+            for (EquipmentType b : EquipmentType.values()) {
+                if (b.name().equalsIgnoreCase(text)) {
+                    return b;
+                }
+            }
+            return null;
         }
     }
 }

@@ -1,30 +1,31 @@
 /*
- * Copyright (C) 2016-2018 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
  *
- * Mantaro is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ *  Mantaro is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * Mantaro is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ *
  */
 
 package net.kodehawa.mantarobot.commands.music.listener;
 
-import net.dv8tion.jda.core.entities.GuildVoiceState;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.VoiceChannel;
-import net.dv8tion.jda.core.events.Event;
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent;
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMuteEvent;
-import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMuteEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.music.GuildMusicManager;
 import net.kodehawa.mantarobot.commands.music.requester.TrackScheduler;
@@ -35,16 +36,17 @@ import java.util.concurrent.TimeUnit;
 
 public class VoiceChannelListener implements EventListener {
     private RateLimiter vcRatelimiter = new RateLimiter(TimeUnit.SECONDS, 10);
+    
     private static boolean validate(GuildVoiceState state) {
         return state == null || !state.inVoiceChannel();
     }
-
+    
     private static boolean isAlone(VoiceChannel vc) {
-        return vc.getMembers().stream().noneMatch(m -> !m.getUser().isBot());
+        return vc.getMembers().stream().allMatch(m -> m.getUser().isBot());
     }
-
+    
     @Override
-    public void onEvent(Event event) {
+    public void onEvent(GenericEvent event) {
         if(event instanceof GuildVoiceMoveEvent) {
             onGuildVoiceMove((GuildVoiceMoveEvent) event);
         } else if(event instanceof GuildVoiceJoinEvent) {
@@ -55,33 +57,33 @@ public class VoiceChannelListener implements EventListener {
             onGuildVoiceMute((GuildVoiceMuteEvent) event);
         }
     }
-
+    
     private void onGuildVoiceMove(GuildVoiceMoveEvent event) {
         if(event.getChannelJoined().getMembers().contains(event.getGuild().getSelfMember()))
             onJoin(event.getChannelJoined());
-
+        
         if(event.getChannelLeft().getMembers().contains(event.getGuild().getSelfMember()))
             onLeave(event.getChannelLeft());
     }
-
+    
     private void onGuildVoiceJoin(GuildVoiceJoinEvent event) {
         if(event.getChannelJoined().getMembers().contains(event.getGuild().getSelfMember()))
             onJoin(event.getChannelJoined());
     }
-
+    
     private void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
         if(event.getChannelLeft().getMembers().contains(event.getGuild().getSelfMember()))
             onLeave(event.getChannelLeft());
     }
-
+    
     private void onGuildVoiceMute(GuildVoiceMuteEvent event) {
         if(event.getMember().getUser().getIdLong() != event.getJDA().getSelfUser().getIdLong())
             return;
-
+        
         GuildVoiceState vs = event.getVoiceState();
         if(validate(vs))
             return;
-
+        
         GuildMusicManager gmm = MantaroBot.getInstance().getAudioManager().getMusicManager(event.getGuild());
         if(gmm != null) {
             if(event.isMuted()) {
@@ -103,12 +105,12 @@ public class VoiceChannelListener implements EventListener {
             }
         }
     }
-
+    
     private void onJoin(VoiceChannel vc) {
         GuildVoiceState vs = vc.getGuild().getSelfMember().getVoiceState();
         if(validate(vs))
             return;
-
+        
         if(!isAlone(vc)) {
             GuildMusicManager gmm = MantaroBot.getInstance().getAudioManager().getMusicManager(vc.getGuild());
             if(gmm != null) {
@@ -121,19 +123,19 @@ public class VoiceChannelListener implements EventListener {
                         }
                     }
                 }
-
+                
                 gmm.cancelLeave();
                 gmm.setAwaitingDeath(false);
                 gmm.getLavaLink().getPlayer().setPaused(false);
             }
         }
     }
-
+    
     private void onLeave(VoiceChannel vc) {
         GuildVoiceState vs = vc.getGuild().getSelfMember().getVoiceState();
         if(validate(vs))
             return;
-
+        
         if(isAlone(vc)) {
             GuildMusicManager gmm = MantaroBot.getInstance().getAudioManager().getMusicManager(vc.getGuild());
             if(gmm != null) {
@@ -146,7 +148,7 @@ public class VoiceChannelListener implements EventListener {
                         );
                     }
                 }
-
+                
                 gmm.setAwaitingDeath(true);
                 gmm.scheduleLeave();
                 gmm.getLavaLink().getPlayer().setPaused(true);

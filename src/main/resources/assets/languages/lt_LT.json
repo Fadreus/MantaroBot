@@ -329,7 +329,7 @@
             },
             "import": {
                 "not_found": "%1$sNėra jokios pasirinktinės komandos, atitinkančios tavo paieškos kriterijus.",
-                "header": "`%1$s` - Serveris: `%2$s`",
+                "header": "`%1$s` (Responses: %2$s) - Serveris: `%3$s`",
                 "selection": "Pasirink komandą:",
                 "note": "(Tu matai tik tų serverių pasirinktines komandas, kuriuose tu esi)",
                 "success": "Importuota `%1$s` pasirinktinė komanda iš `%2$s` serverio su %1$d atsakymais."
@@ -1218,7 +1218,7 @@
             "not_in_inventory": "%1$sTu neturi šito kirtiklio savo inventoriuje, keičiama į paprastą kirtiklį.",
             "success": "%1$sTu iškasei mineralus, vertus **$%2$s kreditų**, naudojant *%3$s*",
             "diamond": {
-                "overflow": "Huh, kasinėjant tu radai deimantą, bet tu jų ir taip turėjai per daug, tad aš tą rastą deimantą pardaviau.",
+                "overflow": "Huh, kasinėjant %1$s deimantą, bet tu jų ir taip turėjai per daug, tad aš tą rastą deimantą pardaviau.",
                 "success": "Huh! Tau nusišypsojo sėkmė ir kasinėjantis tu radai deimantą! Patikrink savo inventorių!"
             },
             "gem": {

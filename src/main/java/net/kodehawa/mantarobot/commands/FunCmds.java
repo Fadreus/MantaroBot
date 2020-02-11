@@ -1,29 +1,30 @@
 /*
- * Copyright (C) 2016-2018 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
  *
- * Mantaro is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ *  Mantaro is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * Mantaro is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ *
  */
 
 package net.kodehawa.mantarobot.commands;
 
-import br.com.brjdevs.java.utils.texts.StringUtils;
 import com.google.common.eventbus.Subscribe;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageEmbed;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.commands.currency.TextChannelGround;
 import net.kodehawa.mantarobot.commands.currency.item.Items;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
@@ -37,13 +38,16 @@ import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.Player;
+import net.kodehawa.mantarobot.utils.StringUtils;
 import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.commands.IncreasingRateLimiter;
-import net.kodehawa.mantarobot.utils.commands.RateLimiter;
 
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -52,179 +56,193 @@ import java.util.stream.Collectors;
 public class FunCmds {
     private final Random r = new Random();
     private final Config config = MantaroData.config().get();
-
+    
     @Subscribe
     public void coinflip(CommandRegistry cr) {
         cr.register("coinflip", new SimpleCommand(Category.FUN) {
             @Override
             protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
+                TextChannel channel = event.getChannel();
+                
                 int times;
                 if(args.length == 0 || content.length() == 0) times = 1;
                 else {
                     try {
                         times = Integer.parseInt(args[0]);
                         if(times > 1000) {
-                            event.getChannel().sendMessageFormat(languageContext.get("commands.coinflip.over_limit"), EmoteReference.ERROR).queue();
+                            channel.sendMessageFormat(languageContext.get("commands.coinflip.over_limit"), EmoteReference.ERROR).queue();
                             return;
                         }
                     } catch(NumberFormatException nfe) {
-                        event.getChannel().sendMessageFormat(languageContext.get("commands.coinflip.no_repetitions"), EmoteReference.ERROR).queue();
+                        channel.sendMessageFormat(languageContext.get("commands.coinflip.no_repetitions"), EmoteReference.ERROR).queue();
                         return;
                     }
                 }
-
+                
                 final int[] heads = {0};
                 final int[] tails = {0};
-
+                
                 doTimes(times, () -> {
                     if(r.nextBoolean()) heads[0]++;
                     else tails[0]++;
                 });
-
-                event.getChannel().sendMessageFormat(languageContext.get("commands.coinflip.success"), EmoteReference.PENNY, times, heads[0], tails[0]).queue();
+                
+                channel.sendMessageFormat(languageContext.get("commands.coinflip.success"), EmoteReference.PENNY, times, heads[0], tails[0]).queue();
             }
-
+            
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Flips a coin with a defined number of repetitions.")
-                        .setUsage("`~>coinflip <times>` - Flips a coin x number of times")
-                        .addParameter("times", "Amount of times you want to flip the coin.")
-                        .build();
+                               .setDescription("Flips a coin with a defined number of repetitions.")
+                               .setUsage("`~>coinflip <times>` - Flips a coin x number of times")
+                               .addParameter("times", "Amount of times you want to flip the coin.")
+                               .build();
             }
         });
     }
-
+    
     @Subscribe
     public void ratewaifu(CommandRegistry cr) {
         cr.register("ratewaifu", new SimpleCommand(Category.FUN) {
             @Override
             protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
+                TextChannel channel = event.getChannel();
+                
                 if(args.length == 0) {
-                    event.getChannel().sendMessageFormat(languageContext.get("commands.ratewaifu.nothing_specified"), EmoteReference.ERROR).queue();
+                    channel.sendMessageFormat(languageContext.get("commands.ratewaifu.nothing_specified"), EmoteReference.ERROR).queue();
                     return;
                 }
-
+                
                 int waifuRate = content.replaceAll("\\s+", " ").replaceAll("<@!?(\\d+)>", "<@$1>").chars().sum() % 101;
-                if(content.equalsIgnoreCase("mantaro")) waifuRate = 100;
-
+                
+                //hehe~
+                if(content.equalsIgnoreCase("mantaro"))
+                    waifuRate = 100;
+                
                 new MessageBuilder().setContent(String.format(languageContext.get("commands.ratewaifu.success"), EmoteReference.THINKING, content, waifuRate))
-                        .stripMentions(event.getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE).sendTo(event.getChannel()).queue();
+                        .stripMentions(event.getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE).sendTo(channel).queue();
             }
-
+            
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Just rates your waifu from zero to 100. Results may vary.")
-                        .setUsage("`~>ratewaifu <@user>` - Rates your waifu.")
-                        .addParameter("@user", "The waifu to rate (results may vary, not dependant on profile waifu score)")
-                        .build();
+                               .setDescription("Just rates your waifu from zero to 100. Results may vary.")
+                               .setUsage("`~>ratewaifu <@user>` - Rates your waifu.")
+                               .addParameter("@user", "The waifu to rate (results may vary, not dependant on profile waifu score)")
+                               .build();
             }
         });
-
+        
         cr.registerAlias("ratewaifu", "rw");
     }
-
+    
     @Subscribe
     public void roll(CommandRegistry registry) {
         final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
-                .limit(1)
-                .spamTolerance(2)
-                .cooldown(10, TimeUnit.SECONDS)
-                .maxCooldown(1, TimeUnit.MINUTES)
-                .randomIncrement(true)
-                .pool(MantaroData.getDefaultJedisPool())
-                .prefix("roll")
-                .build();
-
+                                                          .limit(1)
+                                                          .spamTolerance(2)
+                                                          .cooldown(10, TimeUnit.SECONDS)
+                                                          .maxCooldown(1, TimeUnit.MINUTES)
+                                                          .randomIncrement(true)
+                                                          .pool(MantaroData.getDefaultJedisPool())
+                                                          .prefix("roll")
+                                                          .build();
+        
         registry.register("roll", new SimpleCommand(Category.FUN) {
             @Override
             protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
+                TextChannel channel = event.getChannel();
+                
                 if(!Utils.handleDefaultIncreasingRatelimit(rateLimiter, event.getAuthor(), event, languageContext))
                     return;
-
-                Map<String, Optional<String>> opts = StringUtils.parse(args);
+                
+                Map<String, String> opts = StringUtils.parse(args);
                 int size = 6, amount = 1;
-
+                
                 if(opts.containsKey("size")) {
                     try {
-                        size = Integer.parseInt(opts.get("size").orElse(""));
-                    } catch(Exception ignored) { }
+                        size = Integer.parseInt(opts.get("size"));
+                    } catch(Exception ignored) {
+                    }
                 }
-
+                
                 if(opts.containsKey("amount")) {
                     try {
-                        amount = Integer.parseInt(opts.get("amount").orElse(""));
-                    } catch(Exception ignored) { }
+                        amount = Integer.parseInt(opts.get("amount"));
+                    } catch(Exception ignored) {
+                    }
                 } else if(opts.containsKey(null)) { //Backwards Compatibility
                     try {
-                        amount = Integer.parseInt(opts.get(null).orElse(""));
-                    } catch(Exception ignored) { }
+                        amount = Integer.parseInt(opts.get(null));
+                    } catch(Exception ignored) {
+                    }
                 }
-
+                
                 if(amount >= 100)
                     amount = 100;
-
+                
                 long result = diceRoll(size, amount);
                 if(size == 6 && result == 6) {
                     Player p = MantaroData.db().getPlayer(event.getAuthor());
                     p.getData().addBadgeIfAbsent(Badge.LUCK_BEHIND);
                     p.saveAsync();
                 }
-
-                event.getChannel().sendMessageFormat(languageContext.get("commands.roll.success"), EmoteReference.DICE, result, amount == 1 ? "!" : (String.format("\nDoing **%d** rolls.", amount))).queue();
-
-                TextChannelGround.of(event.getChannel()).dropItemWithChance(Items.LOADED_DICE, 5);
+                
+                channel.sendMessageFormat(languageContext.get("commands.roll.success"), EmoteReference.DICE, result, amount == 1 ? "!" : (String.format("\nDoing **%d** rolls.", amount))).queue();
+                
+                TextChannelGround.of(channel).dropItemWithChance(Items.LOADED_DICE, 5);
             }
-
+            
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Roll a any-sided dice a 1 or more times. By default, this command will roll a 6-sized dice 1 time.")
-                        .setUsage("`~>roll [-amount <number>] [-size <number>]`: Rolls a dice of the specified size the specified times.\n" +
-                                "D20 Format: For this, 1d20 would be `~>roll -size 20 -amount 1`")
-                        .addParameter("-amount", "The amount you want (example: -amount 20)")
-                        .addParameter("-size", "The size of the dice (example: -size 7)")
-                        .build();
+                               .setDescription("Roll a any-sided dice a 1 or more times. By default, this command will roll a 6-sized dice 1 time.")
+                               .setUsage("`~>roll [-amount <number>] [-size <number>]`: Rolls a dice of the specified size the specified times.\n" +
+                                                 "D20 Format: For this, 1d20 would be `~>roll -size 20 -amount 1`")
+                               .addParameter("-amount", "The amount you want (example: -amount 20)")
+                               .addParameter("-size", "The size of the dice (example: -size 7)")
+                               .build();
             }
         });
     }
-
+    
     @Subscribe
     public void love(CommandRegistry registry) {
         final SecureRandom random = new SecureRandom();
         registry.register("love", new SimpleCommand(Category.FUN) {
             @Override
             protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
+                TextChannel channel = event.getChannel();
+                
                 List<User> mentioned = event.getMessage().getMentionedUsers();
                 String result;
-
+                
                 if(mentioned.size() < 1) {
-                    event.getChannel().sendMessageFormat(languageContext.get("commands.love.no_mention"), EmoteReference.ERROR).queue();
+                    channel.sendMessageFormat(languageContext.get("commands.love.no_mention"), EmoteReference.ERROR).queue();
                     return;
                 }
-
+                
                 long[] ids = new long[2];
                 List<String> listDisplay = new ArrayList<>();
                 String toDisplay;
-
+                
                 listDisplay.add(String.format("\uD83D\uDC97  %s#%s", mentioned.get(0).getName(), mentioned.get(0).getDiscriminator()));
                 listDisplay.add(String.format("\uD83D\uDC97  %s#%s", event.getAuthor().getName(), event.getAuthor().getDiscriminator()));
-
+                
                 toDisplay = listDisplay.stream().collect(Collectors.joining("\n"));
-
+                
                 if(mentioned.size() > 1) {
                     ids[0] = mentioned.get(0).getIdLong();
                     ids[1] = mentioned.get(1).getIdLong();
                     toDisplay = mentioned.stream()
-                            .map(user -> "\uD83D\uDC97  " + user.getName() + "#" + user.getDiscriminator()).collect(Collectors.joining("\n"));
+                                        .map(user -> "\uD83D\uDC97  " + user.getName() + "#" + user.getDiscriminator()).collect(Collectors.joining("\n"));
                 } else {
                     ids[0] = event.getAuthor().getIdLong();
                     ids[1] = mentioned.get(0).getIdLong();
                 }
-
+                
                 int percentage = (ids[0] == ids[1] ? 101 : random.nextInt(101)); //last value is exclusive, so 101.
-
+                
                 if(percentage < 45) {
                     result = languageContext.get("commands.love.not_ideal");
                 } else if(percentage < 75) {
@@ -237,32 +255,32 @@ public class FunCmds {
                         result = languageContext.get("commands.love.yourself_note");
                     }
                 }
-
+                
                 MessageEmbed loveEmbed = new EmbedBuilder()
-                        .setAuthor("\u2764 " + languageContext.get("commands.love.header") + " \u2764", null, event.getAuthor().getEffectiveAvatarUrl())
-                        .setThumbnail("http://www.hey.fr/fun/emoji/twitter/en/twitter/469-emoji_twitter_sparkling_heart.png")
-                        .setDescription("\n**" + toDisplay + "**\n\n" +
-                                percentage + "% **\\|\\|**  " + CommandStatsManager.bar(percentage, 40) + "  **\\|\\|** \n\n" +
-                                "**" + languageContext.get("commands.love.result") + "** `"
-                                + result + "`")
-                        .setColor(event.getMember().getColor())
-                        .build();
-
-                event.getChannel().sendMessage(loveEmbed).queue();
+                                                 .setAuthor("\u2764 " + languageContext.get("commands.love.header") + " \u2764", null, event.getAuthor().getEffectiveAvatarUrl())
+                                                 .setThumbnail("http://www.hey.fr/fun/emoji/twitter/en/twitter/469-emoji_twitter_sparkling_heart.png")
+                                                 .setDescription("\n**" + toDisplay + "**\n\n" +
+                                                                         percentage + "% **\\|\\|**  " + CommandStatsManager.bar(percentage, 40) + "  **\\|\\|** \n\n" +
+                                                                         "**" + languageContext.get("commands.love.result") + "** `"
+                                                                         + result + "`")
+                                                 .setColor(event.getMember().getColor())
+                                                 .build();
+                
+                channel.sendMessage(loveEmbed).queue();
             }
-
+            
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Calculates the love between 2 discord users. Results may vary.\n" +
-                                "You can either mention one user (matches with yourself) or two (matches 2 users)")
-                        .setUsage("`~>love <@user>`")
-                        .addParameter("@user", "The user to check against.")
-                        .build();
+                               .setDescription("Calculates the love between 2 discord users. Results may vary.\n" +
+                                                       "You can either mention one user (matches with yourself) or two (matches 2 users)")
+                               .setUsage("`~>love <@user>`")
+                               .addParameter("@user", "The user to check against.")
+                               .build();
             }
         });
     }
-
+    
     private long diceRoll(int size, int amount) {
         long sum = 0;
         for(int i = 0; i < amount; i++) sum += r.nextInt(size) + 1;

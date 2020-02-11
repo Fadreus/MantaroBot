@@ -330,7 +330,7 @@
             },
             "import": {
                 "not_found": "%1$sEr zijn geen eigen commando's gevonden die voldoen aan je zoekopdracht.",
-                "header": "`%1$s` - Guild: `%2$s`",
+                "header": "`%1$s` (Responses: %2$s) - Guild: `%3$s`",
                 "selection": "Selecteer het Commando:",
                 "note": "(Je kunt alleen eigen commando's selecteren van de Guild waarvan je lid bent)",
                 "success": "Het eigen commando `%1$s` van Guild `%2$s` met een totaal van %3$d antwoorden is geïmporteerd."
@@ -1219,7 +1219,7 @@
             "not_in_inventory": "%1$sJe hebt deze pikhouweel niet in je inventaris. Je wordt omgeschakeld naar de standaard pikhouweel.",
             "success": "%1$sJe hebt mineralen gemijnd met een waarde van **$%2$s credits!**",
             "diamond": {
-                "overflow": "\nHuh, je hebt tijdens het mijnen een diamant gevonden, maar je had al te veel, dus heb ik het voor je verkocht.",
+                "overflow": "\nHuh, je hebt tijdens het mijnen %1$s diamant gevonden, maar je had al te veel, dus heb ik het voor je verkocht.",
                 "success": "\nHuh! Je hebt geluk gehad en een diamant gevonden tijdens het mijnen, controleer je inventaris!"
             },
             "gem": {

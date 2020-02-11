@@ -1,24 +1,25 @@
 /*
- * Copyright (C) 2016-2018 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
  *
- * Mantaro is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ *  Mantaro is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * Mantaro is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ *
  */
 
 package net.kodehawa.mantarobot.commands.custom;
 
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class EmbedJSON {
     public String image;
     public String thumbnail;
     public String title, titleUrl;
-
+    
     public MessageEmbed gen(Member member) {
         EmbedBuilder embedBuilder = new EmbedBuilder();
         if(title != null) embedBuilder.setTitle(title, titleUrl);
@@ -60,7 +61,7 @@ public class EmbedJSON {
             }
             if(col != null) embedBuilder.setColor(col);
         }
-
+        
         fields.forEach(f -> {
             if(f == null) {
                 embedBuilder.addBlankField(false);
@@ -70,10 +71,10 @@ public class EmbedJSON {
                 embedBuilder.addField(f.name == null ? "" : f.name, f.value, f.inline);
             }
         });
-
+        
         return embedBuilder.build();
     }
-
+    
     public static class EmbedField {
         public boolean inline;
         public String name, value;
