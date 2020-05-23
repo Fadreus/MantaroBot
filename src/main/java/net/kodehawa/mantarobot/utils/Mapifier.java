@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.utils;
@@ -32,20 +31,20 @@ public class Mapifier {
     public static <T> T fromMap(Mode mode, Class<T> c, Map<String, Object> map) {
         return mode.mapper.convertValue(map, c);
     }
-    
+
     public static <T> T fromMap(Class<T> c, Map<String, Object> map) {
         return fromMap(Mode.SOFT, c, map);
     }
-    
+
     public static Map<String, Object> toMap(Object object) {
         return toMap(Mode.SOFT, object);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static Map<String, Object> toMap(Mode mode, Object object) {
         return (Map<String, Object>) mode.mapper.convertValue(object, Map.class);
     }
-    
+
     public enum Mode {
         SOFT(() -> {
             ObjectMapper m = new ObjectMapper();
@@ -63,9 +62,9 @@ public class Mapifier {
             m.registerModule(pair);
             return m;
         });
-        
+
         private final ObjectMapper mapper;
-        
+
         Mode(Supplier<ObjectMapper> mapper) {
             this.mapper = mapper.get();
         }

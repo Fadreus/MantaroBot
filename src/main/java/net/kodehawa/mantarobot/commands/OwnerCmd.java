@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -23,9 +22,7 @@ import com.github.natanbc.javaeval.JavaEvaluator;
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.currency.item.Item;
 import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
@@ -38,30 +35,23 @@ import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
 import net.kodehawa.mantarobot.core.modules.commands.base.Category;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandPermission;
+import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
-import net.kodehawa.mantarobot.core.shard.Shard;
 import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.db.entities.MantaroObj;
 import net.kodehawa.mantarobot.db.entities.Player;
 import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
-import net.kodehawa.mantarobot.utils.DiscordUtils;
+import net.kodehawa.mantarobot.utils.APIUtils;
 import net.kodehawa.mantarobot.utils.Pair;
-import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -71,387 +61,319 @@ import static net.kodehawa.mantarobot.utils.StringUtils.SPLIT_PATTERN;
 @SuppressWarnings("unused")
 public class OwnerCmd {
     private static final String JAVA_EVAL_IMPORTS = "" +
-                                                            "import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;\n" +
-                                                            "import net.kodehawa.mantarobot.*;\n" +
-                                                            "import net.kodehawa.mantarobot.core.listeners.operations.*;\n" +
-                                                            "import net.kodehawa.mantarobot.data.*;\n" +
-                                                            "import net.kodehawa.mantarobot.db.*;\n" +
-                                                            "import net.kodehawa.mantarobot.db.entities.*;\n" +
-                                                            "import net.kodehawa.mantarobot.commands.currency.*;\n" +
-                                                            "import net.kodehawa.mantarobot.utils.*;\n" +
-                                                            "import net.dv8tion.jda.api.entities.*;\n";
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(OwnerCmd.class);
-    
+            "import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;\n" +
+            "import net.kodehawa.mantarobot.core.modules.commands.base.Context;\n" +
+            "import net.kodehawa.mantarobot.*;\n" +
+            "import net.kodehawa.mantarobot.core.listeners.operations.*;\n" +
+            "import net.kodehawa.mantarobot.data.*;\n" +
+            "import net.kodehawa.mantarobot.db.*;\n" +
+            "import net.kodehawa.mantarobot.db.entities.*;\n" +
+            "import net.kodehawa.mantarobot.commands.currency.*;\n" +
+            "import net.kodehawa.mantarobot.utils.*;\n" +
+            "import net.dv8tion.jda.api.entities.*;\n";
+    private static final Logger log = LoggerFactory.getLogger(OwnerCmd.class);
+
     @Subscribe
     public void blacklist(CommandRegistry cr) {
         cr.register("blacklist", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                MantaroObj obj = MantaroData.db().getMantaroData();
-                
+            protected void call(Context ctx, String content, String[] args) {
+                MantaroObj obj = ctx.db().getMantaroData();
+
                 String context = args[0];
                 String action = args[1];
-                
-                if(context.equals("guild")) {
-                    if(action.equals("add")) {
-                        if(MantaroBot.getInstance().getShardManager().getGuildById(args[2]) == null) return;
+
+                if (context.equals("guild")) {
+                    if (action.equals("add")) {
+                        if (MantaroBot.getInstance().getShardManager().getGuildById(args[2]) == null)
+                            return;
+
                         obj.getBlackListedGuilds().add(args[2]);
-                        channel.sendMessage(EmoteReference.CORRECT + "Blacklisted Guild: " +
-                                                    MantaroBot.getInstance().getShardManager().getGuildById(args[2])).queue();
+                        ctx.send(EmoteReference.CORRECT + "Blacklisted Guild: " +
+                                MantaroBot.getInstance().getShardManager().getGuildById(args[2]));
                         obj.saveAsync();
-                        
+
                         return;
-                    } else if(action.equals("remove")) {
-                        if(!obj.getBlackListedGuilds().contains(args[2])) return;
+                    } else if (action.equals("remove")) {
+                        if (!obj.getBlackListedGuilds().contains(args[2]))
+                            return;
+
                         obj.getBlackListedGuilds().remove(args[2]);
-                        channel.sendMessage(EmoteReference.CORRECT + "Unblacklisted Guild: " + args[2]).queue();
+                        ctx.send(EmoteReference.CORRECT + "Unblacklisted Guild: " + args[2]);
                         obj.saveAsync();
-                        
+
                         return;
                     }
-                    
-                    channel.sendMessage("Invalid guild scope. (Valid: add, remove)").queue();
+
+                    ctx.send("Invalid guild scope. (Valid: add, remove)");
                     return;
                 }
-                
-                if(context.equals("user")) {
-                    if(action.equals("add")) {
-                        if(MantaroBot.getInstance().getShardManager().getUserById(args[2]) == null) {
-                            channel.sendMessage("Can't find user.").queue();
+
+                if (context.equals("user")) {
+                    if (action.equals("add")) {
+                        if (MantaroBot.getInstance().getShardManager().getUserById(args[2]) == null) {
+                            ctx.send("Can't find user.");
                             return;
                         }
-                        
+
                         obj.getBlackListedUsers().add(args[2]);
-                        channel.sendMessage(EmoteReference.CORRECT + "Blacklisted User: " + MantaroBot.getInstance().getShardManager().getUserById(args[2])).queue();
+                        ctx.send(EmoteReference.CORRECT + "Blacklisted User: " + MantaroBot.getInstance().getShardManager().getUserById(args[2]));
                         obj.saveAsync();
-                        
+
                         return;
-                    } else if(action.equals("remove")) {
-                        if(!obj.getBlackListedUsers().contains(args[2])) {
-                            channel.sendMessage("User not in blacklist.").queue();
+                    } else if (action.equals("remove")) {
+                        if (!obj.getBlackListedUsers().contains(args[2])) {
+                            ctx.send("User not in blacklist.");
                             return;
                         }
-                        
+
                         obj.getBlackListedUsers().remove(args[2]);
-                        channel.sendMessage(EmoteReference.CORRECT + "Unblacklisted User: " + MantaroBot.getInstance().getShardManager().getUserById(args[2])).queue();
+                        ctx.send(EmoteReference.CORRECT + "Unblacklisted User: " + MantaroBot.getInstance().getShardManager().getUserById(args[2]));
                         obj.saveAsync();
-                        
+
                         return;
                     }
-                    
-                    channel.sendMessage("Invalid user scope. (Valid: add, remove)").queue();
+
+                    ctx.send("Invalid user scope. (Valid: add, remove)");
                     return;
                 }
-                
-                channel.sendMessage("Invalid scope. (Valid: user, guild)").queue();
+
+                ctx.send("Invalid scope. (Valid: user, guild)");
             }
-            
+
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                               .setDescription("Blacklists a user (user argument) or a guild (guild argument) by id.\n" +
-                                                       "Examples: ~>blacklist user add/remove 293884638101897216, ~>blacklist guild add/remove 305408763915927552")
-                               .build();
+                        .setDescription("Blacklists a user (user argument) or a guild (guild argument) by id.\n" +
+                                "Examples: ~>blacklist user add/remove 293884638101897216, ~>blacklist guild add/remove 305408763915927552")
+                        .build();
             }
         });
     }
-    
-    @Subscribe
-    public void getFaultShards(CommandRegistry cr) {
-        cr.register("faultshards", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
-            @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                
-                Map<String, Pair<Integer, Integer>> faultShards = new HashMap<>();
-                for(var shard : MantaroBot.getInstance().getShardList()) {
-                    List<Pair<String, Integer>> queueBuckets = Shard.GET_BUCKETS_WITH_QUEUE.apply(shard.getJDA());
-                    for(Pair<String, Integer> qb : queueBuckets) {
-                        int amount = qb.getRight();
-                        if(amount > 10)
-                            faultShards.put(qb.getLeft(), Pair.of(shard.getId(), amount));
-                    }
-                }
-                
-                if(faultShards.isEmpty()) {
-                    channel.sendMessage("Nothing to see.").queue();
-                    return;
-                }
-                
-                StringBuilder builder = new StringBuilder();
-                for(Map.Entry<String, Pair<Integer, Integer>> fs : faultShards.entrySet()) {
-                    String route = fs.getKey();
-                    Pair<Integer, Integer> info = fs.getValue();
-                    int shardId = info.getLeft();
-                    int amount = info.getRight();
-                    
-                    builder.append(String.format("I: %-9s | R: %-30s | A: %-6d", shardId, route, amount)).append("\n");
-                }
-                
-                List<String> m = DiscordUtils.divideString(builder);
-                List<String> messages = new LinkedList<>();
-                
-                for(String s1 : m) {
-                    messages.add(String.format("%s\n```prolog\n%s```", "**Mantaro's Fault Shard (>10 queue) Information. Use &p >> and &p << to move pages, &cancel to exit.**", s1));
-                }
-                
-                DiscordUtils.listText(event, 45, false, messages);
-            }
-        });
-    }
-    
+
     @Subscribe
     public void restoreStreak(CommandRegistry cr) {
         cr.register("restorestreak", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                
-                if(args.length < 2) {
-                    channel.sendMessage("You need to provide the id and the amount").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                if (args.length < 2) {
+                    ctx.send("You need to provide the id and the amount");
                     return;
                 }
-                
+
                 String id = args[0];
                 long amount = Long.parseLong(args[1]);
                 User u = MantaroBot.getInstance().getShardManager().getUserById(id);
-                
-                if(u == null) {
-                    channel.sendMessage("Can't find user").queue();
+
+                if (u == null) {
+                    ctx.send("Can't find user");
                     return;
                 }
-                
+
                 Player p = MantaroData.db().getPlayer(id);
                 PlayerData pd = p.getData();
                 pd.setLastDailyAt(System.currentTimeMillis());
                 pd.setDailyStreak(amount);
-                
+
                 p.save();
-                
-                channel.sendMessage("Done, new streak is " + amount).queue();
+
+                ctx.send("Done, new streak is " + amount);
             }
         });
     }
-    
+
     //This is for testing lol
     @Subscribe
     public void giveItem(CommandRegistry cr) {
         cr.register("giveitem", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                
-                if(content.isEmpty()) {
-                    channel.sendMessage(EmoteReference.ERROR + "You need to tell me which item to give you.").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                if (content.isEmpty()) {
+                    ctx.send(EmoteReference.ERROR + "You need to tell me which item to give you.");
                     return;
                 }
-                
+
                 Item i = Items.fromAnyNoId(content).orElse(null);
-                
-                if(i == null) {
-                    channel.sendMessage(EmoteReference.ERROR + "I didn't find that item.").queue();
+
+                if (i == null) {
+                    ctx.send(EmoteReference.ERROR + "I didn't find that item.");
                     return;
                 }
+
+                Player p = ctx.getPlayer();
                 
-                Player p = MantaroData.db().getPlayer(event.getAuthor());
-                if(p.getInventory().getAmount(i) < 5000) {
+                if (p.getInventory().getAmount(i) < 5000) {
                     p.getInventory().process(new ItemStack(i, 1));
                 } else {
-                    channel.sendMessage(EmoteReference.ERROR + "Too many of this item already.").queue();
+                    ctx.send(EmoteReference.ERROR + "Too many of this item already.");
                 }
-                
+
                 p.saveAsync();
-                channel.sendMessage("Gave you " + i).queue();
+                ctx.send("Gave you " + i);
             }
         });
     }
-    
+
     @Subscribe
     public void transferPlayer(CommandRegistry cr) {
         cr.register("transferplayer", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                if(content.isEmpty() || args.length < 2) {
-                    event.getChannel().sendMessage(EmoteReference.ERROR + "You need to tell me the 2 players ids to transfer!").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                if (content.isEmpty() || args.length < 2) {
+                    ctx.send(EmoteReference.ERROR + "You need to tell me the 2 players ids to transfer!");
                     return;
                 }
-                
-                event.getChannel().sendMessage(EmoteReference.WARNING + "You're about to transfer all the player information from " + args[0] + " to " + args[1] + " are you sure you want to continue?").queue();
-                InteractiveOperations.create(event.getChannel(), event.getAuthor().getIdLong(), 30, e -> {
-                    if(e.getAuthor().getIdLong() != event.getAuthor().getIdLong()) {
+
+                ctx.send(EmoteReference.WARNING + "You're about to transfer all the player information from " + args[0] + " to " + args[1] + " are you sure you want to continue?");
+                InteractiveOperations.create(ctx.getChannel(), ctx.getAuthor().getIdLong(), 30, e -> {
+                    if (ctx.getAuthor().getIdLong() != ctx.getAuthor().getIdLong()) {
                         return Operation.IGNORED;
                     }
-                    
-                    if(e.getMessage().getContentRaw().equalsIgnoreCase("yes")) {
+
+                    if (ctx.getMessage().getContentRaw().equalsIgnoreCase("yes")) {
                         Player transferred = MantaroData.db().getPlayer(args[0]);
                         Player transferTo = MantaroData.db().getPlayer(args[1]);
-                        
+
                         transferTo.setMoney(transferred.getMoney());
                         transferTo.setLevel(transferred.getLevel());
                         transferTo.setReputation(transferred.getReputation());
                         transferTo.getInventory().merge(transferred.getInventory().asList());
-                        
+
                         PlayerData transferredData = transferred.getData();
                         PlayerData transferToData = transferTo.getData();
-                        
+
                         transferToData.setExperience(transferredData.getExperience());
                         transferToData.setBadges(transferredData.getBadges());
                         transferToData.setShowBadge(transferredData.isShowBadge());
                         transferToData.setMarketUsed(transferredData.getMarketUsed());
                         transferToData.setMainBadge(transferredData.getMainBadge());
                         transferToData.setGamesWon(transferredData.getGamesWon());
-                        
-                        
+
+
                         transferTo.save();
                         Player reset = Player.of(args[0]);
                         reset.save();
-                        
-                        e.getChannel().sendMessage(EmoteReference.CORRECT + "Transfer from " + args[0] + " to " + args[1] + " completed.").queue();
-                        
+
+                        ctx.send(EmoteReference.CORRECT + "Transfer from " + args[0] + " to " + args[1] + " completed.");
+
                         return Operation.COMPLETED;
                     }
-                    
-                    if(e.getMessage().getContentRaw().equalsIgnoreCase("no")) {
-                        e.getChannel().sendMessage(EmoteReference.CORRECT + "Cancelled.").queue();
+
+                    if (e.getMessage().getContentRaw().equalsIgnoreCase("no")) {
+                        ctx.send(EmoteReference.CORRECT + "Cancelled.");
                         return Operation.COMPLETED;
                     }
-                    
+
                     return Operation.IGNORED;
                 });
             }
         });
     }
-    
+
     @Subscribe
     public void badge(CommandRegistry cr) {
         cr.register("addbadge", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                if(args.length != 2) {
-                    channel.sendMessage(EmoteReference.ERROR + "Wrong args length").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                if (args.length != 2) {
+                    ctx.send(EmoteReference.ERROR + "Wrong args length");
                     return;
                 }
-                
+
                 String b = args[1];
                 User user = MantaroBot.getInstance().getShardManager().getUserById(args[0]);
 
-                if(user == null) {
-                    channel.sendMessage(EmoteReference.ERROR + "User not found.").queue();
+                if (user == null) {
+                    ctx.send(EmoteReference.ERROR + "User not found.");
                     return;
                 }
 
                 Badge badge = Badge.lookupFromString(b);
-                if(badge == null) {
-                    channel.sendMessage(EmoteReference.ERROR + "No badge with that enum name! Valid badges: " +
-                                                Arrays.stream(Badge.values()).map(b1 -> "`" + b1.name() + "`").collect(Collectors.joining(" ,"))).queue();
+                if (badge == null) {
+                    ctx.send(EmoteReference.ERROR + "No badge with that enum name! Valid badges: " +
+                            Arrays.stream(Badge.values()).map(b1 -> "`" + b1.name() + "`").collect(Collectors.joining(" ,")));
                     return;
                 }
-                Player p = MantaroData.db().getPlayer(user);
+
+                Player p = ctx.getPlayer(user);
                 p.getData().addBadgeIfAbsent(badge);
                 p.saveAsync();
 
-                channel.sendMessage(EmoteReference.CORRECT + "Added badge " + badge + " to " + user.getAsTag()).queue();
+                ctx.send(EmoteReference.CORRECT + "Added badge " + badge + " to " + user.getAsTag());
             }
         });
-        
+
         cr.register("removebadge", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                
-                if(event.getMessage().getMentionedUsers().isEmpty()) {
-                    channel.sendMessage(EmoteReference.ERROR + "You need to give me a user to remove the badge from!").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                List<User> users = ctx.getMentionedUsers();
+
+                if (users.isEmpty()) {
+                    ctx.send(EmoteReference.ERROR + "You need to give me a user to remove the badge from!");
                     return;
                 }
-                
-                if(args.length != 2) {
-                    channel.sendMessage(EmoteReference.ERROR + "Wrong args length").queue();
+
+                if (args.length != 2) {
+                    ctx.send(EmoteReference.ERROR + "Wrong args length");
                     return;
                 }
-                
+
                 String b = args[1];
-                List<User> users = event.getMessage().getMentionedUsers();
                 Badge badge = Badge.lookupFromString(b);
-                if(badge == null) {
-                    channel.sendMessage(EmoteReference.ERROR + "No badge with that enum name! Valid badges: " +
-                                                Arrays.stream(Badge.values()).map(b1 -> "`" + b1.name() + "`").collect(Collectors.joining(" ,"))).queue();
+                if (badge == null) {
+                    ctx.send(EmoteReference.ERROR + "No badge with that enum name! Valid badges: " +
+                            Arrays.stream(Badge.values()).map(b1 -> "`" + b1.name() + "`").collect(Collectors.joining(" ,")));
                     return;
                 }
-                
-                for(User u : users) {
+
+                for (User u : users) {
                     Player p = MantaroData.db().getPlayer(u);
                     p.getData().removeBadge(badge);
                     p.saveAsync();
                 }
-                
-                channel.sendMessage(
+
+                ctx.send(
                         String.format("%sRemoved badge %s from %s", EmoteReference.CORRECT, badge, users.stream().map(User::getName).collect(Collectors.joining(" ,")))
-                ).queue();
+                );
             }
         });
     }
-    
+
     @Subscribe
     public void eval(CommandRegistry cr) {
         //has no state
         JavaEvaluator javaEvaluator = new JavaEvaluator();
-        
+
         Map<String, Evaluator> evals = new HashMap<>();
-        evals.put("js", (event, code) -> {
-            ScriptEngine script = new ScriptEngineManager().getEngineByName("nashorn");
-            script.put("mantaro", MantaroBot.getInstance());
-            script.put("db", MantaroData.db());
-            script.put("jda", event.getJDA());
-            script.put("event", event);
-            script.put("guild", event.getGuild());
-            script.put("channel", event.getChannel());
-            
-            try {
-                return script.eval(String.join(
-                        "\n",
-                        "load(\"nashorn:mozilla_compat.js\");",
-                        "imports = new JavaImporter(java.util, java.io, java.net);",
-                        "(function() {",
-                        "with(imports) {",
-                        code,
-                        "}",
-                        "})()"
-                ));
-            } catch(Exception e) {
-                return e;
-            }
-        });
-        
-        evals.put("java", (event, code) -> {
+        evals.put("java", (ctx, code) -> {
             try {
                 CompilationResult r = javaEvaluator.compile()
-                                              .addCompilerOptions("-Xlint:unchecked")
-                                              .source("Eval", JAVA_EVAL_IMPORTS + "\n\n" +
-                                                                      "public class Eval {\n" +
-                                                                      "   public static Object run(GuildMessageReceivedEvent event) throws Throwable {\n" +
-                                                                      "       try {\n" +
-                                                                      "           return null;\n" +
-                                                                      "       } finally {\n" +
-                                                                      "           " + (code + ";").replaceAll(";{2,}", ";") + "\n" +
-                                                                      "       }\n" +
-                                                                      "   }\n" +
-                                                                      "}"
-                                              )
-                                              .execute();
+                        .addCompilerOptions("-Xlint:unchecked")
+                        .source("Eval", JAVA_EVAL_IMPORTS + "\n\n" +
+                                "public class Eval {\n" +
+                                "   public static Object run(Context ctx) throws Throwable {\n" +
+                                "       try {\n" +
+                                "           return null;\n" +
+                                "       } finally {\n" +
+                                "           " + (code + ";").replaceAll(";{2,}", ";") + "\n" +
+                                "       }\n" +
+                                "   }\n" +
+                                "}"
+                        )
+                        .execute();
+
                 EvalClassLoader ecl = new EvalClassLoader();
                 r.getClasses().forEach((name, bytes) -> ecl.define(bytes));
-                
-                return ecl.loadClass("Eval").getMethod("run", GuildMessageReceivedEvent.class).invoke(null, event);
-            } catch(CompilationException e) {
+
+                return ecl.loadClass("Eval").getMethod("run", Context.class).invoke(null, ctx);
+            } catch (CompilationException e) {
                 StringBuilder sb = new StringBuilder("\n");
-                
-                if(e.getCompilerOutput() != null)
+
+                if (e.getCompilerOutput() != null)
                     sb.append(e.getCompilerOutput());
-                
-                if(!e.getDiagnostics().isEmpty()) {
-                    if(sb.length() > 0) sb.append("\n\n");
+
+                if (!e.getDiagnostics().isEmpty()) {
+                    if (sb.length() > 0) sb.append("\n\n");
                     e.getDiagnostics().forEach(d -> sb.append(d).append('\n'));
                 }
                 return new Error(sb.toString()) {
@@ -460,175 +382,175 @@ public class OwnerCmd {
                         return getMessage();
                     }
                 };
-            } catch(Exception e) {
+            } catch (Exception e) {
                 return e;
             }
         });
-        
+
         cr.register("eval", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
+            protected void call(Context ctx, String content, String[] args) {
                 Evaluator evaluator = evals.get(args[0]);
-                if(evaluator == null) {
-                    event.getChannel().sendMessage("That's not a valid evaluator, silly.").queue();
+                if (evaluator == null) {
+                    ctx.send("That's not a valid evaluator, silly.");
                     return;
                 }
-                
+
                 String[] values = SPLIT_PATTERN.split(content, 2);
-                if(values.length < 2) {
-                    event.getChannel().sendMessage("Not enough arguments.").queue();
+                if (values.length < 2) {
+                    ctx.send("Not enough arguments.");
                     return;
                 }
-                
+
                 String v = values[1];
-                
-                Object result = evaluator.eval(event, v);
+
+                Object result = evaluator.eval(ctx, v);
                 boolean errored = result instanceof Throwable;
-                
-                event.getChannel().sendMessage(new EmbedBuilder()
-                                                       .setAuthor(
-                                                               "Evaluated " + (errored ? "and errored" : "with success"), null,
-                                                               event.getAuthor().getAvatarUrl()
-                                                       )
-                                                       .setColor(errored ? Color.RED : Color.GREEN)
-                                                       .setDescription(
-                                                               result == null ? "Executed successfully with no objects returned" : ("Executed " + (errored ? "and errored: " : "successfully and returned: ") + result
-                                                                                                                                                                                                                        .toString()))
-                                                       .setFooter("Asked by: " + event.getAuthor().getName(), null)
-                                                       .build()
-                ).queue();
+
+                ctx.send(new EmbedBuilder()
+                        .setAuthor(
+                                "Evaluated " + (errored ? "and errored" : "with success"), null,
+                                ctx.getAuthor().getAvatarUrl()
+                        )
+                        .setColor(errored ? Color.RED : Color.GREEN)
+                        .setDescription(
+                                result == null ? "Executed successfully with no objects returned" : 
+                                        ("Executed " + (errored ? "and errored: " : "successfully and returned: ") + result
+                                        .toString())
+                        ).setFooter("Asked by: " + ctx.getAuthor().getName(), null)
+                        .build()
+                );
             }
-            
+
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                               .setDescription("Evaluates stuff (A: js/bsh).")
-                               .build();
+                        .setDescription("Evaluates stuff (A: java).")
+                        .build();
             }
         });
     }
-    
+
     @Subscribe
     public void link(CommandRegistry cr) {
         cr.register("link", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                final TextChannel channel = event.getChannel();
-                final Config config = MantaroData.config().get();
-                
-                if(!config.isPremiumBot()) {
-                    channel.sendMessage("This command can only be ran in MP, as it'll link a guild to an MP holder.").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                final Config config = ctx.getConfig();
+
+                if (!config.isPremiumBot()) {
+                    ctx.send("This command can only be ran in MP, as it'll link a guild to an MP holder.");
                     return;
                 }
-                
-                if(args.length < 2) {
-                    channel.sendMessage("You need to enter both the user and the guild id (example: 132584525296435200 493297606311542784).").queue();
+
+                if (args.length < 2) {
+                    ctx.send("You need to enter both the user and the guild id (example: 132584525296435200 493297606311542784).");
                     return;
                 }
-                
+
                 String userString = args[0];
                 String guildString = args[1];
                 Guild guild = MantaroBot.getInstance().getShardManager().getGuildById(guildString);
                 User user = MantaroBot.getInstance().getShardManager().getUserById(userString);
-                if(guild == null || user == null) {
-                    channel.sendMessage("User or guild not found.").queue();
+                if (guild == null || user == null) {
+                    ctx.send("User or guild not found.");
                     return;
                 }
-                
+
                 final DBGuild dbGuild = MantaroData.db().getGuild(guildString);
-                Map<String, String> t = getArguments(args);
-                if(t.containsKey("u")) {
+                Map<String, String> t = ctx.getOptionalArguments();
+                if (t.containsKey("u")) {
                     dbGuild.getData().setMpLinkedTo(null);
                     dbGuild.save();
-                    
-                    channel.sendMessageFormat("Un-linked MP for guild %s (%s).", guild.getName(), guild.getId()).queue();
+
+                    ctx.sendFormat("Un-linked MP for guild %s (%s).", guild.getName(), guild.getId());
                     return;
                 }
-                
-                Pair<Boolean, String> pledgeInfo = Utils.getPledgeInformation(user.getId());
+
+                Pair<Boolean, String> pledgeInfo = APIUtils.getPledgeInformation(user.getId());
                 //guaranteed to be an integer
-                if(pledgeInfo == null || !pledgeInfo.getLeft() || Double.parseDouble(pledgeInfo.getRight()) < 4) {
-                    channel.sendMessage("Pledge not found, pledge amount not enough or pledge was cancelled.").queue();
+                if (pledgeInfo == null || !pledgeInfo.getLeft() || Double.parseDouble(pledgeInfo.getRight()) < 4) {
+                    ctx.send("Pledge not found, pledge amount not enough or pledge was cancelled.");
                     return;
                 }
-                
+
                 //Guild assignment.
                 dbGuild.getData().setMpLinkedTo(userString); //Patreon check will run from this user.
                 dbGuild.save();
-                
-                channel.sendMessageFormat("Linked MP for guild %s (%s) to user %s (%s). Including this guild in pledge check (id -> user -> pledge).", guild.getName(), guild.getId(), user.getName(), user.getId()).queue();
+
+                ctx.sendFormat("Linked MP for guild %s (%s) to user %s (%s). Including this guild in pledge check (id -> user -> pledge).", guild.getName(), guild.getId(), user.getName(), user.getId());
             }
-            
+
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                               .setDescription("Links a guild to a patreon owner (user id). Use -u to unlink.")
-                               .setUsage("`~>link <user id> <guild id>`")
-                               .build();
+                        .setDescription("Links a guild to a patreon owner (user id). Use -u to unlink.")
+                        .setUsage("`~>link <user id> <guild id>`")
+                        .build();
             }
         });
     }
-    
+
     @Subscribe
-    public void owner(CommandRegistry cr) {
-        cr.register("owner", new SimpleCommand(Category.OWNER) {
+    public void addOwnerPremium(CommandRegistry cr) {
+        cr.register("addownerpremium", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
             @Override
-            public CommandPermission permission() {
-                return CommandPermission.OWNER;
-            }
-            
-            @Override
-            public HelpContent help() {
-                return new HelpContent.Builder()
-                               .setDescription("`~>owner premium guild <id> <days>` - Adds premium to the specified guild for x days.")
-                               .build();
-            }
-            
-            @Override
-            public void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content, String[] args) {
-                TextChannel channel = event.getChannel();
-                
-                if(args.length < 1) {
-                    channel.sendMessage("Not enough arguments.").queue();
+            protected void call(Context ctx, String content, String[] args) {
+                if (!MantaroData.config().get().isPremiumBot()) {
+                    ctx.send("This command can only be ran in MP, as it's only useful there.");
                     return;
                 }
-                
-                String option = args[0];
-                
-                if(option.equals("premium")) {
-                    String sub = args[1].substring(0, args[1].indexOf(' '));
-                    if(sub.equals("guild")) {
-                        try {
-                            String[] values = SPLIT_PATTERN.split(args[1], 3);
-                            DBGuild db = MantaroData.db().getGuild(values[1]);
-                            db.incrementPremium(TimeUnit.DAYS.toMillis(Long.parseLong(values[2])));
-                            db.saveAsync();
-                            channel.sendMessage(EmoteReference.CORRECT +
-                                                        "The premium feature for guild " + db.getId() + " now is until " +
-                                                        new Date(db.getPremiumUntil())).queue();
-                            return;
-                        } catch(IndexOutOfBoundsException e) {
-                            channel.sendMessage(EmoteReference.ERROR + "You need to specify id and number of days").queue();
-                            e.printStackTrace();
-                            return;
-                        }
-                    }
+
+                if(args.length < 2) {
+                    ctx.send("Wrong amount of arguments. I need the guild id and the amount of days");
+                    return;
                 }
-                
-                channel.sendMessage("You're not meant to use this incorrectly, silly.").queue();
-            }
-            
-            @Override
-            public String[] splitArgs(String content) {
-                return SPLIT_PATTERN.split(content, 2);
+
+                String serverId = args[0];
+                String days = args[1];
+
+                if(MantaroBot.getInstance().getShardManager().getGuildById(serverId) == null) {
+                    ctx.send("Invalid guild.");
+                    return;
+                }
+
+                long dayAmount;
+                try {
+                    dayAmount = Long.parseLong(days);
+                } catch (NumberFormatException e) {
+                    ctx.send("Invalid amount of days.");
+                    return;
+                }
+
+                DBGuild db = MantaroData.db().getGuild(serverId);
+                db.incrementPremium(TimeUnit.DAYS.toMillis(dayAmount));
+                db.saveAsync();
+
+                ctx.send(EmoteReference.CORRECT + "The premium feature for guild " + db.getId() + " now is until " + new Date(db.getPremiumUntil()));
             }
         });
     }
-    
-    private interface Evaluator {
-        Object eval(GuildMessageReceivedEvent event, String code);
+
+    @Subscribe
+    public void refreshPledges(CommandRegistry cr) {
+        cr.register("refreshpledges", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
+            @Override
+            protected void call(Context ctx, String content, String[] args) {
+                try {
+                    APIUtils.getFrom("/mantaroapi/bot/patreon/refresh");
+                    ctx.send("Refreshed Patreon pledges successfully.");
+                } catch (Exception e) {
+                    ctx.send("Somehow this failed. Pretty sure that just always returned ok...");
+                    e.printStackTrace();
+                }
+            }
+        });
     }
-    
+
+    private interface Evaluator {
+        Object eval(Context ctx, String code);
+    }
+
     private static class EvalClassLoader extends ClassLoader {
         public void define(byte[] bytes) {
             super.defineClass(null, bytes, 0, bytes.length);

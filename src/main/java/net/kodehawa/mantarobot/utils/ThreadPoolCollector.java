@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.utils;
@@ -20,48 +19,40 @@ package net.kodehawa.mantarobot.utils;
 import io.prometheus.client.Collector;
 import io.prometheus.client.GaugeMetricFamily;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class ThreadPoolCollector extends Collector {
     private final ConcurrentMap<String, ThreadPoolExecutor> executors = new ConcurrentHashMap<>();
-    
+
     public ThreadPoolExecutor remove(String name) {
         return executors.remove(name);
     }
-    
+
     public boolean add(String name, ThreadPoolExecutor executor) {
         Objects.requireNonNull(name, "Name may not be null");
         Objects.requireNonNull(executor, "Executor may not be null");
         return executors.putIfAbsent(name, executor) == null;
     }
-    
+
     public boolean add(String name, Executor executor) {
         Objects.requireNonNull(executor, "Executor may not be null");
-        if(executor instanceof ThreadPoolExecutor) {
+        if (executor instanceof ThreadPoolExecutor) {
             return add(name, (ThreadPoolExecutor) executor);
         }
         throw new IllegalArgumentException("Provided executor is not a ThreadPoolExecutor");
     }
-    
+
     public boolean add(ThreadPoolExecutor executor) {
         Objects.requireNonNull(executor, "Executor may not be null");
         return add(executor.toString(), executor);
     }
-    
+
     public boolean add(Executor executor) {
         Objects.requireNonNull(executor, "Executor may not be null");
         return add(executor.toString(), executor);
     }
-    
+
     @Override
     public List<MetricFamilySamples> collect() {
         List<MetricFamilySamples> list = new ArrayList<>(8);
@@ -113,7 +104,7 @@ public class ThreadPoolCollector extends Collector {
                 Collections.singletonList("executor")
         );
         list.add(taskCount);
-        for(Map.Entry<String, ThreadPoolExecutor> entry : executors.entrySet()) {
+        for (Map.Entry<String, ThreadPoolExecutor> entry : executors.entrySet()) {
             List<String> name = Collections.singletonList(entry.getKey());
             ThreadPoolExecutor executor = entry.getValue();
             activeCount.addMetric(name, executor.getActiveCount());

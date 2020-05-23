@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
- *
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ *  
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.commands.currency.item;
@@ -21,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.kodehawa.mantarobot.commands.currency.item.special.FishRod;
-import net.kodehawa.mantarobot.commands.currency.item.special.Pickaxe;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
 
 import java.beans.ConstructorProperties;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -32,32 +31,33 @@ public class PlayerEquipment {
     //int = itemId
     private Map<EquipmentType, Integer> equipment;
     private Map<EquipmentType, PotionEffect> effects;
-    //TODO: handle seasons!
     private Map<EquipmentType, Integer> durability;
 
     @JsonCreator
     @ConstructorProperties({"equipment, effects"})
-    public PlayerEquipment(@JsonProperty("equipment") Map<EquipmentType, Integer> equipment, @JsonProperty("effects") Map<EquipmentType, PotionEffect> effects) {
+    public PlayerEquipment(@JsonProperty("equipment") Map<EquipmentType, Integer> equipment, @JsonProperty("effects") Map<EquipmentType, PotionEffect> effects, @JsonProperty("durability") Map<EquipmentType, Integer> durability) {
         this.equipment = equipment;
         this.effects = effects;
+        this.durability = durability == null ? new HashMap<>() : durability; //Workaround because some people will not have this property.
     }
 
     @JsonIgnore
     public boolean equipItem(Item item) {
         EquipmentType type = getTypeFor(item);
-        if(type == null || type.getType() != 0)
+        if (type == null || type.getType() != 0)
             return false;
 
         equipment.put(type, Items.idOf(item));
-        if(item instanceof Breakable) //should always be?
+        if (item instanceof Breakable) //should always be?
             durability.put(type, ((Breakable) item).getMaxDurability());
+
         return true;
     }
 
     @JsonIgnore
     public void applyEffect(PotionEffect effect) {
         EquipmentType type = getTypeFor(Items.fromId(effect.getPotion()));
-        if(type == null || type.getType() != 1)
+        if (type == null || type.getType() != 1)
             return;
 
         effects.put(type, effect);
@@ -87,7 +87,7 @@ public class PlayerEquipment {
     @JsonIgnore
     public boolean isEffectActive(EquipmentType type, int maxUses) {
         PotionEffect effect = effects.get(type);
-        if(effect == null) {
+        if (effect == null) {
             return false;
         }
 
@@ -113,13 +113,18 @@ public class PlayerEquipment {
 
     @JsonIgnore
     public EquipmentType getTypeFor(Item item) {
-        for(EquipmentType type : EquipmentType.values()) {
-            if(type.getPredicate().test(item)) {
+        for (EquipmentType type : EquipmentType.values()) {
+            if (type.getPredicate().test(item)) {
                 return type;
             }
         }
 
         return null;
+    }
+
+    @JsonIgnore
+    public void resetDurabilityTo(EquipmentType type, int amount) {
+        durability.put(type, amount);
     }
 
     @JsonIgnore
@@ -153,14 +158,6 @@ public class PlayerEquipment {
             this.type = type;
         }
 
-        public Predicate<Item> getPredicate() {
-            return this.predicate;
-        }
-
-        public int getType() {
-            return this.type;
-        }
-
         public static EquipmentType fromString(String text) {
             for (EquipmentType b : EquipmentType.values()) {
                 if (b.name().equalsIgnoreCase(text)) {
@@ -168,6 +165,14 @@ public class PlayerEquipment {
                 }
             }
             return null;
+        }
+
+        public Predicate<Item> getPredicate() {
+            return this.predicate;
+        }
+
+        public int getType() {
+            return this.type;
         }
     }
 }

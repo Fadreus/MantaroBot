@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.utils.commands;
@@ -20,7 +19,7 @@ package net.kodehawa.mantarobot.utils.commands;
 import java.util.Optional;
 
 public enum EmoteReference {
-    ERROR(":heavy_multiplication_x:", "\u2716"),
+    ERROR(":x:", "\u274C"),
     ERROR2(":x:", "\u274C"),
     DICE(":game_die:", "\uD83C\uDFB2"),
     SAD(":frowning:", "\uD83D\uDE26"),
@@ -45,6 +44,7 @@ public enum EmoteReference {
     SMILE(":smile:", "\uD83D\uDE04"),
     PICK(":pick:", "\u26cf"),
     HEART(":heart:", "\u2764"),
+    BLUE_HEART(":blue_heart:", "\uD83D\uDC99"),
     RUNNER(":runner:", "\uD83C\uDFC3"),
     POTION1(":milk:", "\uD83E\uDD5B"),
     POTION2(":champagne:", "\uD83C\uDF7E"),
@@ -85,6 +85,7 @@ public enum EmoteReference {
     TROPHY(":trophy:", "\uD83C\uDFC6"),
     WRENCH(":wrench:", "\ud83d\udd27"),
     WHITE_CIRCLE(":white_circle:", "\u25CB"),
+    MUSICAL_NOTE(":musical_note", "\uD83C\uDFB5"),
     //Custom emotes.
     LOOT_CRATE("<:lootbox:556992254749966346>", null),
     MINE_CRATE("<:mine_lootbox:556992254623875073>", null),
@@ -106,24 +107,24 @@ public enum EmoteReference {
     BROKEN_SPARKLE_ROD("<:broken_sparkle_rod:560885907562037248>", null),
     BROKEN_COMET_ROD("<:broken_comet_rod:560885907004325889>", null),
     BROKEN_STAR_ROD("<:broken_star_rod:560885906857263116>", null);
-    
+
     final String discordNotation;
     final String unicode;
-    
+
     EmoteReference(String discordNotation, String unicode) {
         this.discordNotation = discordNotation;
         this.unicode = unicode;
     }
-    
+
     @Override
     public String toString() {
         return Optional.ofNullable(unicode).orElse(discordNotation) + " ";
     }
-    
+
     public String getDiscordNotation() {
         return discordNotation;
     }
-    
+
     public String getUnicode() {
         return unicode;
     }

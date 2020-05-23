@@ -1,27 +1,25 @@
 /*
- * Copyright (C) 2016-2020 David Alejandro Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * Mantaro is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  (at your option) any later version.
+ *  Mantaro is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Mantaro.  If not, see http://www.gnu.org/licenses/
- *
  */
 
 package net.kodehawa.mantarobot.commands.action;
 
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.core.modules.commands.NoArgsCommand;
 import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 
 import java.awt.*;
 import java.util.List;
@@ -34,7 +32,7 @@ public class TextActionCmd extends NoArgsCommand {
     private final String name;
     private final List<String> strings;
     private final Random rand = new Random();
-    
+
     public TextActionCmd(String name, String desc, Color color, String format, List<String> strings) {
         super(Category.ACTION);
         this.name = name;
@@ -43,16 +41,16 @@ public class TextActionCmd extends NoArgsCommand {
         this.format = format;
         this.strings = strings;
     }
-    
+
     @Override
-    protected void call(GuildMessageReceivedEvent event, I18nContext languageContext, String content) {
-        event.getChannel().sendMessage(String.format(format, strings.get(rand.nextInt(strings.size())))).queue();
+    protected void call(Context ctx, String content) {
+        ctx.send(String.format(format, strings.get(rand.nextInt(strings.size()))));
     }
-    
+
     @Override
     public HelpContent help() {
         return new HelpContent.Builder()
-                       .setDescription(desc)
-                       .build();
+                .setDescription(desc)
+                .build();
     }
 }
