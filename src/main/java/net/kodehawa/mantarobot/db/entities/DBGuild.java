@@ -30,9 +30,12 @@ import net.kodehawa.mantarobot.db.entities.helpers.PremiumKeyData;
 import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.APIUtils;
 import net.kodehawa.mantarobot.utils.Pair;
+import net.kodehawa.mantarobot.utils.Utils;
 
 import javax.annotation.Nonnull;
 import java.beans.ConstructorProperties;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +49,7 @@ public class DBGuild implements ManagedObject {
     private long premiumUntil;
 
     @JsonIgnore
-    private Config config = MantaroData.config().get();
+    private final Config config = MantaroData.config().get();
 
     @JsonCreator
     @ConstructorProperties({"id", "premiumUntil", "data"})
@@ -87,12 +90,13 @@ public class DBGuild implements ManagedObject {
         //Key validation check (is it still active? delete otherwise)
         if (key != null) {
             boolean isKeyActive = currentTimeMillis() < key.getExpiration();
-            if (!isKeyActive) {
+            if (!isKeyActive && LocalDate.now(ZoneId.of("America/Chicago")).getDayOfMonth() > 5) {
                 DBUser owner = MantaroData.db().getUser(key.getOwner());
                 UserData ownerData = owner.getData();
                 ownerData.getKeysClaimed().remove(getId());
                 owner.save();
 
+                removePremiumKey(key.getOwner(), key.getId());
                 key.delete();
                 return false;
             }
@@ -122,8 +126,13 @@ public class DBGuild implements ManagedObject {
         String linkedTo = getData().getMpLinkedTo();
         if (config.isPremiumBot() && linkedTo != null && key == null) { //Key should always be null in MP anyway.
             Pair<Boolean, String> pledgeInfo = APIUtils.getPledgeInformation(linkedTo);
+            // The API returned an exception, return true anyway. (Pledge = false, amount = 100000 is basically impossible)
+            if (pledgeInfo != null && !pledgeInfo.getLeft() && pledgeInfo.getRight().equals("100000")) {
+                return true;
+            }
+
             if (pledgeInfo != null && pledgeInfo.getLeft() && Double.parseDouble(pledgeInfo.getRight()) >= 4) {
-                //Subscribed to MP properly, return true.
+                // Subscribed to MP properly, return true.
                 return true;
             }
         }
@@ -144,8 +153,13 @@ public class DBGuild implements ManagedObject {
     }
 
     @JsonIgnore
-    public void removePremiumKey() {
+    public void removePremiumKey(String keyOwner, String originalKey) {
         data.setPremiumKey(null);
+
+        DBUser dbUser = MantaroData.db().getUser(keyOwner);
+        dbUser.getData().getKeysClaimed().remove(Utils.getKeyByValue(dbUser.getData().getKeysClaimed(), originalKey));
+        dbUser.save();
+
         saveAsync();
     }
 
@@ -153,6 +167,7 @@ public class DBGuild implements ManagedObject {
         return this.data;
     }
 
+    @Nonnull
     public String getId() {
         return this.id;
     }

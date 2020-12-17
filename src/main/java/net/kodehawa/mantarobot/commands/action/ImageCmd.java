@@ -16,16 +16,16 @@
 
 package net.kodehawa.mantarobot.commands.action;
 
-import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.core.modules.commands.NoArgsCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.utils.cache.URLCache;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import org.apache.commons.lang3.tuple.Pair;
 
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -36,7 +36,6 @@ public class ImageCmd extends NoArgsCommand {
 
     private final String desc;
     private final String imageName;
-    private final String name;
     private final String toSend;
     private final WeebAPIRequester weebapi = new WeebAPIRequester();
     private final Random rand = new Random();
@@ -44,41 +43,28 @@ public class ImageCmd extends NoArgsCommand {
     private boolean noMentions = false;
     private String type;
 
-    public ImageCmd(String name, String desc, String imageName, List<String> images, String toSend) {
-        super(Category.ACTION);
-        this.name = name;
+    public ImageCmd(String desc, String imageName, List<String> images, String toSend) {
+        super(CommandCategory.ACTION);
         this.desc = desc;
         this.imageName = imageName;
         this.images = images;
         this.toSend = toSend;
     }
 
-    public ImageCmd(String name, String desc, String imageName, List<String> images, String toSend, boolean noMentions) {
-        super(Category.ACTION);
-        this.name = name;
+    public ImageCmd(String desc, String imageName, String type, String toSend) {
+        super(CommandCategory.ACTION);
         this.desc = desc;
         this.imageName = imageName;
-        this.images = images;
-        this.toSend = toSend;
-        this.noMentions = noMentions;
-    }
-
-    public ImageCmd(String name, String desc, String imageName, String type, String toSend) {
-        super(Category.ACTION);
-        this.name = name;
-        this.desc = desc;
-        this.imageName = imageName;
-        this.images = Collections.singletonList(weebapi.getRandomImageByType(type, false, null).getKey());
+        this.images = Collections.emptyList();
         this.toSend = toSend;
         this.type = type;
     }
 
-    public ImageCmd(String name, String desc, String imageName, String type, String toSend, boolean noMentions) {
-        super(Category.ACTION);
-        this.name = name;
+    public ImageCmd(String desc, String imageName, String type, String toSend, boolean noMentions) {
+        super(CommandCategory.ACTION);
         this.desc = desc;
         this.imageName = imageName;
-        this.images = Collections.singletonList(weebapi.getRandomImageByType(type, false, null).getKey());
+        this.images = Collections.emptyList();
         this.toSend = toSend;
         this.noMentions = noMentions;
         this.type = type;
@@ -86,40 +72,47 @@ public class ImageCmd extends NoArgsCommand {
 
     @Override
     protected void call(Context ctx, String content) {
+        final var builder = new EmbedBuilder();
         String random;
-        String id = "";
-        if (images.size() == 1) {
+        try {
             if (type != null) {
-                Pair<String, String> result = weebapi.getRandomImageByType(type, false, null);
+                var result = weebapi.getRandomImageByType(type, false, null);
                 images = Collections.singletonList(result.getKey());
-                id = result.getValue();
-            }
-
-            random = images.get(0); //Guaranteed random selection :^).
-        } else {
-            random = images.get(rand.nextInt(images.size()));
-        }
-
-        String extension = random.substring(random.lastIndexOf("."));
-        MessageBuilder builder = new MessageBuilder();
-        builder.append(EmoteReference.TALKING);
-
-        if (!noMentions) {
-            List<User> users = ctx.getMentionedUsers();
-            String names = "";
-            names = users.stream().distinct().map(user -> {
-                if (ctx.getGuild().getMember(user) == null) {
-                    return "unknown";
+                random = images.get(0); //Guaranteed random selection :^).
+            } else {
+                if (images.isEmpty()) {
+                    ctx.sendLocalized("commands.action.no_type", EmoteReference.ERROR);
+                    return;
                 }
 
-                return ctx.getGuild().getMember(user).getEffectiveName();
-            }).collect(Collectors.joining(", "));
-            if (!names.isEmpty())
-                builder.append("**").append(names).append("**, ");
+                random = images.get(rand.nextInt(images.size()));
+            }
+        } catch (Exception e) {
+            ctx.sendLocalized("commands.action.error_retrieving", EmoteReference.ERROR);
+            return;
         }
 
-        builder.append(ctx.getLanguageContext().get(toSend));
-        ctx.getChannel().sendMessage(builder.build()).addFile(CACHE.getInput(random), imageName + "-" + id + "." + extension).queue();
+        builder.appendDescription(EmoteReference.TALKING.toString());
+
+        if (!noMentions) {
+            var names = ctx.getMentionedUsers().stream()
+                    .distinct()
+                    .map(User::getName)
+                    .collect(Collectors.joining(", "));
+
+            if (!names.isEmpty()) {
+                builder.appendDescription("**%s**, ".formatted(names));
+            }
+        }
+
+        builder.appendDescription(ctx.getLanguageContext().get(toSend));
+
+        var member = ctx.getMember();
+        builder.setColor(member.getColor() == null ? Color.PINK : member.getColor())
+                .setImage(random)
+                .build();
+
+        ctx.send(builder.build());
     }
 
     @Override

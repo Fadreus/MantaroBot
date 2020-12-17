@@ -18,44 +18,41 @@ package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.moderation.ModLog;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
-import net.kodehawa.mantarobot.core.modules.commands.base.Command;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.ManagedDatabase;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.db.entities.MantaroObj;
 import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
 import net.kodehawa.mantarobot.options.core.Option;
 import net.kodehawa.mantarobot.options.core.OptionType;
 import net.kodehawa.mantarobot.utils.Pair;
 import net.kodehawa.mantarobot.utils.StringUtils;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
+import net.kodehawa.mantarobot.utils.commands.FinderUtils;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 @Module
-@SuppressWarnings("unused")
 public class MuteCmds {
-    private static final Pattern timePattern = Pattern.compile("[(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
-    private static final Pattern muteTimePattern = Pattern.compile("-time [(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
+    private static final Pattern timePattern =
+            Pattern.compile("[(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
+    //Regex by Fabricio20
+    private static final Pattern muteTimePattern =
+            Pattern.compile("-time [(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
 
     @Subscribe
     public void mute(CommandRegistry registry) {
-        Command mute = registry.register("mute", new SimpleCommand(Category.MODERATION) {
+        SimpleCommand mute = registry.register("mute", new SimpleCommand(CommandCategory.MODERATION) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (args.length == 0) {
@@ -63,25 +60,26 @@ public class MuteCmds {
                     return;
                 }
 
-                String affected = args[0];
+                var affected = args[0];
 
-                if (!(ctx.getMember().hasPermission(Permission.KICK_MEMBERS) || ctx.getMember().hasPermission(Permission.BAN_MEMBERS))) {
+                if (!(ctx.getMember().hasPermission(Permission.KICK_MEMBERS) ||
+                        ctx.getMember().hasPermission(Permission.BAN_MEMBERS))) {
                     ctx.sendLocalized("commands.mute.no_permissions", EmoteReference.ERROR);
                     return;
                 }
 
-                ManagedDatabase db = ctx.db();
-                DBGuild dbGuild = ctx.getDBGuild();
-                GuildData guildData = dbGuild.getData();
-                String reason = "Not specified";
-                Map<String, String> opts = StringUtils.parse(args);
+                var db = ctx.db();
+                var dbGuild = ctx.getDBGuild();
+                var guildData = dbGuild.getData();
+                var reason = "Not specified";
+                var opts = ctx.getOptionalArguments();
 
                 if (guildData.getMutedRole() == null) {
                     ctx.sendLocalized("commands.mute.no_mute_role", EmoteReference.ERROR);
                     return;
                 }
 
-                Role mutedRole = ctx.getGuild().getRoleById(guildData.getMutedRole());
+                var mutedRole = ctx.getGuild().getRoleById(guildData.getMutedRole());
                 if (mutedRole == null) {
                     ctx.sendLocalized("commands.mute.null_mute_role", EmoteReference.ERROR);
                     return;
@@ -97,78 +95,91 @@ public class MuteCmds {
                 }
 
                 reason = Utils.mentionPattern.matcher(reason).replaceAll("");
-                //Regex from: Fabricio20
-                final String finalReason = muteTimePattern.matcher(reason).replaceAll("");
+                final var finalReason = muteTimePattern.matcher(reason).replaceAll("");
 
-                MantaroObj data = db.getMantaroData();
-                Member member = Utils.findMember(ctx.getEvent(), ctx.getMember(), affected);
-                if (member == null)
-                    return;
-
-                User user = member.getUser();
-                long time = guildData.getSetModTimeout() > 0 ? System.currentTimeMillis() + guildData.getSetModTimeout() : 0L;
-
-                if (opts.containsKey("time")) {
-                    if (opts.get("time") == null || opts.get("time").isEmpty()) {
-                        ctx.sendLocalized("commands.mute.time_not_specified", EmoteReference.WARNING);
+                var data = db.getMantaroData();
+                ctx.findMember(affected, ctx.getMessage()).onSuccess(members -> {
+                    var member = CustomFinderUtil.findMember(affected, members, ctx);
+                    if (member == null)
                         return;
-                    }
 
-                    time = System.currentTimeMillis() + Utils.parseTime(opts.get("time"));
+                    var user = member.getUser();
+                    var time = guildData.getSetModTimeout() > 0 ?
+                            System.currentTimeMillis() + guildData.getSetModTimeout() : 0L;
 
-                    if (time > System.currentTimeMillis() + TimeUnit.DAYS.toMillis(10)) {
-                        ctx.sendLocalized("commands.mute.time_too_long", EmoteReference.ERROR);
-                        return;
-                    }
+                    if (opts.containsKey("time")) {
+                        if (opts.get("time") == null || opts.get("time").isEmpty()) {
+                            ctx.sendLocalized("commands.mute.time_not_specified", EmoteReference.WARNING);
+                            return;
+                        }
 
-                    if (time < 0) {
-                        ctx.sendLocalized("commands.mute.negative_time_notice", EmoteReference.ERROR);
-                        return;
-                    }
+                        var timeParsed = Utils.parseTime(opts.get("time"));
+                        time = System.currentTimeMillis() + timeParsed;
 
-                    data.getMutes().put(user.getIdLong(), Pair.of(ctx.getGuild().getId(), time));
-                    data.save();
-                    dbGuild.save();
-                } else {
-                    if (time > 0) {
+                        if (timeParsed < 10000) {
+                            ctx.sendLocalized("commands.mute.time_too_little", EmoteReference.ERROR);
+                            return;
+                        }
+
                         if (time > System.currentTimeMillis() + TimeUnit.DAYS.toMillis(10)) {
-                            ctx.sendLocalized("commands.mute.default_time_too_long", EmoteReference.ERROR);
+                            ctx.sendLocalized("commands.mute.time_too_long", EmoteReference.ERROR);
+                            return;
+                        }
+
+                        if (time < 0) {
+                            ctx.sendLocalized("commands.mute.negative_time_notice", EmoteReference.ERROR);
                             return;
                         }
 
                         data.getMutes().put(user.getIdLong(), Pair.of(ctx.getGuild().getId(), time));
-                        data.save();
-                        dbGuild.save();
+                        data.saveUpdating();
+                        dbGuild.saveUpdating();
                     } else {
-                        ctx.sendLocalized("commands.mute.no_time", EmoteReference.ERROR);
+                        if (time > 0) {
+                            if (time > System.currentTimeMillis() + TimeUnit.DAYS.toMillis(10)) {
+                                ctx.sendLocalized("commands.mute.default_time_too_long", EmoteReference.ERROR);
+                                return;
+                            }
+
+                            data.getMutes().put(user.getIdLong(), Pair.of(ctx.getGuild().getId(), time));
+                            data.saveUpdating();
+                            dbGuild.saveUpdating();
+                        } else {
+                            ctx.sendLocalized("commands.mute.no_time", EmoteReference.ERROR);
+                            return;
+                        }
+                    }
+
+                    if (member.getRoles().contains(mutedRole)) {
+                        ctx.sendLocalized("commands.mute.already_muted", EmoteReference.WARNING);
                         return;
                     }
-                }
 
-                if (member.getRoles().contains(mutedRole)) {
-                    ctx.sendLocalized("commands.mute.already_muted", EmoteReference.WARNING);
-                    return;
-                }
+                    if (!ctx.getSelfMember().canInteract(member)) {
+                        ctx.sendLocalized("commands.mute.self_hierarchy_error", EmoteReference.ERROR);
+                        return;
+                    }
 
-                if (!ctx.getSelfMember().canInteract(member)) {
-                    ctx.sendLocalized("commands.mute.self_hierarchy_error", EmoteReference.ERROR);
-                    return;
-                }
+                    if (!ctx.getMember().canInteract(member)) {
+                        ctx.sendLocalized("commands.mute.user_hierarchy_error", EmoteReference.ERROR);
+                        return;
+                    }
 
-                if (!ctx.getMember().canInteract(member)) {
-                    ctx.sendLocalized("commands.mute.user_hierarchy_error", EmoteReference.ERROR);
-                    return;
-                }
+                    ctx.getGuild().addRoleToMember(member, mutedRole)
+                            .reason(String.format("Muted by %#s for %s: %s", ctx.getAuthor(),
+                                    Utils.formatDuration(time - System.currentTimeMillis()), finalReason)
+                            ).queue();
 
-                ctx.getGuild().addRoleToMember(member, mutedRole)
-                        .reason(String.format("Muted by %#s for %s: %s", ctx.getAuthor(), Utils.formatDuration(time - System.currentTimeMillis()), finalReason))
-                        .queue();
+                    ctx.sendLocalized("commands.mute.success", EmoteReference.CORRECT, member.getEffectiveName(),
+                            Utils.formatDuration(time - System.currentTimeMillis())
+                    );
 
-                ctx.sendLocalized("commands.mute.success", EmoteReference.CORRECT, member.getEffectiveName(), Utils.formatDuration(time - System.currentTimeMillis()));
-
-                dbGuild.getData().setCases(dbGuild.getData().getCases() + 1);
-                dbGuild.saveAsync();
-                ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.MUTE, dbGuild.getData().getCases());
+                    dbGuild.getData().setCases(dbGuild.getData().getCases() + 1);
+                    dbGuild.saveAsync();
+                    ModLog.log(
+                            ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.MUTE, dbGuild.getData().getCases()
+                    );
+                });
             }
 
             @Override
@@ -176,18 +187,22 @@ public class MuteCmds {
                 return new HelpContent.Builder()
                         .setDescription("Mutes the specified users.")
                         .setUsage("`~>mute <@user> [reason] [-time <time>]`")
-                        .addParameter("@user", "The users to mute. Needs to be mentions (pings)")
-                        .addParameter("reason", "The mute reason. This is optional.")
-                        .addParameter("-time", "The time to mute an user for. For example `~>mute @Natan#1289 wew, nice -time 1m20s` will mute Natan for 1 minute and 20 seconds.")
+                        .addParameter("@user",
+                                "The users to mute. Needs to be mentions (pings)")
+                        .addParameter("reason",
+                                "The mute reason. This is optional.")
+                        .addParameter("-time",
+                                "The time to mute an user for. " +
+                                        "For example `~>mute @Natan#1289 wew, nice -time 1m20s` will mute Natan for 1 minute and 20 seconds.")
                         .build();
             }
         });
 
-        mute.addOption("defaultmutetimeout:set", new Option("Default mute timeout",
-                "Sets the default mute timeout for ~>mute.\n" +
-                        "This command will set the timeout of ~>mute to a fixed value **unless you specify another time in the command**\n" +
-                        "**Example:** `~>opts defaultmutetimeout set 1m20s`\n" +
-                        "**Considerations:** Time is in 1m20s or 1h10m3s format, for example.", OptionType.GUILD)
+        mute.addOption("defaultmutetimeout:set", new Option("Default mute timeout", """
+                Sets the default mute timeout for ~>mute.
+                This command will set the timeout of ~>mute to a fixed value **unless you specify another time in the command**
+                **Example:** `~>opts defaultmutetimeout set 1m20s`
+                **Considerations:** Time is in 1m20s or 1h10m3s format, for example.""", OptionType.GUILD)
                 .setActionLang((event, args, lang) -> {
                     if (args.length == 0) {
                         event.getChannel().sendMessageFormat(lang.get("options.defaultmutetimeout_set.not_specified"), EmoteReference.ERROR).queue();
@@ -199,9 +214,9 @@ public class MuteCmds {
                         return;
                     }
 
-                    long timeoutToSet = Utils.parseTime(args[0]);
+                    var timeoutToSet = Utils.parseTime(args[0]);
 
-                    long time = System.currentTimeMillis() + timeoutToSet;
+                    var time = System.currentTimeMillis() + timeoutToSet;
 
                     if (time > System.currentTimeMillis() + TimeUnit.DAYS.toMillis(10)) {
                         event.getChannel().sendMessageFormat(lang.get("options.defaultmutetimeout_set.too_long"), EmoteReference.ERROR).queue();
@@ -213,20 +228,23 @@ public class MuteCmds {
                         return;
                     }
 
-                    DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
-                    GuildData guildData = dbGuild.getData();
+                    var dbGuild = MantaroData.db().getGuild(event.getGuild());
+                    var guildData = dbGuild.getData();
+
                     guildData.setSetModTimeout(timeoutToSet);
                     dbGuild.save();
 
-                    event.getChannel().sendMessageFormat(lang.get("options.defaultmutetimeout_set.success"), EmoteReference.CORRECT, args[0], timeoutToSet).queue();
+                    event.getChannel().sendMessageFormat(
+                            lang.get("options.defaultmutetimeout_set.success"), EmoteReference.CORRECT, args[0], timeoutToSet
+                    ).queue();
                 }).setShortDescription("Sets the default timeout for the ~>mute command"));
 
 
         mute.addOption("defaultmutetimeout:reset", new Option("Default mute timeout reset",
                 "Resets the default mute timeout which was set previously with `defaultmusictimeout set`", OptionType.GUILD)
                 .setActionLang((event, lang) -> {
-                    DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
-                    GuildData guildData = dbGuild.getData();
+                    var dbGuild = MantaroData.db().getGuild(event.getGuild());
+                    var guildData = dbGuild.getData();
 
                     guildData.setSetModTimeout(0L);
                     dbGuild.save();
@@ -244,9 +262,9 @@ public class MuteCmds {
                         return;
                     }
 
-                    String roleName = String.join(" ", args);
-                    DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
-                    GuildData guildData = dbGuild.getData();
+                    var roleName = String.join(" ", args);
+                    var dbGuild = MantaroData.db().getGuild(event.getGuild());
+                    var guildData = dbGuild.getData();
 
                     Consumer<Role> consumer = (role) -> {
                         guildData.setMutedRole(role.getId());
@@ -254,14 +272,15 @@ public class MuteCmds {
                         event.getChannel().sendMessageFormat(lang.get("options.muterole_set.success"), EmoteReference.OK, roleName).queue();
                     };
 
-                    Role role = Utils.findRoleSelect(event, roleName, consumer);
+                    var role = FinderUtils.findRoleSelect(event, roleName, consumer);
 
                     if (role != null) {
                         consumer.accept(role);
                     }
                 }).setShortDescription("Sets this guilds mute role to apply on the ~>mute command"));
 
-        mute.addOption("muterole:unbind", new Option("Mute Role unbind", "Resets the current value set for the mute role", OptionType.GENERAL)
+        mute.addOption("muterole:unbind", new Option("Mute Role unbind",
+                "Resets the current value set for the mute role", OptionType.GENERAL)
                 .setActionLang((event, lang) -> {
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
@@ -273,7 +292,7 @@ public class MuteCmds {
 
     @Subscribe
     public void unmute(CommandRegistry commandRegistry) {
-        commandRegistry.register("unmute", new SimpleCommand(Category.MODERATION) {
+        commandRegistry.register("unmute", new SimpleCommand(CommandCategory.MODERATION) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (!ctx.getMember().hasPermission(Permission.KICK_MEMBERS) || !ctx.getMember().hasPermission(Permission.KICK_MEMBERS)) {
@@ -281,17 +300,16 @@ public class MuteCmds {
                     return;
                 }
 
-                ManagedDatabase db = MantaroData.db();
-                DBGuild dbGuild = ctx.getDBGuild();
-                GuildData guildData = dbGuild.getData();
-                String reason = "Not specified";
+                var dbGuild = ctx.getDBGuild();
+                var guildData = dbGuild.getData();
+                var reason = "Not specified";
 
                 if (guildData.getMutedRole() == null) {
                     ctx.sendLocalized("commands.mute.no_mute_role", EmoteReference.ERROR);
                     return;
                 }
 
-                Role mutedRole = ctx.getGuild().getRoleById(guildData.getMutedRole());
+                var mutedRole = ctx.getGuild().getRoleById(guildData.getMutedRole());
 
                 if (mutedRole == null) {
                     ctx.sendLocalized("commands.mute.null_mute_role", EmoteReference.ERROR);
@@ -302,7 +320,7 @@ public class MuteCmds {
                     reason = StringUtils.splitArgs(content, 2)[1];
                 }
 
-                List<Member> mentionedMembers = ctx.getMessage().getMentionedMembers();
+                var mentionedMembers = ctx.getMessage().getMentionedMembers();
                 if (mentionedMembers.isEmpty()) {
                     ctx.sendLocalized("commands.unmute.no_mentions", EmoteReference.ERROR);
                     return;
@@ -313,10 +331,10 @@ public class MuteCmds {
                     return;
                 }
 
-                final String finalReason = Utils.mentionPattern.matcher(reason).replaceAll("");
+                final var finalReason = Utils.mentionPattern.matcher(reason).replaceAll("");
 
                 mentionedMembers.forEach(member -> {
-                    User user = member.getUser();
+                    var user = member.getUser();
 
                     guildData.getMutedTimelyUsers().remove(user.getIdLong());
                     if (!ctx.getSelfMember().canInteract(member)) {

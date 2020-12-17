@@ -18,26 +18,25 @@ package net.kodehawa.mantarobot.commands.music.requester;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import io.sentry.Sentry;
 import lavalink.client.io.Link;
 import lavalink.client.player.IPlayer;
-import lavalink.client.player.LavalinkPlayer;
 import lavalink.client.player.event.PlayerEventListenerAdapter;
 import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.kodehawa.mantarobot.MantaroBot;
-import net.kodehawa.mantarobot.commands.music.utils.AudioUtils;
+import net.kodehawa.mantarobot.commands.music.utils.AudioCmdUtils;
 import net.kodehawa.mantarobot.data.I18n;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 public class TrackScheduler extends PlayerEventListenerAdapter {
     private final String guildId;
@@ -66,10 +65,11 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
 
     public void queue(AudioTrack track, boolean addFirst) {
         if (getMusicPlayer().getPlayingTrack() != null) {
-            if (addFirst)
+            if (addFirst) {
                 queue.addFirst(track);
-            else
+            } else {
                 queue.offer(track);
+            }
         } else {
             getMusicPlayer().playTrack(track);
             currentTrack = track;
@@ -86,18 +86,24 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
         if (repeatMode == Repeat.SONG && currentTrack != null && !force) {
             queue(currentTrack.makeClone());
         } else {
-            if (currentTrack != null)
+            if (currentTrack != null) {
                 previousTrack = currentTrack;
+            }
+
             currentTrack = queue.poll();
 
             //This actually reads wrongly, but current = next in this context, since we switched it already.
-            if (currentTrack != null)
+            if (currentTrack != null) {
                 getMusicPlayer().playTrack(currentTrack);
+            }
 
-            if (skip)
+            if (skip) {
                 onTrackStart();
-            if (repeatMode == Repeat.QUEUE)
+            }
+
+            if (repeatMode == Repeat.QUEUE) {
                 queue(previousTrack.makeClone());
+            }
         }
     }
 
@@ -107,43 +113,65 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
             return;
         }
 
-        if (MantaroData.db().getGuild(guildId).getData().isMusicAnnounce() && requestedChannel != 0 && getRequestedTextChannel() != null) {
-            VoiceChannel voiceChannel = getRequestedTextChannel().getGuild().getSelfMember().getVoiceState().getChannel();
+        final var guild = MantaroBot.getInstance().getShardManager().getGuildById(guildId);
+        final var dbGuild = MantaroData.db().getGuild(guildId);
+
+        if (dbGuild.getData().isMusicAnnounce() && requestedChannel != 0 && getRequestedTextChannel() != null) {
+            var voiceState = getRequestedTextChannel().getGuild().getSelfMember().getVoiceState();
+
+            //What kind of massive meme is this? part 2
+            if (voiceState == null) {
+                this.getAudioPlayer().destroy();
+                return;
+            }
+
+            final var voiceChannel = voiceState.getChannel();
 
             //What kind of massive meme is this?
             //It's called mantaro
-            if (voiceChannel == null)
+            if (voiceChannel == null) {
+                this.getAudioPlayer().destroy();
                 return;
+            }
 
             //Force it in case it keeps going all the time?
             if (errorCount > 20) {
-                getRequestedTextChannel().sendMessageFormat(language.get("commands.music_general.too_many_errors"),
-                        EmoteReference.ERROR).queue();
+                getRequestedTextChannel().sendMessageFormat(
+                        language.get("commands.music_general.too_many_errors"),
+                        EmoteReference.ERROR
+                ).queue();
+
                 onStop();
                 return;
             }
 
-            if (getRequestedTextChannel().canTalk()) {
-                AudioTrackInfo information = currentTrack.getInfo();
-                String title = information.title;
-                long trackLength = information.length;
+            if (getRequestedTextChannel().canTalk() && repeatMode != Repeat.SONG) {
+                var information = currentTrack.getInfo();
+                var title = information.title;
+                var trackLength = information.length;
 
-                User user = null;
-                if (getCurrentTrack().getUserData() != null) {
-                    user = MantaroBot.getInstance().getShardManager()
-                            .getUserById(String.valueOf(getCurrentTrack().getUserData()));
+                Member user = null;
+                if (getCurrentTrack().getUserData() != null && guild != null) {
+                    // Retrieve member instead of user, so it gets cached.
+                    try {
+                        user = guild.retrieveMemberById(
+                                String.valueOf(getCurrentTrack().getUserData()), false
+                        ).complete();
+                    } catch (Exception ignored) {}
                 }
 
                 //Avoid massive spam of "now playing..." when repeating songs.
                 if (lastMessageSentAt == 0 || lastMessageSentAt + 10000 < System.currentTimeMillis()) {
                     getRequestedTextChannel().sendMessage(
-                            new MessageBuilder().append(String.format(language.get("commands.music_general.np_message"),
-                                    "\uD83D\uDCE3", title, AudioUtils.getLength(trackLength),
-                                    voiceChannel.getName(), user != null ?
-                                            String.format(language.get("general.requested_by"),
-                                                    String.format("**%s#%s**", user.getName(), user.getDiscriminator()))
-                                            : ""))
-                                    .stripMentions(getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE)
+                            new MessageBuilder()
+                                    .append(String.format(
+                                            language.get("commands.music_general.np_message"),
+                                            "\uD83D\uDCE3", title,
+                                            AudioCmdUtils.getDurationMinutes(trackLength),
+                                            voiceChannel.getName(), user != null ?
+                                                    String.format(language.get("general.requested_by"),
+                                                            String.format("**%s**", user.getUser().getAsTag())) : "")
+                                    )
                                     .build()
                     ).queue(message -> {
                         lastMessageSentAt = System.currentTimeMillis();
@@ -168,7 +196,9 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
             //Avoid massive spam of when song error in mass.
             if ((lastErrorSentAt == 0 || lastErrorSentAt + 60000 < System.currentTimeMillis()) && errorCount < 10) {
                 lastErrorSentAt = System.currentTimeMillis();
-                getRequestedTextChannel().sendMessageFormat(language.get("commands.music_general.track_error"), EmoteReference.SAD).queue();
+                getRequestedTextChannel().sendMessageFormat(
+                        language.get("commands.music_general.track_error"), EmoteReference.SAD
+                ).queue();
             }
 
             errorCount++;
@@ -180,7 +210,7 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
     }
 
     public int getRequiredVotes() {
-        int listeners = (int) getGuild().getVoiceChannelById(getAudioPlayer().getChannel())
+        var listeners = (int) getGuild().getVoiceChannelById(getAudioPlayer().getChannel())
                 .getMembers().stream()
                 .filter(m -> !m.getUser().isBot() && !m.getVoiceState().isDeafened())
                 .count();
@@ -208,52 +238,60 @@ public class TrackScheduler extends PlayerEventListenerAdapter {
         onStop();
     }
 
-    public void getQueueAsList(Consumer<List<AudioTrack>> list) {
-        List<AudioTrack> tempList = new ArrayList<>(getQueue());
-        list.accept(tempList);
+    public List<AudioTrack> getQueueAsList() {
+        return new LinkedList<>(getQueue());
+    }
+
+    public void acceptNewQueue(List<AudioTrack> newQueue) {
         queue.clear();
-        queue.addAll(tempList);
+        queue.addAll(newQueue);
     }
 
     private void onStop() {
-        //stop the track.
-        LavalinkPlayer lavalinkPlayer = getAudioPlayer().getPlayer();
-        if (lavalinkPlayer.getPlayingTrack() != null)
+        final var managedDatabase = MantaroData.db();
+        final var lavalinkPlayer = getAudioPlayer().getPlayer();
+        // Stop the track.
+        if (lavalinkPlayer.getPlayingTrack() != null) {
             lavalinkPlayer.stopTrack();
+        }
 
         getVoteStop().clear();
         getVoteSkips().clear();
 
-        Guild g = getGuild();
-        if (g == null) {
+        var guild = getGuild();
+        if (guild == null) {
             //Why?
             this.getAudioPlayer().destroy();
             return;
         }
 
-        boolean premium = MantaroData.db().getGuild(g).isPremium();
+        var premium = managedDatabase.getGuild(guild).isPremium();
         try {
-            TextChannel ch = getRequestedTextChannel();
+            var ch = getRequestedTextChannel();
             if (ch != null && ch.canTalk()) {
                 ch.sendMessageFormat(
                         language.get("commands.music_general.queue_finished"),
                         EmoteReference.MEGA, premium ? "" :
-                                String.format(language.get("commands.music_general.premium_beg"), EmoteReference.HEART)
+                                String.format(language.get("commands.music_general.premium_beg"),
+                                        EmoteReference.HEART
+                                )
                 ).queue(message -> message.delete().queueAfter(30, TimeUnit.SECONDS));
             }
         } catch (Exception e) {
-            Sentry.capture(e);
+            e.printStackTrace();
         }
 
+        // If not reset, this will come us to bite on next run.
         requestedChannel = 0;
         errorCount = 0;
+
         //If not set to null, those two objects will always be in scope and dangle around in the heap forever.
         //Some AudioTrack objects were of almost 500kb of size, I guess 100k of those can cause a meme.
         currentTrack = null;
         previousTrack = null;
 
         //Disconnect this audio player.
-        this.getAudioPlayer().disconnect();
+        MantaroBot.getInstance().getAudioManager().resetMusicManagerFor(guildId);
     }
 
     public ConcurrentLinkedDeque<AudioTrack> getQueue() {

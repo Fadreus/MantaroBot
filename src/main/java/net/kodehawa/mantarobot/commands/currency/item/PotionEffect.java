@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.beans.ConstructorProperties;
-import java.util.Objects;
 import java.util.UUID;
 
 public class PotionEffect {
@@ -40,9 +39,6 @@ public class PotionEffect {
         this.type = type;
     }
 
-    public PotionEffect() {
-    }
-
     @JsonIgnore
     public boolean use() {
         long newAmount = amountEquipped - 1;
@@ -56,20 +52,18 @@ public class PotionEffect {
     }
 
     @JsonIgnore
-    public boolean equip(int amount) {
+    public void equip(int amount) {
         long newAmount = amountEquipped + amount;
-        if (newAmount >= 10) {
-            setAmountEquipped(9);
+        if (newAmount > 15) {
+            setAmountEquipped(15);
         } else {
             setAmountEquipped(newAmount);
         }
-
-        return true;
     }
 
     @JsonIgnore
-    public boolean equip() {
-        return equip(1);
+    public void equip() {
+        equip(1);
     }
 
     public String getUuid() {

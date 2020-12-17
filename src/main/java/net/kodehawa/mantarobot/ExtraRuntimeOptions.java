@@ -22,12 +22,13 @@ import java.util.OptionalInt;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class ExtraRuntimeOptions {
-    public static final boolean DISABLE_NON_ALLOCATING_BUFFER = getValue("mantaro.disable-non-allocating-buffer") != null;
     public static final boolean DEBUG = getValue("mantaro.debug") != null;
     public static final boolean DEBUG_LOGS = getValue("mantaro.debug_logs") != null;
     public static final boolean LOG_DB_ACCESS = getValue("mantaro.log_db_access") != null;
     public static final boolean TRACE_LOGS = getValue("mantaro.trace_logs") != null;
     public static final boolean VERBOSE = getValue("mantaro.verbose") != null;
+    public static final boolean PRINT_VARIABLES = getValue("mantaro.print_variables") != null;
+    public static final boolean VERBOSE_SHARD_LOGS = getValue("mantaro.verbose_shard_logs") != null;
 
     public static final OptionalInt FROM_SHARD = maybeInt("mantaro.from-shard");
     public static final OptionalInt TO_SHARD = maybeInt("mantaro.to-shard");
@@ -37,7 +38,7 @@ public class ExtraRuntimeOptions {
             FROM_SHARD.isPresent() || TO_SHARD.isPresent()
     );
 
-    public static final OptionalInt NODE_NUMBER = maybeInt("mantaro.node_number");
+    public static final OptionalInt NODE_NUMBER = maybeInt("mantaro.node-number");
 
     private static OptionalInt maybeInt(String name) {
         var value = getValue(name);
@@ -51,6 +52,6 @@ public class ExtraRuntimeOptions {
 
     @Nullable
     private static String getValue(@Nonnull String name) {
-        return System.getProperty(name, System.getenv(name.replace(".", "_").toUpperCase()));
+        return System.getProperty(name, System.getenv(name.replace("-", "_").replace(".", "_").toUpperCase()));
     }
 }

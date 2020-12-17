@@ -17,57 +17,54 @@
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
-import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.currency.item.*;
+import net.kodehawa.mantarobot.commands.currency.item.special.Axe;
 import net.kodehawa.mantarobot.commands.currency.item.special.FishRod;
 import net.kodehawa.mantarobot.commands.currency.item.special.Pickaxe;
+import net.kodehawa.mantarobot.commands.currency.pets.HousePet;
+import net.kodehawa.mantarobot.commands.currency.pets.HousePetType;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
-import net.kodehawa.mantarobot.commands.currency.seasons.helpers.SeasonalPlayerData;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.ManagedDatabase;
 import net.kodehawa.mantarobot.db.entities.DBUser;
 import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.PremiumKey;
-import net.kodehawa.mantarobot.db.entities.helpers.Inventory;
-import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.RandomCollection;
-import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.commands.IncreasingRateLimiter;
-import org.apache.commons.lang3.tuple.Pair;
+import net.kodehawa.mantarobot.utils.commands.campaign.Campaign;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.kodehawa.mantarobot.commands.currency.item.Items.handleDurability;
+import static net.kodehawa.mantarobot.commands.currency.item.ItemHelper.handleDurability;
 
 @Module
 public class CurrencyActionCmds {
-    private final SecureRandom random = new SecureRandom();
+    private static final SecureRandom random = new SecureRandom();
 
     @Subscribe
     public void mine(CommandRegistry cr) {
-        cr.register("mine", new SimpleCommand(Category.CURRENCY) {
+        cr.register("mine", new SimpleCommand(CommandCategory.CURRENCY) {
             final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
                     .limit(1)
-                    .spamTolerance(2)
+                    .spamTolerance(3)
                     .cooldown(5, TimeUnit.MINUTES)
                     .maxCooldown(5, TimeUnit.MINUTES)
-                    .randomIncrement(false)
+                    .incrementDivider(10)
                     .premiumAware(true)
                     .pool(MantaroData.getDefaultJedisPool())
                     .prefix("mine")
@@ -75,26 +72,23 @@ public class CurrencyActionCmds {
 
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                final Map<String, String> t = ctx.getOptionalArguments();
-                boolean isSeasonal = t.containsKey("season") || t.containsKey("s");
-                final I18nContext languageContext = ctx.getLanguageContext();
+                final var isSeasonal = ctx.isSeasonal();
+                final var languageContext = ctx.getLanguageContext();
 
-                final User user = ctx.getAuthor();
-                final ManagedDatabase db = MantaroData.db();
+                final var player = ctx.getPlayer();
+                final var playerData = player.getData();
 
-                final Player player = ctx.getPlayer();
-                final PlayerData playerData = player.getData();
+                final var seasonalPlayer = ctx.getSeasonPlayer();
+                final var seasonalPlayerData = seasonalPlayer.getData();
 
-                final SeasonPlayer seasonalPlayer = ctx.getSeasonPlayer();
-                final SeasonalPlayerData seasonalPlayerData = seasonalPlayer.getData();
+                final var dbUser = ctx.getDBUser();
+                final var userData = dbUser.getData();
+                final var marriage = ctx.getMarriage(userData);
 
-                final DBUser dbUser = ctx.getDBUser();
-                final UserData userData = dbUser.getData();
+                final var inventory = isSeasonal ?
+                        seasonalPlayer.getInventory() : player.getInventory();
 
-                final Inventory inventory = isSeasonal ? seasonalPlayer.getInventory() : player.getInventory();
-
-                Pickaxe item;
-                int equipped = isSeasonal ?
+                var equipped = isSeasonal ?
                         seasonalPlayerData.getEquippedItems().of(PlayerEquipment.EquipmentType.PICK) :
                         userData.getEquippedItems().of(PlayerEquipment.EquipmentType.PICK);
 
@@ -103,131 +97,205 @@ public class CurrencyActionCmds {
                     return;
                 }
 
-                item = (Pickaxe) Items.fromId(equipped);
+                var item = (Pickaxe) ItemHelper.fromId(equipped);
 
-                if (!Utils.handleIncreasingRatelimit(rateLimiter, user, ctx.getEvent(), languageContext, false))
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx, false)) {
                     return;
+                }
 
-                long money = Math.max(30, random.nextInt(200)); //30 to 150 credits.
+                var money = Math.max(30, random.nextInt(200)); //30 to 150 credits.
+                var moneyIncrease = item.getMoneyIncrease() <= 0 ? 1 : item.getMoneyIncrease();
+                money += Math.max(moneyIncrease / 2, random.nextInt(moneyIncrease));
 
-                //Add money buff to higher pickaxes.
-                if (item == Items.STAR_PICKAXE || item == Items.COMET_PICKAXE)
-                    money += random.nextInt(100);
-                if (item == Items.SPARKLE_PICKAXE)
-                    money += random.nextInt(300);
+                var waifuHelp = false;
+                if (ItemHelper.handleEffect(PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), ItemReference.WAIFU_PILL, dbUser)) {
+                    final var waifus = userData.getWaifus().entrySet();
 
-                boolean waifuHelp = false;
-                if (Items.handleEffect(PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), Items.WAIFU_PILL, dbUser)) {
-                    if (userData.getWaifus().entrySet().stream().anyMatch((w) -> w.getValue() > 10_000_000L)) {
-                        money += Math.max(45, random.nextInt(200));
+                    if (waifus.stream().anyMatch((w) -> w.getValue() > 20_000L)) {
+                        money += Math.max(20, random.nextInt(100));
                         waifuHelp = true;
                     }
                 }
 
-                String reminder = random.nextInt(6) == 0 && item == Items.BROM_PICKAXE ? languageContext.get("commands.mine.reminder") : "";
-                String message = String.format(languageContext.get("commands.mine.success") + reminder, item.getEmoji(), money, item.getName());
+                var reminder = random.nextInt(6) == 0 && item == ItemReference.BROM_PICKAXE ?
+                        languageContext.get("commands.mine.reminder") : "";
 
-                boolean hasPotion = Items.handleEffect(PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), Items.POTION_HASTE, dbUser);
+                var message = "";
 
-                //Diamond find
-                if (random.nextInt(400) > (hasPotion ? 290 : 350)) {
-                    if (inventory.getAmount(Items.DIAMOND) == 5000) {
+                var hasPotion = ItemHelper.handleEffect(
+                        PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), ItemReference.POTION_HASTE, dbUser
+                );
+
+                var petHelp = false;
+
+                if (marriage != null && marriage.getData().getPet() != null) {
+                    var pet = marriage.getData().getPet();
+                    if (pet != null) {
+                        var rewards = handlePetBuff(pet, HousePetType.HousePetAbility.CATCH, languageContext, false);
+                        money += rewards.getMoney();
+                        message += rewards.getResult();
+
+                        if (rewards.getMoney() > 0) {
+                            petHelp = true;
+                        }
+                    }
+                }
+
+                // Diamond find
+                var chance = 350;
+                if (hasPotion || petHelp) {
+                    chance = 290;
+                }
+
+                if (petHelp && hasPotion) {
+                    chance = 240;
+                }
+
+                if (random.nextInt(400) >= chance) {
+                    if (inventory.getAmount(ItemReference.DIAMOND) == 5000) {
                         message += "\n" + languageContext.withRoot("commands", "mine.diamond.overflow");
-                        money += Items.DIAMOND.getValue() * 0.9;
+                        money += ItemReference.DIAMOND.getValue() * 0.9;
                     } else {
-                        int amount = 1;
+                        var amount = 1;
 
-                        if (item == Items.STAR_PICKAXE || item == Items.COMET_PICKAXE)
+                        // TODO: Make this less silly
+                        // Everything but sparkle and hellfire
+                        if (item.getMaxDurability() < 430) {
                             amount += random.nextInt(2);
-                        if (item == Items.SPARKLE_PICKAXE)
-                            amount += random.nextInt(4);
+                        }
 
-                        inventory.process(new ItemStack(Items.DIAMOND, amount));
+                        if (item == ItemReference.SPARKLE_PICKAXE) {
+                            amount += random.nextInt(4);
+                        }
+
+                        if (item == ItemReference.HELLFIRE_PICK) {
+                            amount += random.nextInt(6);
+                        }
+
+                        inventory.process(new ItemStack(ItemReference.DIAMOND, amount));
                         message += "\n" + EmoteReference.DIAMOND +
-                                String.format(languageContext.withRoot("commands", "mine.diamond.success"), amount);
+                                languageContext.withRoot("commands", "mine.diamond.success").formatted(amount);
                     }
 
                     playerData.addBadgeIfAbsent(Badge.MINER);
                 }
 
-                //Gem find
-                if (random.nextInt(400) > (hasPotion ? 278 : 325)) {
-                    List<Item> gem = Stream.of(Items.ALL)
+                // Gem find
+                var gemChance = 340;
+                if (hasPotion) {
+                    gemChance = 325;
+                }
+
+                if (petHelp) {
+                    gemChance = 300;
+                }
+
+                if (petHelp && hasPotion) {
+                    gemChance = 280;
+                }
+
+                if (random.nextInt(400) >= gemChance) {
+
+                    List<Item> gem = Stream.of(ItemReference.ALL)
                             .filter(i -> i.getItemType() == ItemType.MINE && !i.isHidden() && i.isSellable())
                             .collect(Collectors.toList());
 
                     //top notch handling for gems, 10/10 implementation -ign
-                    ItemStack selectedGem = new ItemStack(gem.get(random.nextInt(gem.size())), Math.max(1, random.nextInt(5)));
-                    Item itemGem = selectedGem.getItem();
+                    var selectedGem = new ItemStack(gem.get(random.nextInt(gem.size())), Math.max(1, random.nextInt(5)));
+                    var itemGem = selectedGem.getItem();
+
                     if (inventory.getAmount(itemGem) + selectedGem.getAmount() >= 5000) {
                         message += "\n" + languageContext.withRoot("commands", "mine.gem.overflow");
                         money += itemGem.getValue() * 0.9;
                     } else {
                         inventory.process(selectedGem);
-                        message += "\n" + EmoteReference.MEGA +
-                                String.format(languageContext.withRoot("commands", "mine.gem.success"), itemGem.getEmoji() + " x" + selectedGem.getAmount());
+                        message += "\n" + EmoteReference.MEGA + languageContext.withRoot("commands", "mine.gem.success")
+                                .formatted(itemGem.getEmoji() + " x" + selectedGem.getAmount());
                     }
 
-                    if (waifuHelp)
+                    if (waifuHelp) {
                         message += "\n" + languageContext.get("commands.mine.waifu_help");
+                    }
 
                     playerData.addBadgeIfAbsent(Badge.GEM_FINDER);
                 }
 
+                var bonus = money;
+                if (random.nextBoolean()) {
+                    bonus = money / 2;
+                }
+
+                if (dbUser.isPremium() && money > 0 && bonus > 0) {
+                    money += random.nextInt(bonus);
+                }
+
                 //Sparkle find
-                if ((random.nextInt(400) > 395 && item == Items.COMET_PICKAXE) ||
-                        (random.nextInt(400) > 390 && (item == Items.STAR_PICKAXE || item == Items.SPARKLE_PICKAXE))) {
-                    Item gem = Items.SPARKLE_FRAGMENT;
+                var sparkleChance = 401; // Impossible w/o, since a bound of 400 should always drop less than 401
+                if (item == ItemReference.MOON_PICK || item == ItemReference.STAR_PICKAXE) {
+                    sparkleChance = 390;
+                }
+
+                if (item == ItemReference.SPARKLE_PICKAXE) {
+                    sparkleChance = 385;
+                }
+
+                if (item == ItemReference.HELLFIRE_PICK) {
+                    sparkleChance = 380;
+                }
+
+                if (sparkleChance <= 385 && petHelp) {
+                    sparkleChance = sparkleChance - 5;
+                }
+
+                if (random.nextInt(400) >= sparkleChance) {
+                    var gem = ItemReference.SPARKLE_FRAGMENT;
+
                     if (inventory.getAmount(gem) + 1 >= 5000) {
                         message += "\n" + languageContext.withRoot("commands", "mine.sparkle.overflow");
                         money += gem.getValue() * 0.9;
                     } else {
                         inventory.process(new ItemStack(gem, 1));
-                        message += "\n" + EmoteReference.MEGA + String.format(languageContext.withRoot("commands", "mine.sparkle.success"), gem.getEmoji());
+                        message += "\n" + EmoteReference.MEGA +
+                                languageContext.withRoot("commands", "mine.sparkle.success").formatted(gem.getEmoji());
                     }
 
                     playerData.addBadgeIfAbsent(Badge.GEM_FINDER);
                 }
 
-                PremiumKey key = db.getPremiumKey(dbUser.getData().getPremiumKey());
-                if (random.nextInt(400) > 392) {
-                    Item crate = (key != null && key.getDurationDays() > 1) ? Items.MINE_PREMIUM_CRATE : Items.MINE_CRATE;
+                if (random.nextInt(400) >= 392) {
+                    var crate = dbUser.isPremium() ? ItemReference.MINE_PREMIUM_CRATE : ItemReference.MINE_CRATE;
+
                     if (inventory.getAmount(crate) + 1 > 5000) {
                         message += "\n" + languageContext.withRoot("commands", "mine.crate.overflow");
                     } else {
                         inventory.process(new ItemStack(crate, 1));
-                        message += "\n" + EmoteReference.MEGA +
-                                String.format(languageContext.withRoot("commands", "mine.crate.success"), crate.getEmoji(), crate.getName());
+                        message += "\n" + EmoteReference.MEGA + languageContext.withRoot("commands", "mine.crate.success")
+                                .formatted(crate.getEmoji(), crate.getName());
                     }
+                }
+
+                if (playerData.shouldSeeCampaign()) {
+                    message += Campaign.PREMIUM.getStringFromCampaign(languageContext, dbUser.isPremium());
+                    playerData.markCampaignAsSeen();
                 }
 
                 if (isSeasonal) {
                     seasonalPlayer.addMoney(money);
-                    seasonalPlayer.saveAsync();
+                    seasonalPlayer.saveUpdating();
                 } else {
                     playerData.incrementMiningExperience(random);
                     player.addMoney(money);
                 }
 
                 //Due to badges.
-                player.save();
+                player.saveUpdating();
 
-                //Pick broke
-                //The same player gets thrown around here and there to avoid race conditions.
-                Pair<Boolean, Player> breakage = handleDurability(ctx, item, player, dbUser, seasonalPlayer, isSeasonal);
-                if (breakage.getKey()) {
-                    Player p = breakage.getValue();
-                    Inventory inv = p.getInventory();
-                    if(userData.isAutoEquip() && inv.containsItem(item)) {
-                        userData.getEquippedItems().equipItem(item);
-                        inv.process(new ItemStack(item, -1));
-
-                        p.save();
-                        dbUser.save();
-
-                        message += "\n" + String.format(languageContext.get("commands.mine.autoequip.success"), EmoteReference.CORRECT, item.getName());
-                    }
+                if (marriage != null) {
+                    marriage.saveUpdating();
                 }
+
+                handleItemDurability(item, ctx, player, dbUser, seasonalPlayer, "commands.mine.autoequip.success", isSeasonal);
+                message += "\n\n" + (languageContext.get("commands.mine.success") + reminder).formatted(item.getEmoji(), money, item.getName());
 
                 ctx.send(message);
             }
@@ -236,7 +304,11 @@ public class CurrencyActionCmds {
             public HelpContent help() {
                 return new HelpContent.Builder()
                         .setDescription("Mines minerals to gain some credits. A bit more lucrative than loot, but needs pickaxes.")
-                        .setUsage("`~>mine` - Mines. You can gain minerals or mineral fragments by mining. This can used later on to cast rods or picks for better chances.")
+                        .setUsage("""
+                                  `~>mine` - Mines. You can gain minerals or mineral fragments by mining.
+                                  This can used later on to cast rods or picks for better chances.
+                                  """
+                        )
                         .setSeasonal(true)
                         .build();
             }
@@ -250,30 +322,35 @@ public class CurrencyActionCmds {
                 .spamTolerance(2)
                 .cooldown(4, TimeUnit.MINUTES)
                 .maxCooldown(4, TimeUnit.MINUTES)
-                .randomIncrement(false)
+                .incrementDivider(10)
                 .pool(MantaroData.getDefaultJedisPool())
                 .prefix("fish")
                 .premiumAware(true)
                 .build();
 
-        cr.register("fish", new SimpleCommand(Category.CURRENCY) {
+        cr.register("fish", new SimpleCommand(CommandCategory.CURRENCY) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                Map<String, String> t = ctx.getOptionalArguments();
-                boolean isSeasonal = t.containsKey("season") || t.containsKey("s");
-                I18nContext languageContext = ctx.getLanguageContext();
+                final var isSeasonal = ctx.isSeasonal();
+                final var languageContext = ctx.getLanguageContext();
 
-                Player player = ctx.getPlayer();
-                SeasonPlayer seasonPlayer = ctx.getSeasonPlayer();
-                DBUser dbUser = ctx.getDBUser();
-                Inventory playerInventory = isSeasonal ? seasonPlayer.getInventory() : player.getInventory();
+                final var player = ctx.getPlayer();
+                final var playerData = ctx.getPlayer().getData();
+
+                final var seasonPlayer = ctx.getSeasonPlayer();
+                final var dbUser = ctx.getDBUser();
+                final var userData = dbUser.getData();
+                final var marriage = ctx.getMarriage(userData);
+
+                final var playerInventory = isSeasonal ? seasonPlayer.getInventory() : player.getInventory();
+
                 FishRod item;
 
-                int equipped = isSeasonal ?
+                var equipped = isSeasonal ?
                         //seasonal equipped
                         seasonPlayer.getData().getEquippedItems().of(PlayerEquipment.EquipmentType.ROD) :
                         //not seasonal
-                        dbUser.getData().getEquippedItems().of(PlayerEquipment.EquipmentType.ROD);
+                        userData.getEquippedItems().of(PlayerEquipment.EquipmentType.ROD);
 
                 if (equipped == 0) {
                     ctx.sendLocalized("commands.fish.no_rod_equipped", EmoteReference.ERROR);
@@ -281,36 +358,36 @@ public class CurrencyActionCmds {
                 }
 
                 //It can only be a rod, lol.
-                item = (FishRod) Items.fromId(equipped);
+                item = (FishRod) ItemHelper.fromId(equipped);
 
-                if (!Utils.handleIncreasingRatelimit(fishRatelimiter, ctx.getAuthor(), ctx.getEvent(), languageContext, false))
+                if (!RatelimitUtils.ratelimit(fishRatelimiter, ctx, false)) {
                     return;
+                }
 
                 //Level but starting at 0.
-                int nominalLevel = item.getLevel() - 3;
-                String extraMessage = "";
+                var nominalLevel = item.getLevel() - 3;
+                var extraMessage = "";
+                var chance = random.nextInt(100);
 
-                int select = random.nextInt(100);
-
-                if (select < 10) {
+                if (chance < 10) {
                     //Here your fish rod got dusty. Yes, on the sea.
-                    int level = dbUser.getData().increaseDustLevel(random.nextInt(4));
+                    var level = userData.increaseDustLevel(random.nextInt(4));
                     ctx.sendLocalized("commands.fish.dust", EmoteReference.TALKING, level);
-                    dbUser.save();
+                    dbUser.saveUpdating();
 
-                    handleRodBreak(item, ctx, player, dbUser, seasonPlayer, isSeasonal);
+                    handleItemDurability(item, ctx, player, dbUser, seasonPlayer, "commands.fish.autoequip.success", isSeasonal);
                     return;
-                } else if (select < 35) {
+                } else if (chance < 35) {
                     //Here you found trash.
-                    List<Item> common = Stream.of(Items.ALL)
+                    List<Item> common = Stream.of(ItemReference.ALL)
                             .filter(i -> i.getItemType() == ItemType.COMMON && !i.isHidden() && i.isSellable() && i.getValue() < 45)
                             .collect(Collectors.toList());
 
-                    Item selected = common.get(random.nextInt(common.size()));
+                    var selected = common.get(random.nextInt(common.size()));
                     if (playerInventory.getAmount(selected) >= 5000) {
                         ctx.sendLocalized("commands.fish.trash.overflow", EmoteReference.SAD);
 
-                        handleRodBreak(item, ctx, player, dbUser, seasonPlayer, isSeasonal);
+                        handleItemDurability(item, ctx, player, dbUser, seasonPlayer, "commands.fish.autoequip.success", isSeasonal);
                         return;
                     }
 
@@ -318,61 +395,92 @@ public class CurrencyActionCmds {
                     ctx.sendLocalized("commands.fish.trash.success", EmoteReference.EYES, selected.getEmoji());
                 } else {
                     //Here you actually caught fish, congrats.
-                    List<Item> fish = Stream.of(Items.ALL)
+                    List<Item> fish = Stream.of(ItemReference.ALL)
                             .filter(i -> i.getItemType() == ItemType.FISHING && !i.isHidden() && i.isSellable())
                             .collect(Collectors.toList());
                     RandomCollection<Item> fishItems = new RandomCollection<>();
 
-                    int money = 0;
-                    boolean buff = Items.handleEffect(PlayerEquipment.EquipmentType.BUFF, dbUser.getData().getEquippedItems(), Items.FISHING_BAIT, dbUser);
-                    int amount = buff ? Math.max(1, random.nextInt(item.getLevel() + 4)) : Math.max(1, random.nextInt(item.getLevel()));
-                    if (nominalLevel >= 2)
+                    var money = 0;
+                    var buff = ItemHelper.handleEffect(
+                            PlayerEquipment.EquipmentType.BUFF,
+                            userData.getEquippedItems(),
+                            ItemReference.FISHING_BAIT, dbUser
+                    );
+
+                    var amount = Math.max(1, random.nextInt(item.getLevel()));
+
+                    if (buff) {
+                        amount = Math.max(1, random.nextInt(item.getLevel() + 4));
+                        extraMessage += "\n" + languageContext.get("commands.fish.bait");
+                    }
+
+                    if (nominalLevel >= 2) {
                         amount += random.nextInt(4);
+                    }
 
                     fish.forEach((i1) -> fishItems.add(3, i1));
 
-                    //Basically more chance if you have a better rod.
-                    if (select > (75 - nominalLevel))
-                        money = Math.max(5, random.nextInt(130 + (3 * nominalLevel)));
+                    if (marriage != null && marriage.getData().getPet() != null) {
+                        var pet = marriage.getData().getPet();
 
-                    //START OF WAIFU HELP IMPLEMENTATION
+                        if (pet != null) {
+                            HousePet.ActivityReward rewards = handlePetBuff(pet, HousePetType.HousePetAbility.FISH, languageContext);
+                            amount += rewards.getItems();
+                            money += rewards.getMoney();
+                            extraMessage += "\n" + rewards.getResult();
+                        }
+                    }
+
+                    // Basically more chance if you have a better rod.
+                    if (chance > (70 - nominalLevel)) {
+                        money += Math.max(25, random.nextInt(130 + (3 * nominalLevel)));
+                    }
+
+                    // START OF WAIFU HELP IMPLEMENTATION
                     boolean waifuHelp = false;
-                    if (Items.handleEffect(PlayerEquipment.EquipmentType.POTION, dbUser.getData().getEquippedItems(), Items.WAIFU_PILL, dbUser)) {
-                        if (dbUser.getData().getWaifus().entrySet().stream().anyMatch((w) -> w.getValue() > 10_000_000L)) {
-                            money += Math.max(10, random.nextInt(100));
+                    if (ItemHelper.handleEffect(
+                            PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), ItemReference.WAIFU_PILL, dbUser)) {
+
+                        if (userData.getWaifus().entrySet().stream().anyMatch((w) -> w.getValue() > 20_000L)) {
+                            money += Math.max(10, random.nextInt(150));
                             waifuHelp = true;
                         }
                     }
-                    //END OF WAIFU HELP IMPLEMENTATION
+                    // END OF WAIFU HELP IMPLEMENTATION
 
-                    //START OF FISH LOOT CRATE HANDLING
+                    // START OF FISH LOOT CRATE HANDLING
                     if (random.nextInt(400) > 380) {
-                        Item crate = dbUser.isPremium() ? Items.FISH_PREMIUM_CRATE : Items.FISH_CRATE;
+                        var crate = dbUser.isPremium() ? ItemReference.FISH_PREMIUM_CRATE : ItemReference.FISH_CRATE;
+
                         if (playerInventory.getAmount(crate) >= 5000) {
                             extraMessage += "\n" + languageContext.get("commands.fish.crate.overflow");
                         } else {
                             playerInventory.process(new ItemStack(crate, 1));
-                            extraMessage += "\n" + EmoteReference.MEGA + String.format(languageContext.get("commands.fish.crate.success"), crate.getEmoji(), crate.getName());
+                            extraMessage += "\n" + EmoteReference.MEGA +
+                                    languageContext.get("commands.fish.crate.success").formatted(crate.getEmoji(), crate.getName());
                         }
                     }
-                    //END OF FISH LOOT CRATE HANDLING
+                    // END OF FISH LOOT CRATE HANDLING
 
-                    if (item == Items.SPARKLE_ROD && random.nextInt(30) > 20) {
+                    if ((item == ItemReference.SPARKLE_ROD || item == ItemReference.HELLFIRE_ROD) && random.nextInt(30) > 20) {
+
                         if (random.nextInt(100) > 96) {
-                            fish.addAll(Stream.of(Items.ALL)
+                            fish.addAll(Stream.of(ItemReference.ALL)
                                     .filter(i -> i.getItemType() == ItemType.FISHING_RARE && !i.isHidden() && i.isSellable())
                                     .collect(Collectors.toList())
                             );
                         }
 
-                        playerInventory.process(new ItemStack(Items.SHARK, 1));
-                        extraMessage += "\n" + EmoteReference.MEGA + String.format(languageContext.get("commands.fish.shark_success"), Items.SHARK.getEmoji());
+                        playerInventory.process(new ItemStack(ItemReference.SHARK, 1));
+                        extraMessage += "\n" + EmoteReference.MEGA +
+                                languageContext.get("commands.fish.shark_success").formatted(ItemReference.SHARK.getEmoji());
+
                         player.getData().setSharksCaught(player.getData().getSharksCaught() + 1);
                     }
 
-                    //START OF ITEM ADDING HANDLING
                     List<ItemStack> list = new ArrayList<>(amount);
-                    boolean overflow = false;
+                    var overflow = false;
+
                     for (int i = 0; i < amount; i++) {
                         Item it = fishItems.next();
                         if (playerInventory.getAmount(it) >= 5000) {
@@ -382,15 +490,16 @@ public class CurrencyActionCmds {
 
                         list.add(new ItemStack(it, 1));
                     }
+                    // END OF ITEM ADD HANDLING
 
-                    if (buff)
-                        extraMessage += "\n" + languageContext.get("commands.fish.bait");
-
-                    if (overflow)
-                        extraMessage += "\n" + String.format(languageContext.get("commands.fish.overflow"), EmoteReference.SAD);
+                    if (overflow) {
+                        extraMessage += "\n" + languageContext.get("commands.fish.overflow")
+                                .formatted(EmoteReference.SAD);
+                    }
 
                     List<ItemStack> reducedList = ItemStack.reduce(list);
                     playerInventory.process(reducedList);
+
                     if (isSeasonal) {
                         seasonPlayer.addMoney(money);
                     } else {
@@ -398,27 +507,46 @@ public class CurrencyActionCmds {
                         player.getData().incrementFishingExperience(random);
                     }
 
-                    String itemDisplay = ItemStack.toString(reducedList);
-                    boolean foundFish = !reducedList.isEmpty();
-                    //END OF ITEM ADDING HANDLING
+                    var itemDisplay = ItemStack.toString(reducedList);
+                    var foundFish = !reducedList.isEmpty();
 
                     //Add fisher badge if the player found fish successfully.
-                    if (foundFish)
+                    if (foundFish) {
                         player.getData().addBadgeIfAbsent(Badge.FISHER);
+                    }
 
                     if (nominalLevel >= 3 && random.nextInt(110) > 90) {
-                        playerInventory.process(new ItemStack(Items.SHELL, 1));
-                        extraMessage += "\n" + EmoteReference.MEGA + String.format(languageContext.get("commands.fish.fossil_success"), Items.SHELL.getEmoji());
+                        playerInventory.process(new ItemStack(ItemReference.SHELL, 1));
+                        extraMessage += "\n" + EmoteReference.MEGA +
+                                languageContext.get("commands.fish.fossil_success")
+                                        .formatted(ItemReference.SHELL.getEmoji());
+                    }
+
+
+                    var bonus = money;
+                    if (random.nextBoolean()) {
+                        bonus = money / 2;
+                    }
+
+                    if (dbUser.isPremium() && money > 0 && bonus > 0) {
+                        money += random.nextInt(bonus);
+                    }
+
+                    if (playerData.shouldSeeCampaign()) {
+                        extraMessage += Campaign.PREMIUM.getStringFromCampaign(languageContext, dbUser.isPremium());
+                        playerData.markCampaignAsSeen();
                     }
 
                     //START OF REPLY HANDLING
                     //Didn't find a thingy thing.
                     if (money == 0 && !foundFish) {
-                        int level = dbUser.getData().increaseDustLevel(random.nextInt(4));
+                        int level = userData.increaseDustLevel(random.nextInt(4));
                         ctx.sendLocalized("commands.fish.dust", EmoteReference.TALKING, level);
-                        dbUser.save();
+                        dbUser.saveUpdating();
 
-                        handleRodBreak(item, ctx, player, dbUser, seasonPlayer, isSeasonal);
+                        handleItemDurability(item, ctx, player, dbUser, seasonPlayer,
+                                "commands.fish.autoequip.success", isSeasonal
+                        );
                         return;
                     }
 
@@ -436,42 +564,277 @@ public class CurrencyActionCmds {
                 }
 
                 //Save all changes to the player object.
-                player.save();
-                if (isSeasonal)
-                    seasonPlayer.save();
+                player.saveUpdating();
 
-                handleRodBreak(item, ctx, player, dbUser, seasonPlayer, isSeasonal);
+                if (isSeasonal) {
+                    seasonPlayer.saveUpdating();
+                }
+
+                // Save pet stats.
+                if (marriage != null) {
+                    marriage.saveUpdating();
+                }
+
+                handleItemDurability(item, ctx, player, dbUser, seasonPlayer, "commands.fish.autoequip.success", isSeasonal);
             }
-
 
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
                         .setDescription("Starts a fishing session.")
-                        .setUsage("`~>fish` - Starts fishing. You can gain credits and fish items by fishing, which can be used later on for casting.")
+                        .setUsage("""
+                                  `~>fish` - Starts fishing.
+                                  You can gain credits and fish items by fishing, which can be used later on for casting.
+                                  """
+                        )
                         .setSeasonal(true)
                         .build();
             }
         });
     }
 
-    private void handleRodBreak(Item item, Context ctx, Player p, DBUser u, SeasonPlayer sp, boolean isSeasonal) {
-        Pair<Boolean, Player> breakage = handleDurability(ctx, item, p, u, sp, isSeasonal);
-        if (!breakage.getKey())
+    @Subscribe
+    public void chop(CommandRegistry cr) {
+        final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
+                .limit(1)
+                .spamTolerance(3)
+                .cooldown(4, TimeUnit.MINUTES)
+                .maxCooldown(4, TimeUnit.MINUTES)
+                .incrementDivider(10)
+                .premiumAware(true)
+                .pool(MantaroData.getDefaultJedisPool())
+                .prefix("chop")
+                .build();
+
+        // TODO: Loot crates, Rare items
+        cr.register("chop", new SimpleCommand(CommandCategory.CURRENCY) {
+            @Override
+            protected void call(Context ctx, String content, String[] args) {
+                final var isSeasonal = ctx.isSeasonal();
+                final var languageContext = ctx.getLanguageContext();
+
+                final var player = ctx.getPlayer();
+                final var playerData = player.getData();
+
+                final var seasonPlayer = ctx.getSeasonPlayer();
+                final var dbUser = ctx.getDBUser();
+                final var userData = dbUser.getData();
+                final var marriage = ctx.getMarriage(userData);
+                final var playerInventory = isSeasonal ? seasonPlayer.getInventory() : player.getInventory();
+
+                var extraMessage = "\n";
+                var equipped = isSeasonal ?
+                        //seasonal equipped
+                        seasonPlayer.getData().getEquippedItems().of(PlayerEquipment.EquipmentType.AXE) :
+                        //not seasonal
+                        userData.getEquippedItems().of(PlayerEquipment.EquipmentType.AXE);
+
+                if (equipped == 0) {
+                    ctx.sendLocalized("commands.chop.not_equipped", EmoteReference.ERROR);
+                    return;
+                }
+
+                final var item = (Axe) ItemHelper.fromId(equipped);
+
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx, false)) {
+                    return;
+                }
+
+                var chance = random.nextInt(100);
+                var hasPotion = ItemHelper.handleEffect(
+                        PlayerEquipment.EquipmentType.POTION, userData.getEquippedItems(), ItemReference.POTION_HASTE, dbUser
+                );
+
+                if (hasPotion) {
+                    chance += 9;
+                }
+
+                if (chance < 10) {
+                    // Found nothing.
+                    int level = userData.increaseDustLevel(random.nextInt(5));
+                    dbUser.save();
+                    // Process axe durability.
+                    handleItemDurability(item, ctx, player, dbUser, seasonPlayer, "commands.chop.autoequip.success", isSeasonal);
+
+                    ctx.sendLocalized("commands.chop.dust", EmoteReference.SAD, level);
+                } else {
+                    var money = chance > 50 ? random.nextInt(100) : 0;
+                    var amount = random.nextInt(8);
+                    var moneyIncrease = item.getMoneyIncrease() <= 0 ? 1 : item.getMoneyIncrease();
+                    money += Math.max(moneyIncrease / 4, random.nextInt(moneyIncrease));
+
+                    if (marriage != null && marriage.getData().getPet() != null) {
+                        var pet = marriage.getData().getPet();
+
+                        if (pet != null) {
+                            HousePet.ActivityReward rewards = handlePetBuff(pet, HousePetType.HousePetAbility.CHOP, languageContext);
+                            amount += rewards.getItems();
+                            money += rewards.getMoney();
+                            extraMessage += rewards.getResult();
+                        }
+                    }
+
+                    if (hasPotion) {
+                        amount += 3;
+                    }
+
+                    // ---- Start of drop handling.
+                    RandomCollection<Item> items = new RandomCollection<>();
+                    var toDrop = handleChopDrop();
+                    toDrop.forEach(i -> items.add(3, i));
+
+                    List<Item> list = new ArrayList<>(amount);
+                    for (int i = 0; i < amount; i++) {
+                        list.add(items.next());
+                    }
+
+                    ArrayList<ItemStack> ita = new ArrayList<>();
+                    list.forEach(it -> ita.add(new ItemStack(it, 1)));
+                    var found = !ita.isEmpty();
+
+                    // Make so it drops some decent amount of wood lol
+                    if (ita.stream().anyMatch(is -> is.getItem() == ItemReference.WOOD)) {
+                        ita.add(new ItemStack(ItemReference.WOOD, Math.max(1, random.nextInt(7))));
+                    } else if (found) {
+                        // Guarantee at least one wood.
+                        ita.add(new ItemStack(ItemReference.WOOD, 1));
+                    }
+
+                    // Reduce item stacks (aka join them) and process it.
+                    var reducedStack = ItemStack.reduce(ita);
+                    var itemDisplay = ItemStack.toString(reducedStack);
+
+                    playerInventory.process(reducedStack);
+
+                    // Add money
+                    if (isSeasonal) {
+                        seasonPlayer.addMoney(money);
+                    } else {
+                        player.addMoney(money);
+                        player.getData().incrementChopExperience(random);
+                    }
+
+                    // Ah yes, sellout
+                    var bonus = money;
+                    if (random.nextBoolean()) {
+                        bonus = money / 2;
+                    }
+
+                    if (dbUser.isPremium() && money > 0 && bonus > 0) {
+                        money += random.nextInt(bonus);
+                    }
+
+                    if (found) {
+                        playerData.addBadgeIfAbsent(Badge.CHOPPER);
+                    }
+
+                    if (playerData.shouldSeeCampaign()) {
+                        extraMessage += Campaign.PREMIUM.getStringFromCampaign(languageContext, dbUser.isPremium());
+                        playerData.markCampaignAsSeen();
+                    }
+
+                    // Show a message depending on the outcome.
+                    if (money > 0 && !found) {
+                        ctx.sendFormat(languageContext.get("commands.chop.success_money_noitem") + extraMessage, item.getEmoji(), money);
+                    } else if (found && money == 0) {
+                        ctx.sendFormat(languageContext.get("commands.chop.success_only_item") + extraMessage, item.getEmoji(), itemDisplay);
+                    } else if (!found && money == 0) {
+                        // This doesn't actually increase the dust level, though.
+                        var level = userData.getDustLevel();
+                        ctx.sendLocalized("commands.chop.dust", EmoteReference.SAD, level);
+                    } else {
+                        ctx.sendFormat(languageContext.get("commands.chop.success") + extraMessage, item.getEmoji(), itemDisplay, money);
+                    }
+
+                    player.save();
+
+                    // Save pet stuff.
+                    if (marriage != null) {
+                        marriage.save();
+                    }
+
+                    // Process axe durability.
+                    handleItemDurability(item, ctx, player, dbUser, seasonPlayer, "commands.chop.autoequip.success", isSeasonal);
+                }
+            }
+
+            @Override
+            public HelpContent help() {
+                return new HelpContent.Builder()
+                        .setDescription("Starts a chopping session.")
+                        .setUsage("""
+                                  `~>chop` - Starts chopping trees.
+                                  You can gain credits and items by chopping, which can be used later on for casting, specially tools.
+                                  """
+                        )
+                        .setSeasonal(true)
+                        .build();
+            }
+        });
+    }
+
+    private HousePet.ActivityReward handlePetBuff(HousePet pet, HousePetType.HousePetAbility required,
+                                                  I18nContext languageContext) {
+        return handlePetBuff(pet, required, languageContext, true);
+    }
+
+
+    private HousePet.ActivityReward handlePetBuff(HousePet pet, HousePetType.HousePetAbility required,
+                                                  I18nContext languageContext, boolean needsItem) {
+        HousePet.ActivityResult ability = pet.handleAbility(required);
+        if (ability.passed()) {
+            var itemIncrease = 0;
+            if (needsItem) {
+                itemIncrease = random.nextInt(pet.getType().getMaxItemBuildup(pet.getLevel()));
+            }
+
+            var moneyIncrease = Math.max(1, random.nextInt(pet.getType().getMaxCoinBuildup(pet.getLevel())));
+            var message = "\n" + pet.buildMessage(ability, languageContext, moneyIncrease, itemIncrease);
+
+            return new HousePet.ActivityReward(itemIncrease, moneyIncrease, message);
+        } else if (!ability.getLanguageString().isEmpty()) {
+            var message = "\n" + pet.buildMessage(ability, languageContext, 0, 0);
+            return new HousePet.ActivityReward(0, 0, message);
+        }
+
+        return new HousePet.ActivityReward(0, 0, "");
+    }
+
+    private List<Item> handleChopDrop() {
+        var all = Arrays.stream(ItemReference.ALL)
+                .filter(i -> i.getItemType() == ItemType.CHOP_DROP)
+                .collect(Collectors.toList());
+
+        return all.stream()
+                .sorted(Comparator.comparingLong(Item::getValue))
+                .collect(Collectors.toList());
+    }
+
+    private void handleItemDurability(Item item, Context ctx, Player player, DBUser dbUser,
+                                      SeasonPlayer seasonPlayer, String i18n, boolean isSeasonal) {
+        var breakage = handleDurability(ctx, item, player, dbUser, seasonPlayer, isSeasonal);
+        if (!breakage.getKey()) {
             return;
+        }
+
+        if (isSeasonal) {
+            return;
+        }
 
         //We need to get this again since reusing the old ones will cause :fire:
-        Player pl = breakage.getValue();
-        Inventory inv = pl.getInventory();
+        var finalPlayer = breakage.getValue().getKey();
+        var finalUser = breakage.getValue().getValue();
+        var inventory = finalPlayer.getInventory();
+        var userData = finalUser.getData();
 
-        if(u.getData().isAutoEquip() && inv.containsItem(item)) {
-            u.getData().getEquippedItems().equipItem(item);
-            inv.process(new ItemStack(item, -1));
+        if (userData.isAutoEquip() && inventory.containsItem(item)) {
+            userData.getEquippedItems().equipItem(item);
+            inventory.process(new ItemStack(item, -1));
 
-            pl.save();
-            u.save();
+            finalPlayer.save();
+            finalUser.save();
 
-            ctx.sendLocalized("commands.fish.autoequip.success", EmoteReference.CORRECT, item.getName());
+            ctx.sendLocalized(i18n, EmoteReference.CORRECT, item.getName());
         }
     }
 }

@@ -17,46 +17,45 @@
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
-import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
 import net.kodehawa.mantarobot.MantaroBot;
-import net.kodehawa.mantarobot.MantaroInfo;
-import net.kodehawa.mantarobot.commands.currency.item.*;
+import net.kodehawa.mantarobot.commands.currency.item.ItemHelper;
+import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
+import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
+import net.kodehawa.mantarobot.commands.currency.item.PlayerEquipment;
 import net.kodehawa.mantarobot.commands.currency.item.special.Potion;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.currency.profile.ProfileComponent;
+import net.kodehawa.mantarobot.commands.currency.profile.inventory.InventorySortType;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SubCommand;
 import net.kodehawa.mantarobot.core.modules.commands.TreeCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
 import net.kodehawa.mantarobot.core.modules.commands.base.Command;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.base.ITreeCommand;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.I18n;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.entities.DBUser;
-import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.PlayerStats;
-import net.kodehawa.mantarobot.db.entities.helpers.Inventory;
-import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.commands.IncreasingRateLimiter;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
-import java.io.IOException;
-import java.util.*;
+import java.awt.Color;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static net.kodehawa.mantarobot.commands.currency.profile.ProfileComponent.*;
@@ -65,11 +64,23 @@ import static net.kodehawa.mantarobot.utils.Utils.*;
 
 @Module
 public class ProfileCmd {
+    private static final Pattern offsetRegex = Pattern.compile("(?:UTC|GMT)[+-][0-9]{1,2}(:[0-9]{1,2})?", Pattern.CASE_INSENSITIVE);
+
+    // Discord makes it so multiple spaces get only rendered as one, but half-width spaces don't.
+    // So therefore you get this cursed *thing* for formatting.
+    private static final String SEPARATOR = "\u2009\u2009\u2009\u2009\u2009\u2009\u2009\u2009";
+    private static final String SEPARATOR_MID = "\u2009\u2009\u2009\u2009";
+    private static final String SEPARATOR_ONE = "\u2009\u2009";
+    private static final String SEPARATOR_HALF = "\u2009";
+
+    // A small white square.
+    private static final String LIST_MARKER = "\u25AB\uFE0F";
+
     @Subscribe
     public void profile(CommandRegistry cr) {
-        final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
+        final var rateLimiter = new IncreasingRateLimiter.Builder()
                 .limit(2) //twice every 10m
-                .spamTolerance(1)
+                .spamTolerance(2)
                 .cooldown(10, TimeUnit.MINUTES)
                 .cooldownPenaltyIncrease(10, TimeUnit.SECONDS)
                 .maxCooldown(15, TimeUnit.MINUTES)
@@ -77,108 +88,139 @@ public class ProfileCmd {
                 .prefix("profile")
                 .build();
 
-        //I actually do need this, sob.
-        final LinkedList<ProfileComponent> defaultOrder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+        final var config = MantaroData.config().get();
 
-        ITreeCommand profileCommand = (TreeCommand) cr.register("profile", new TreeCommand(Category.CURRENCY) {
+        List<ProfileComponent> defaultOrder;
+        if (config.isPremiumBot() || config.isSelfHost()) {
+            defaultOrder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+        } else {
+            defaultOrder = createLinkedList(HEADER, CREDITS, OLD_CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+        }
 
+        List<ProfileComponent> noOldOlder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+
+        ITreeCommand profileCommand = cr.register("profile", new TreeCommand(CommandCategory.CURRENCY) {
             @Override
             public Command defaultTrigger(Context ctx, String mainCommand, String commandName) {
                 return new SubCommand() {
                     @Override
-                    protected void call(Context ctx, String content) {
-                        Map<String, String> t = ctx.getOptionalArguments();
-                        content = Utils.replaceArguments(t, content, "season", "s").trim();
-                        boolean isSeasonal = ctx.isSeasonal();
+                    protected void call(Context ctx, I18nContext languageContext, String content) {
+                        var optionalArguments = ctx.getOptionalArguments();
+                        content = Utils.replaceArguments(optionalArguments, content, "season", "s").trim();
+                        var isSeasonal = ctx.isSeasonal();
 
-                        User userLooked = ctx.getAuthor();
-                        Member memberLooked = ctx.getMember();
 
-                        Player player = ctx.getPlayer();
-                        SeasonPlayer seasonalPlayer = null;
-                        DBUser dbUser = ctx.getDBUser();
+                        var finalContent = content;
+                        ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                            SeasonPlayer seasonalPlayer = null;
+                            var userLooked = ctx.getAuthor();
+                            var memberLooked = ctx.getMember();
 
-                        if(!content.isEmpty()) {
-                            List<Member> found = FinderUtil.findMembers(content, ctx.getGuild());
-                            if(found != null) {
-                                userLooked = found.get(0).getUser();
-                                memberLooked = found.get(0);
-
-                                if (userLooked.isBot()) {
-                                    ctx.sendLocalized("commands.profile.bot_notice", EmoteReference.ERROR);
+                            if (!finalContent.isEmpty()) {
+                                var found = CustomFinderUtil.findMember(finalContent, members, ctx);
+                                if (found == null) {
                                     return;
                                 }
 
-                                //Re-assign.
-                                dbUser = ctx.getDBUser(userLooked);
-                                player = ctx.getPlayer(userLooked);
+                                userLooked = found.getUser();
+                                memberLooked = found;
                             }
-                        }
 
-                        PlayerData playerData = player.getData();
-                        UserData userData = dbUser.getData();
-                        Inventory inv = player.getInventory();
+                            if (userLooked.isBot()) {
+                                ctx.sendLocalized("commands.profile.bot_notice", EmoteReference.ERROR);
+                                return;
+                            }
 
-                        //Cache waifu value.
-                        playerData.setWaifuCachedValue(RelationshipCmds.calculateWaifuValue(userLooked).getFinalValue());
+                            var player = ctx.getPlayer(userLooked);
+                            var dbUser = ctx.getDBUser(userLooked);
 
-                        //start of badge assigning
-                        Guild mh = MantaroBot.getInstance().getShardManager().getGuildById("213468583252983809");
-                        Member mhMember = mh == null ? null : mh.getMemberById(memberLooked.getUser().getId());
+                            var playerData = player.getData();
+                            var userData = dbUser.getData();
+                            var inv = player.getInventory();
 
-                        //Badge assigning code
-                        Badge.assignBadges(player, dbUser);
+                            // Cache waifu value.
+                            playerData.setWaifuCachedValue(WaifuCmd.calculateWaifuValue(userLooked).getFinalValue());
 
-                        //Manual badges
-                        if (MantaroData.config().get().isOwner(userLooked))
-                            playerData.addBadgeIfAbsent(Badge.DEVELOPER);
-                        if (inv.asList().stream()
-                                .anyMatch(stack -> stack.getItem().equals(Items.CHRISTMAS_TREE_SPECIAL) ||
-                                        stack.getItem().equals(Items.BELL_SPECIAL)))
-                            playerData.addBadgeIfAbsent(Badge.CHRISTMAS);
-                        if (mhMember != null &&
-                                mhMember.getRoles().stream().anyMatch(r -> r.getIdLong() == 406920476259123201L))
-                            playerData.addBadgeIfAbsent(Badge.HELPER_2);
-                        if (mhMember != null &&
-                                mhMember.getRoles().stream().anyMatch(r -> r.getIdLong() == 290257037072531466L ||
-                                        r.getIdLong() == 290902183300431872L))
-                            playerData.addBadgeIfAbsent(Badge.DONATOR_2);
-                        //end of badge assigning
+                            // start of badge assigning
+                            var mh = MantaroBot.getInstance().getShardManager().getGuildById("213468583252983809");
+                            var mhMember = mh == null ? null : ctx.retrieveMemberById(memberLooked.getUser().getId(), false);
 
-                        List<Badge> badges = playerData.getBadges();
-                        Collections.sort(badges);
+                            Badge.assignBadges(player, dbUser);
+                            var christmasBadgeAssign = inv.asList()
+                                    .stream()
+                                    .map(ItemStack::getItem)
+                                    .anyMatch(it -> it.equals(ItemReference.CHRISTMAS_TREE_SPECIAL) || it.equals(ItemReference.BELL_SPECIAL));
 
-                        if (isSeasonal)
-                            seasonalPlayer = ctx.getSeasonPlayer(userLooked);
+                            // Manual badges
+                            if (config.isOwner(userLooked)) {
+                                playerData.addBadgeIfAbsent(Badge.DEVELOPER);
+                            }
 
-                        boolean ringHolder = player.getInventory().containsItem(Items.RING) && userData.getMarriage() != null;
-                        ProfileComponent.Holder holder = new ProfileComponent.Holder(userLooked, player, seasonalPlayer, dbUser, badges);
-                        I18nContext languageContext = ctx.getLanguageContext();
+                            if (christmasBadgeAssign) {
+                                playerData.addBadgeIfAbsent(Badge.CHRISTMAS);
+                            }
 
-                        EmbedBuilder profileBuilder = new EmbedBuilder();
-                        profileBuilder.setAuthor((ringHolder ? EmoteReference.RING : "") +
-                                String.format(languageContext.get("commands.profile.header"),
-                                        memberLooked.getEffectiveName()), null, userLooked.getEffectiveAvatarUrl()
-                                ).setDescription(player.getData().getDescription() == null ?
-                                        languageContext.get("commands.profile.no_desc") : player.getData().getDescription()
-                                ).setFooter(ProfileComponent.FOOTER.getContent().apply(holder, languageContext), null);
+                            // Requires a valid Member in Mantaro Hub.
+                            if (mhMember != null) {
+                                // Admin
+                                if (containsRole(mhMember, 315910951994130432L, 642089477828902912L)) {
+                                    playerData.addBadgeIfAbsent(Badge.COMMUNITY_ADMIN);
+                                }
 
-                        boolean hasCustomOrder = dbUser.isPremium() && !playerData.getProfileComponents().isEmpty();
-                        List<ProfileComponent> usedOrder = hasCustomOrder ? playerData.getProfileComponents() : defaultOrder;
+                                // Patron - Donator
+                                if (containsRole(mhMember, 290902183300431872L, 290257037072531466L)) {
+                                    playerData.addBadgeIfAbsent(Badge.DONATOR_2);
+                                }
 
-                        for (ProfileComponent component : usedOrder) {
-                            profileBuilder.addField(
-                                    component.getTitle(languageContext), component.getContent().apply(holder, languageContext), component.isInline()
-                            );
-                        }
+                                // Translator
+                                if (containsRole(mhMember, 407156441812828162L)) {
+                                    playerData.addBadgeIfAbsent(Badge.TRANSLATOR);
+                                }
+                            }
+                            // end of badge assigning
 
-                        applyBadge(ctx.getChannel(),
-                                badges.isEmpty() ? null :
-                                        (playerData.getMainBadge() == null ? badges.get(0) : playerData.getMainBadge()),
-                                userLooked, profileBuilder
-                        );
+                            var badges = playerData.getBadges();
+                            Collections.sort(badges);
 
-                        player.saveAsync();
+                            if (isSeasonal) {
+                                seasonalPlayer = ctx.getSeasonPlayer(userLooked);
+                            }
+
+                            var ringHolder = player.getInventory().containsItem(ItemReference.RING) && userData.getMarriage() != null;
+                            var holder = new ProfileComponent.Holder(userLooked, player, seasonalPlayer, dbUser, badges);
+                            var profileBuilder = new EmbedBuilder();
+                            var description = languageContext.get("commands.profile.no_desc");
+
+                            if (playerData.getDescription() != null) {
+                                description = player.getData().getDescription();
+                            }
+
+                            profileBuilder.setAuthor(
+                                    (ringHolder ? EmoteReference.RING : "") + String.format(languageContext.get("commands.profile.header"),
+                                            memberLooked.getEffectiveName()), null, userLooked.getEffectiveAvatarUrl())
+                                    .setDescription(description)
+                                    .setThumbnail(userLooked.getEffectiveAvatarUrl())
+                                    .setColor(memberLooked.getColor() == null ? Color.PINK : memberLooked.getColor())
+                                    .setFooter(ProfileComponent.FOOTER.getContent().apply(holder, languageContext),
+                                            ctx.getAuthor().getEffectiveAvatarUrl()
+                                    );
+
+                            var hasCustomOrder = dbUser.isPremium() && !playerData.getProfileComponents().isEmpty();
+                            var usedOrder = hasCustomOrder ? playerData.getProfileComponents() : defaultOrder;
+                            if ((!config.isPremiumBot() && player.getOldMoney() < 5000 && !hasCustomOrder) || playerData.isHiddenLegacy()) {
+                                usedOrder = noOldOlder;
+                            }
+
+                            for (var component : usedOrder) {
+                                profileBuilder.addField(
+                                        component.getTitle(languageContext), component.getContent().apply(holder, languageContext), component.isInline()
+                                );
+                            }
+
+                            ctx.send(profileBuilder.build());
+                            player.saveUpdating();
+                        });
+
                     }
                 };
             }
@@ -203,26 +245,79 @@ public class ProfileCmd {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                Player player = ctx.getPlayer();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                final var player = ctx.getPlayer();
+                final var playerData = player.getData();
 
                 if (content.equals("remove")) {
-                    player.getData().setClaimLocked(false);
+                    playerData.setClaimLocked(false);
                     ctx.sendLocalized("commands.profile.claimlock.removed", EmoteReference.CORRECT);
-                    player.save();
+                    player.saveUpdating();
                     return;
                 }
 
-                Inventory inventory = player.getInventory();
-                if(!inventory.containsItem(Items.CLAIM_KEY)) {
+                if (playerData.isClaimLocked()) {
+                    ctx.sendLocalized("commands.profile.claimlock.already_locked", EmoteReference.CORRECT);
+                    return;
+                }
+
+                var inventory = player.getInventory();
+                if (!inventory.containsItem(ItemReference.CLAIM_KEY)) {
                     ctx.sendLocalized("commands.profile.claimlock.no_key", EmoteReference.ERROR);
                     return;
                 }
 
-                player.getData().setClaimLocked(true);
+                playerData.setClaimLocked(true);
                 ctx.sendLocalized("commands.profile.claimlock.success", EmoteReference.CORRECT);
-                inventory.process(new ItemStack(Items.CLAIM_KEY, -1));
-                player.save();
+                inventory.process(new ItemStack(ItemReference.CLAIM_KEY, -1));
+                player.saveUpdating();
+            }
+        });
+
+        if (!config.isPremiumBot()) {
+            profileCommand.addSubCommand("togglelegacy", new SubCommand() {
+                @Override
+                public String description() {
+                    return "Hides/unhides legacy credits.";
+                }
+
+                @Override
+                protected void call(Context ctx, I18nContext languageContext, String content) {
+                    final var player = ctx.getPlayer();
+                    final var data = player.getData();
+                    data.setHiddenLegacy(!data.isHiddenLegacy());
+
+                    ctx.sendLocalized("commands.profile.hidelegacy", EmoteReference.CORRECT, data.isHiddenLegacy());
+                }
+            });
+        }
+
+        profileCommand.addSubCommand("inventorysort", new SubCommand() {
+            @Override
+            public String description() {
+                return "Sets how you wanna sort your inventory. Possible values: `VALUE, VALUE_TOTAL, AMOUNT, TYPE, RANDOM`.";
+            }
+
+            @Override
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                final var type = Utils.lookupEnumString(content, InventorySortType.class);
+
+                if (type == null) {
+                    ctx.sendLocalized("commands.profile.inventorysort.not_valid",
+                            EmoteReference.ERROR, Arrays.stream(InventorySortType.values())
+                                    .map(b1 -> b1.toString().toLowerCase())
+                                    .collect(Collectors.joining(", "))
+                    );
+                    return;
+                }
+
+                final var player = ctx.getPlayer();
+                final var playerData = player.getData();
+
+                playerData.setInventorySortType(type);
+                player.saveUpdating();
+
+                ctx.sendLocalized("commands.profile.inventorysort.success", EmoteReference.CORRECT, type.toString().toLowerCase());
             }
         });
 
@@ -233,20 +328,20 @@ public class ProfileCmd {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                DBUser user = ctx.getDBUser();
-                UserData data = user.getData();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var user = ctx.getDBUser();
+                var data = user.getData();
 
                 if (content.equals("disable")) {
                     data.setAutoEquip(false);
                     ctx.sendLocalized("commands.profile.autoequip.disable", EmoteReference.CORRECT);
-                    user.save();
+                    user.saveUpdating();
                     return;
                 }
 
                 data.setAutoEquip(true);
                 ctx.sendLocalized("commands.profile.autoequip.success", EmoteReference.CORRECT);
-                user.save();
+                user.saveUpdating();
             }
         });
 
@@ -258,12 +353,12 @@ public class ProfileCmd {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                DBUser user = ctx.getDBUser();
-                UserData data = user.getData();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var user = ctx.getDBUser();
+                var data = user.getData();
 
                 data.setPrivateTag(!data.isPrivateTag());
-                user.save();
+                user.saveUpdating();
 
                 ctx.sendLocalized("commands.profile.hide_tag.success", EmoteReference.POPPER, data.isPrivateTag());
             }
@@ -272,20 +367,23 @@ public class ProfileCmd {
         profileCommand.addSubCommand("timezone", new SubCommand() {
             @Override
             public String description() {
-                return "Sets the profile timezone. Usage: `~>profile timezone <tz>`";
+                return "Sets the profile timezone.";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                DBUser dbUser = ctx.getDBUser();
-                String[] args = ctx.getArguments();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var dbUser = ctx.getDBUser();
+                var args = ctx.getArguments();
 
                 if (args.length < 1) {
                     ctx.sendLocalized("commands.profile.timezone.not_specified", EmoteReference.ERROR);
                     return;
                 }
 
-                String timezone = args[0].replace("UTC", "GMT").toUpperCase();
+                var timezone = content;
+                if (offsetRegex.matcher(timezone).matches()) {
+                    timezone = content.toUpperCase().replace("UTC", "GMT");
+                }
 
                 if (timezone.equalsIgnoreCase("reset")) {
                     dbUser.getData().setTimezone(null);
@@ -299,19 +397,13 @@ public class ProfileCmd {
                     return;
                 }
 
-                try {
-                    UtilsCmds.dateGMT(ctx.getGuild(), timezone);
-                } catch (Exception e) {
-                    ctx.sendLocalized("commands.profile.timezone.invalid", EmoteReference.ERROR);
-                    return;
+                var player = ctx.getPlayer();
+                if (player.getData().addBadgeIfAbsent(Badge.CALENDAR)) {
+                    player.saveUpdating();
                 }
 
-                Player player = ctx.getPlayer();
-                if(player.getData().addBadgeIfAbsent(Badge.CALENDAR))
-                    player.save();
-
                 dbUser.getData().setTimezone(timezone);
-                dbUser.saveAsync();
+                dbUser.saveUpdating();
                 ctx.sendLocalized("commands.profile.timezone.success", EmoteReference.CORRECT, timezone);
             }
         });
@@ -319,87 +411,91 @@ public class ProfileCmd {
         profileCommand.addSubCommand("description", new SubCommand() {
             @Override
             public String description() {
-                return "Sets your profile description. Usage: `~>profile description set <description>`\n" +
-                        "Reset with `~>profile description clear`";
+                return "Sets your profile description.";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                if (!Utils.handleIncreasingRatelimit(rateLimiter, ctx.getAuthor(), ctx))
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
                     return;
+                }
 
-                String[] args = content.split(" ");
-                User author = ctx.getAuthor();
-                Player player = ctx.getPlayer();
-                DBUser dbUser = ctx.getDBUser();
+                var args = content.split(" ");
+                var player = ctx.getPlayer();
+                var dbUser = ctx.getDBUser();
 
                 if (args.length == 0) {
                     ctx.sendLocalized("commands.profile.description.no_argument", EmoteReference.ERROR);
                     return;
                 }
 
-                if (args[0].equals("set")) {
-                    int MAX_LENGTH = 300;
-
-                    if (dbUser.isPremium())
-                        MAX_LENGTH = 500;
-
-                    if (args.length < 2) {
-                        ctx.sendLocalized("commands.profile.description.no_content", EmoteReference.ERROR);
-                        return;
-                    }
-
-                    String content1 = SPLIT_PATTERN.split(content, 2)[1];
-
-                    if (content1.length() > MAX_LENGTH) {
-                        ctx.sendLocalized("commands.profile.description.too_long", EmoteReference.ERROR);
-                        return;
-                    }
-
-                    content1 = Utils.DISCORD_INVITE.matcher(content1).replaceAll("-discord invite link-");
-                    content1 = Utils.DISCORD_INVITE_2.matcher(content1).replaceAll("-discord invite link-");
-
-                    player.getData().setDescription(content1);
-
-                    ctx.sendStrippedLocalized("commands.profile.description.success", EmoteReference.POPPER, content1);
-
-                    player.getData().addBadgeIfAbsent(Badge.WRITER);
-                    player.save();
-                    return;
-                }
-
                 if (args[0].equals("clear")) {
                     player.getData().setDescription(null);
                     ctx.sendLocalized("commands.profile.description.clear_success", EmoteReference.CORRECT);
-                    player.save();
+                    player.saveUpdating();
                 }
+
+                var split = SPLIT_PATTERN.split(content, 2);
+                var desc = content;
+                var old = false;
+                if (split[0].equals("set")) {
+                    desc = content.replaceFirst("set ", "");
+                    old = true;
+                }
+
+                var MAX_LENGTH = 300;
+
+                if (dbUser.isPremium()) {
+                    MAX_LENGTH = 500;
+                }
+
+                if (args.length < (old ? 2 : 1)) {
+                    ctx.sendLocalized("commands.profile.description.no_content", EmoteReference.ERROR);
+                    return;
+                }
+
+                if (desc.length() > MAX_LENGTH) {
+                    ctx.sendLocalized("commands.profile.description.too_long", EmoteReference.ERROR);
+                    return;
+                }
+
+                desc = Utils.DISCORD_INVITE.matcher(desc).replaceAll("-discord invite link-");
+                desc = Utils.DISCORD_INVITE_2.matcher(desc).replaceAll("-discord invite link-");
+
+                player.getData().setDescription(desc);
+
+                ctx.sendStrippedLocalized("commands.profile.description.success", EmoteReference.POPPER, desc);
+
+                player.getData().addBadgeIfAbsent(Badge.WRITER);
+                player.saveUpdating();
             }
         });
 
         profileCommand.addSubCommand("displaybadge", new SubCommand() {
             @Override
             public String description() {
-                return "Sets your profile badge. Usage: `~>profile displaybadge <badge name>`\n" +
-                        "Reset with `~>profile displaybadge reset`\n" +
-                        "No badge: `~>profile displaybadge none`";
+                return """
+                        Sets your profile badge.
+                        Reset with `~>profile displaybadge reset`
+                        No badge: `~>profile displaybadge none`""";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                String[] args = ctx.getArguments();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var args = ctx.getArguments();
                 if (args.length == 0) {
                     ctx.sendLocalized("commands.profile.displaybadge.not_specified", EmoteReference.ERROR);
                     return;
                 }
 
-                Player player = ctx.getPlayer();
-                PlayerData data = player.getData();
-                String arg = args[0];
+                var player = ctx.getPlayer();
+                var data = player.getData();
+                var arg = args[0];
 
                 if (arg.equalsIgnoreCase("none")) {
                     data.setShowBadge(false);
                     ctx.sendLocalized("commands.profile.displaybadge.reset_success", EmoteReference.CORRECT);
-                    player.saveAsync();
+                    player.saveUpdating();
                     return;
                 }
 
@@ -407,11 +503,11 @@ public class ProfileCmd {
                     data.setMainBadge(null);
                     data.setShowBadge(true);
                     ctx.sendLocalized("commands.profile.displaybadge.important_success", EmoteReference.CORRECT);
-                    player.saveAsync();
+                    player.saveUpdating();
                     return;
                 }
 
-                Badge badge = Badge.lookupFromString(content);
+                var badge = Badge.lookupFromString(content);
 
                 if (badge == null) {
                     ctx.sendLocalized("commands.profile.displaybadge.no_such_badge", EmoteReference.ERROR,
@@ -435,29 +531,29 @@ public class ProfileCmd {
 
                 data.setShowBadge(true);
                 data.setMainBadge(badge);
-                player.saveAsync();
+                player.saveUpdating();
                 ctx.sendLocalized("commands.profile.displaybadge.success", EmoteReference.CORRECT, badge.display);
             }
         });
 
-        profileCommand.addSubCommand("lang", new SubCommand() {
+        profileCommand.addSubCommand("language", new SubCommand() {
             @Override
             public String description() {
-                return "Sets your profile language. Usage: `~>profile lang <lang>`. Available langs: `~>lang`";
+                return "Sets your profile language. Available langs: `~>lang`";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
                 if (content.isEmpty()) {
                     ctx.sendLocalized("commands.profile.lang.nothing_specified", EmoteReference.ERROR);
                     return;
                 }
 
-                DBUser dbUser = ctx.getDBUser();
+                var dbUser = ctx.getDBUser();
 
                 if (content.equalsIgnoreCase("reset")) {
                     dbUser.getData().setLang(null);
-                    dbUser.save();
+                    dbUser.saveUpdating();
                     ctx.sendLocalized("commands.profile.lang.reset_success", EmoteReference.CORRECT);
                     return;
                 }
@@ -465,219 +561,231 @@ public class ProfileCmd {
                 if (I18n.isValidLanguage(content)) {
                     dbUser.getData().setLang(content);
                     //Create new I18n context based on the new language choice.
-                    I18nContext newContext = new I18nContext(ctx.getDBGuild().getData(), dbUser.getData());
+                    var newContext = new I18nContext(ctx.getDBGuild().getData(), dbUser.getData());
 
-                    dbUser.save();
+                    dbUser.saveUpdating();
                     ctx.getChannel().sendMessageFormat(newContext.get("commands.profile.lang.success"), EmoteReference.CORRECT, content).queue();
                 } else {
                     ctx.sendLocalized("commands.profile.lang.invalid", EmoteReference.ERROR);
                 }
             }
-        });
+        }).createSubCommandAlias("language", "lang");
 
         profileCommand.addSubCommand("stats", new SubCommand() {
             @Override
             public String description() {
-                return "Checks profile statistics. Usage: `~>profile stats [@mention]`";
+                return "Checks profile statistics.";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                Member member = Utils.findMember(ctx.getEvent(), ctx.getMember(), content);
-                if (member == null)
-                    return;
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                    var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
+                    if (member == null) {
+                        return;
+                    }
 
-                User toLookup = member.getUser();
+                    var toLookup = member.getUser();
+                    if (toLookup.isBot()) {
+                        ctx.sendLocalized("commands.profile.bot_notice", EmoteReference.ERROR);
+                        return;
+                    }
 
-                Player player = ctx.getPlayer(toLookup);
-                DBUser dbUser = ctx.getDBUser(toLookup);
-                UserData data = dbUser.getData();
-                PlayerData playerData = player.getData();
-                PlayerStats playerStats = ctx.db().getPlayerStats(toLookup);
-                SeasonPlayer seasonPlayer = ctx.getSeasonPlayer(toLookup);
+                    var player = ctx.getPlayer(toLookup);
+                    var dbUser = ctx.getDBUser(toLookup);
+                    var data = dbUser.getData();
+                    var playerData = player.getData();
+                    var playerStats = ctx.db().getPlayerStats(toLookup);
+                    var seasonPlayer = ctx.getSeasonPlayer(toLookup);
 
-                PlayerEquipment equippedItems = data.getEquippedItems();
-                PlayerEquipment seasonalEquippedItems = seasonPlayer.getData().getEquippedItems();
+                    var equippedItems = data.getEquippedItems();
+                    var seasonalEquippedItems = seasonPlayer.getData().getEquippedItems();
 
-                Potion potion = (Potion) equippedItems.getEffectItem(PlayerEquipment.EquipmentType.POTION);
-                Potion buff = (Potion) equippedItems.getEffectItem(PlayerEquipment.EquipmentType.BUFF);
-                PotionEffect potionEffect = equippedItems.getCurrentEffect(PlayerEquipment.EquipmentType.POTION);
-                PotionEffect buffEffect = equippedItems.getCurrentEffect(PlayerEquipment.EquipmentType.BUFF);
+                    var potion = (Potion) equippedItems.getEffectItem(PlayerEquipment.EquipmentType.POTION);
+                    var buff = (Potion) equippedItems.getEffectItem(PlayerEquipment.EquipmentType.BUFF);
+                    var potionEffect = equippedItems.getCurrentEffect(PlayerEquipment.EquipmentType.POTION);
+                    var buffEffect = equippedItems.getCurrentEffect(PlayerEquipment.EquipmentType.BUFF);
 
-                boolean isPotionActive =
-                        potion != null && 
-                        (equippedItems.isEffectActive(PlayerEquipment.EquipmentType.POTION, potion.getMaxUses()) ||
-                                potionEffect.getAmountEquipped() > 1);
-                boolean isBuffActive = 
-                        buff != null && 
-                        (equippedItems.isEffectActive(PlayerEquipment.EquipmentType.BUFF, buff.getMaxUses()) ||
-                                buffEffect.getAmountEquipped() > 1);
+                    var isPotionActive = potion != null &&
+                            (equippedItems.isEffectActive(PlayerEquipment.EquipmentType.POTION, potion.getMaxUses())
+                            || potionEffect.getAmountEquipped() > 1);
 
-                long potionEquipped = 0;
-                long buffEquipped = 0;
-
-                if (potion != null)
-                    potionEquipped = 
-                            equippedItems.isEffectActive(PlayerEquipment.EquipmentType.POTION, potion.getMaxUses()) ? 
-                            potionEffect.getAmountEquipped() : potionEffect.getAmountEquipped() - 1;
-                if (buff != null)
-                    buffEquipped = 
-                            equippedItems.isEffectActive(PlayerEquipment.EquipmentType.BUFF, buff.getMaxUses()) ? 
-                            buffEffect.getAmountEquipped() : buffEffect.getAmountEquipped() - 1;
-
-                //no need for decimals
-                long experienceNext = (long) (player.getLevel() * Math.log10(player.getLevel()) * 1000) +
-                        (50 * player.getLevel() / 2);
-
-                boolean noPotion = potion == null || !isPotionActive;
-                boolean noBuff = buff == null || !isBuffActive;
-
-                String equipment = parsePlayerEquipment(equippedItems);
-                String seasonalEquipment = parsePlayerEquipment(seasonalEquippedItems);
-
-                I18nContext languageContext = ctx.getLanguageContext();
-
-                //This whole thing is a massive mess, lmfao.
-                //This is definitely painful and goes on for 100 lines lol
-                String s = String.join("\n",
-                        prettyDisplay(languageContext.get("commands.profile.stats.market"),
-                                playerData.getMarketUsed() + " " + languageContext.get("commands.profile.stats.times")
-                        ),
-
-                        //Potion display
-                        prettyDisplay(languageContext.get("commands.profile.stats.potion"),
-                                noPotion ? "None" : String.format("%s (%dx)", potion.getName(), potionEquipped)
-                        ),
-
-                        "\u3000 " +
-                                EmoteReference.BOOSTER + languageContext.get("commands.profile.stats.times_used") + ": " +
-                                (noPotion ? "Not equipped" :
-                                        potionEffect.getTimesUsed() + " " +
-                                        languageContext.get("commands.profile.stats.times")),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.buff"), noBuff ? "None" :
-                                String.format("%s (%dx)", buff.getName(), buffEquipped)
-                        ),
-
-                        "\u3000 " +
-                                EmoteReference.BOOSTER + languageContext.get("commands.profile.stats.times_used") + ": " +
-                                (noBuff ? "Not equipped" : buffEffect.getTimesUsed() + " " +
-                                        languageContext.get("commands.profile.stats.times")),
-                        //End of potion display
-
-                        prettyDisplayLine(languageContext.get("commands.profile.stats.equipment"),
-                                equipment
-                        ),
-
-                        prettyDisplayLine(languageContext.get("commands.profile.stats.seasonal_equipment"),
-                                seasonalEquipment
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.autoequip"),
-                                String.valueOf(data.isAutoEquip())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.experience"),
-                                playerData.getExperience() + "/" + experienceNext + " XP"
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.mine_xp"),
-                                playerData.getMiningExperience() + " XP"
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.fish_xp"),
-                                playerData.getFishingExperience() + " XP"
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.sharks_caught"),
-                                String.valueOf(playerData.getSharksCaught())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.crates_open"),
-                                String.valueOf(playerData.getCratesOpened())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.times_mop"),
-                                String.valueOf(playerData.getTimesMopped())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.daily"),
-                                playerData.getDailyStreak() + " " + languageContext.get("commands.profile.stats.days")
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.daily_at"),
-                                playerData.getLastDailyAt() == 0 ?
-                                        languageContext.get("commands.profile.stats.never") :
-                                        new Date(playerData.getLastDailyAt()).toString()
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.waifu_claimed"),
-                                data.getTimesClaimed() + " " + languageContext.get("commands.profile.stats.times")
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.waifu_locked"),
-                                String.valueOf(playerData.isClaimLocked())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.dust"),
-                                data.getDustLevel() + "%"
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.reminders"),
-                                data.getRemindedTimes() + " " + languageContext.get("commands.profile.stats.times")
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.lang"),
-                                (data.getLang() == null ? "en_US" : data.getLang())
-                        ),
-
-                        prettyDisplay(languageContext.get("commands.profile.stats.wins"),
-                                String.format("\n\u3000\u2009\u2009\u2009\u2009" +
-                                        "%1$sGamble: %2$d, Slots: %3$d, Game: %4$d (times)",
-                                        EmoteReference.CREDITCARD, playerStats.getGambleWins(), playerStats.getSlotsWins(), playerData.getGamesWon())
-                        )
-                );
+                    var isBuffActive = buff != null &&
+                            (equippedItems.isEffectActive(PlayerEquipment.EquipmentType.BUFF, buff.getMaxUses())
+                            || buffEffect.getAmountEquipped() > 1);
 
 
-                ctx.send(new EmbedBuilder()
-                        .setThumbnail(toLookup.getEffectiveAvatarUrl())
-                        .setAuthor(String.format(languageContext.get("commands.profile.stats.header"), toLookup.getName()), null, toLookup.getEffectiveAvatarUrl())
-                        .setDescription("\n" + s)
-                        .setFooter("This shows stuff usually not shown on the profile card. Content might change", null)
-                        .build()
-                );
+                    var potionEquipped = 0L;
+                    var buffEquipped = 0L;
+
+                    if (potion != null) {
+                        potionEquipped = equippedItems.isEffectActive(
+                                PlayerEquipment.EquipmentType.POTION, potion.getMaxUses()
+                        ) ? potionEffect.getAmountEquipped() : potionEffect.getAmountEquipped() - 1;
+                    }
+
+                    if (buff != null) {
+                        buffEquipped = equippedItems.isEffectActive(
+                                PlayerEquipment.EquipmentType.BUFF, buff.getMaxUses()
+                        ) ? buffEffect.getAmountEquipped() : buffEffect.getAmountEquipped() - 1;
+                    }
+
+                    //no need for decimals
+                    var experienceNext = (long) (player.getLevel() * Math.log10(player.getLevel()) * 1000) +
+                            (50 * player.getLevel() / 2);
+
+                    var noPotion = potion == null || !isPotionActive;
+                    var noBuff = buff == null || !isBuffActive;
+
+                    var equipment = parsePlayerEquipment(equippedItems);
+                    var seasonalEquipment = parsePlayerEquipment(seasonalEquippedItems);
+
+                    //This whole thing is a massive mess, lmfao.
+                    //This is definitely painful and goes on for 100 lines lol
+                    var s = String.join("\n",
+                            prettyDisplay(languageContext.get("commands.profile.stats.market"),
+                                    "%,d %s".formatted(playerData.getMarketUsed(), languageContext.get("commands.profile.stats.times"))
+                            ),
+
+                            //Potion display
+                            prettyDisplay(languageContext.get("commands.profile.stats.potion"),
+                                    noPotion ? "None" : String.format("%s (%dx)", potion.getName(), potionEquipped)
+                            ),
+
+                            "\u3000 " + SEPARATOR_HALF +
+                                    EmoteReference.BOOSTER + languageContext.get("commands.profile.stats.times_used") + ": " +
+                                    (noPotion ? "Not equipped" : potionEffect.getTimesUsed() + " " +
+                                            languageContext.get("commands.profile.stats.times")),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.buff"), noBuff ? "None" :
+                                    String.format("%s (%dx)", buff.getName(), buffEquipped)
+                            ),
+
+                            "\u3000 " + SEPARATOR_HALF +
+                                    EmoteReference.BOOSTER + languageContext.get("commands.profile.stats.times_used") + ": " +
+                                    (noBuff ? "Not equipped" : buffEffect.getTimesUsed() + " " +
+                                            languageContext.get("commands.profile.stats.times")),
+                            //End of potion display
+
+                            prettyDisplayLine(languageContext.get("commands.profile.stats.equipment"),
+                                    equipment
+                            ),
+
+                            prettyDisplayLine(languageContext.get("commands.profile.stats.seasonal_equipment"),
+                                    seasonalEquipment
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.autoequip"),
+                                    String.valueOf(data.isAutoEquip())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.experience"),
+                                    "%,d/%,d XP".formatted(playerData.getExperience(), experienceNext)
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.mine_xp"),
+                                    "%,d XP".formatted(playerData.getMiningExperience())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.chop_xp"),
+                                    "%,d XP".formatted(playerData.getChopExperience())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.fish_xp"),
+                                    "%,d XP".formatted(playerData.getFishingExperience())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.sharks_caught"),
+                                    "%,d".formatted(playerData.getSharksCaught())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.crates_open"),
+                                    "%,d".formatted(playerData.getCratesOpened())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.times_mop"),
+                                    "%,d".formatted(playerData.getTimesMopped())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.daily"),
+                                    "%,d %s".formatted(playerData.getDailyStreak(), languageContext.get("commands.profile.stats.days"))
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.daily_at"),
+                                    playerData.getLastDailyAt() == 0 ?
+                                            languageContext.get("commands.profile.stats.never") :
+                                            Utils.formatDate(playerData.getLastDailyAt(), dbUser.getData().getLang())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.waifu_claimed"),
+                                    "%,d %s".formatted(data.getTimesClaimed(), languageContext.get("commands.profile.stats.times"))
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.waifu_locked"),
+                                    String.valueOf(playerData.isClaimLocked())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.dust"),
+                                    "%d".formatted(data.getDustLevel())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.reminders"),
+                                    "%,d %s".formatted(data.getRemindedTimes(), languageContext.get("commands.profile.stats.times"))
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.lang"),
+                                    (data.getLang() == null ? "en_US" : data.getLang())
+                            ),
+
+                            prettyDisplay(languageContext.get("commands.profile.stats.wins"),
+                                    String.format("\n\u3000%1$s" +
+                                                    "%2$s%3$sGamble: %4$,d, Slots: %5$,d, Game: %6$,d (times)",
+                                            SEPARATOR_ONE, EmoteReference.CREDITCARD, SEPARATOR_ONE,
+                                            playerStats.getGambleWins(), playerStats.getSlotsWins(),
+                                            playerData.getGamesWon()
+                                    )
+                            )
+                    );
+
+                    ctx.send(new EmbedBuilder()
+                            .setThumbnail(toLookup.getEffectiveAvatarUrl())
+                            .setAuthor(languageContext.get("commands.profile.stats.header").formatted(toLookup.getName()),
+                                    null, toLookup.getEffectiveAvatarUrl()
+                            )
+                            .setDescription("\n" + s)
+                            .setFooter("Thanks for using Mantaro! %s".formatted(EmoteReference.HEART), ctx.getGuild().getIconUrl())
+                            .build()
+                    );
+                });
             }
         });
 
         profileCommand.addSubCommand("widgets", new SubCommand() {
             @Override
             public String description() {
-                return "Sets profile widgets and order. Usage: `~>profile widgets <widget/ls/reset>`";
+                return "Sets profile widgets and order. Arguments: widget, ls or reset";
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                DBUser user = ctx.getDBUser();
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var user = ctx.getDBUser();
                 if (!user.isPremium()) {
                     ctx.sendLocalized("commands.profile.display.not_premium", EmoteReference.ERROR);
                     return;
                 }
 
-                Player player = ctx.getPlayer();
-                PlayerData data = player.getData();
-                I18nContext languageContext = ctx.getLanguageContext();
+                var player = ctx.getPlayer();
+                var playerData = player.getData();
 
                 if (content.equalsIgnoreCase("ls") || content.equalsIgnoreCase("Is")) {
-                    ctx.sendFormat(languageContext.get("commands.profile.display.ls") + languageContext.get("commands.profile.display.example"),
-                            EmoteReference.ZAP,
-                            EmoteReference.BLUE_SMALL_MARKER,
-
-                            defaultOrder.stream()
-                                    .map(Enum::name)
-                                    .collect(Collectors.joining(", ")),
-
-                            data.getProfileComponents().size() == 0 ? "Not personalized" :
-                                    data.getProfileComponents().stream()
+                    ctx.sendFormat(
+                            languageContext.get("commands.profile.display.ls") +
+                                    languageContext.get("commands.profile.display.example"),
+                            EmoteReference.ZAP, EmoteReference.BLUE_SMALL_MARKER,
+                            defaultOrder.stream().map(Enum::name).collect(Collectors.joining(", ")),
+                            playerData.getProfileComponents().size() == 0 ?
+                                    "Not personalized" :
+                                    playerData.getProfileComponents().stream()
                                             .map(Enum::name)
                                             .collect(Collectors.joining(", "))
                     );
@@ -685,18 +793,18 @@ public class ProfileCmd {
                 }
 
                 if (content.equalsIgnoreCase("reset")) {
-                    data.getProfileComponents().clear();
-                    player.saveAsync();
+                    playerData.getProfileComponents().clear();
+                    player.save();
 
                     ctx.sendLocalized("commands.profile.display.reset", EmoteReference.CORRECT);
                     return;
                 }
 
-                String[] splitContent = content.replace(",", "").split("\\s+");
+                var splitContent = content.replace(",", "").split("\\s+");
                 List<ProfileComponent> newComponents = new LinkedList<>(); //new list of profile components
 
-                for (String c : splitContent) {
-                    ProfileComponent component = ProfileComponent.lookupFromString(c);
+                for (var cmt : splitContent) {
+                    var component = ProfileComponent.lookupFromString(cmt);
                     if (component != null && component.isAssignable()) {
                         newComponents.add(component);
                     }
@@ -710,8 +818,8 @@ public class ProfileCmd {
                     return;
                 }
 
-                data.setProfileComponents(newComponents);
-                player.saveAsync();
+                playerData.setProfileComponents(newComponents);
+                player.save();
 
                 ctx.sendLocalized("commands.profile.display.success",
                         EmoteReference.CORRECT, newComponents.stream().map(Enum::name).collect(Collectors.joining(", "))
@@ -720,55 +828,24 @@ public class ProfileCmd {
         });
     }
 
-    private void applyBadge(MessageChannel channel, Badge badge, User author, EmbedBuilder builder) {
-        if (badge == null) {
-            channel.sendMessage(builder.build()).queue();
-            return;
-        }
-
-        Message message = new MessageBuilder().setEmbed(builder.setThumbnail("attachment://avatar.png").build()).build();
-        byte[] bytes;
-        try {
-            String url = author.getEffectiveAvatarUrl();
-
-            if (url.endsWith(".gif")) {
-                url = url.substring(0, url.length() - 3) + "png";
-            }
-
-            Response res = httpClient.newCall(new Request.Builder()
-                    .url(url)
-                    .addHeader("User-Agent", MantaroInfo.USER_AGENT)
-                    .build()
-            ).execute();
-
-            ResponseBody body = res.body();
-
-            if (body == null)
-                throw new IOException("body is null");
-
-            bytes = body.bytes();
-            res.close();
-        } catch (IOException e) {
-            throw new AssertionError("io error", e);
-        }
-
-        channel.sendMessage(message).addFile(badge.apply(bytes), "avatar.png").queue();
-    }
-
     public String parsePlayerEquipment(PlayerEquipment equipment) {
-        Map<PlayerEquipment.EquipmentType, Integer> toolsEquipment = equipment.getEquipment();
+        var toolsEquipment = equipment.getEquipment();
+        var separator = SEPARATOR + SEPARATOR_HALF + LIST_MARKER + SEPARATOR_HALF;
 
         if (toolsEquipment.isEmpty()) {
-            return "None";
+            return separator + "None";
         }
 
         return toolsEquipment.entrySet().stream().map((entry) -> {
-            Item item = Items.fromId(entry.getValue());
+            var item = ItemHelper.fromId(entry.getValue());
 
-            return "- " +
-                    Utils.capitalize(entry.getKey().toString()) + ": " +
-                    item.toDisplayString() +
-                    " [" + equipment.getDurability().get(entry.getKey()) + " / " + ((Breakable) item).getMaxDurability() + "]";
+            return separator + Utils.capitalize(entry.getKey().toString()) + ": " + SEPARATOR_ONE +
+                    item.toDisplayString() + SEPARATOR_HALF + " [%,d / %,d]"
+                    .formatted(equipment.getDurability().get(entry.getKey()), ((Breakable) item).getMaxDurability());
         }).collect(Collectors.joining("\n"));
+    }
+
+    private boolean containsRole(Member member, long... roles) {
+        return member.getRoles().stream().map(Role::getIdLong).anyMatch(id -> Arrays.stream(roles).anyMatch(i -> i == id));
     }
 }

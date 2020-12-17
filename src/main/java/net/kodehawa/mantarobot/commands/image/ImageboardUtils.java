@@ -24,15 +24,16 @@ import net.kodehawa.lib.imageboards.ImageBoard;
 import net.kodehawa.lib.imageboards.entities.BoardImage;
 import net.kodehawa.lib.imageboards.entities.Rating;
 import net.kodehawa.mantarobot.commands.currency.TextChannelGround;
+import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
+import java.awt.Color;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ImageboardUtils {
     private static final Random r = new Random();
@@ -49,194 +50,243 @@ public class ImageboardUtils {
             DefaultImageBoards.E621, false
     );
 
-    @SuppressWarnings("unchecked")
-    public static void getImage(ImageBoard<?> api, ImageRequestType type, boolean nsfwOnly, String imageboard, String[] args, String content, Context ctx) {
-        Rating rating = Rating.SAFE;
+    public static void getImage(ImageBoard<?> api, ImageRequestType type, boolean nsfwOnly, String imageboard, String[] args, Context ctx) {
+        var rating = Rating.SAFE;
         List<String> list = new ArrayList<>(Arrays.asList(args));
         list.remove("tags"); // remove tags from argument list. (BACKWARDS COMPATIBILITY)
-        if(type == ImageRequestType.RANDOM)
-            list.remove("random"); // remove "random" declaration.
+        var needRating = list.size() >= 2;
 
-        boolean needRating = list.size() >= 2;
         if (needRating && !nsfwOnly) {
-            rating = Rating.lookupFromString(list.get(1));
-        } else if (!needRating) {
-            //Attempt to get from the tags instead.
-            rating = Rating.lookupFromString(list.get(0));
+            rating = lookupRating(list.get(1));
+        } else if (!needRating && !list.isEmpty()) {
+            // Attempt to get from the tags instead.
+            rating = lookupRating(list.get(0));
         }
 
         if (rating == null && needRating) {
-            //Try with short name
-            rating = Rating.lookupFromStringShort(list.get(1));
-
-            if (rating != null)
+            // Try with short name
+            rating = lookupShortRating(list.get(1));
+            if (rating != null) {
                 list.remove(rating.getShortName());
+            }
         }
 
-        //Allow for more tags after declaration.
-        Rating finalRating = rating;
-        if (finalRating != null)
+        // Allow for more tags after declaration.
+        var finalRating = rating;
+        if (finalRating != null) {
             list.remove(rating.getLongName());
-        else
+            list.remove("random"); // remove "random" declaration.
+            list.remove("r"); // Remove short-hand random declaration.
+        } else {
             finalRating = Rating.SAFE;
+        }
 
         if (!nsfwCheck(ctx, nsfwOnly, false, finalRating)) {
-            ctx.sendLocalized("commands.imageboard.nsfw_no_nsfw", EmoteReference.ERROR);
+            ctx.sendLocalized("commands.imageboard.non_nsfw_channel", EmoteReference.ERROR);
             return;
         }
 
-        if (!Optional.ofNullable(imageboardUsesRating.get(api)).orElse(true))
+        if (!Optional.ofNullable(imageboardUsesRating.get(api)).orElse(true)) {
             finalRating = null;
+        }
 
-        int limit = Optional.ofNullable(maxQuerySize.get(api)).orElse(10);
-
+        var limit = Optional.ofNullable(maxQuerySize.get(api)).orElse(10);
         if (list.size() > limit) {
             ctx.sendLocalized("commands.imageboard.too_many_tags", EmoteReference.ERROR, imageboard, limit);
             return;
         }
 
-        if(type == ImageRequestType.TAGS) {
-            try {
-                DBGuild dbGuild = ctx.getDBGuild();
-                GuildData data = dbGuild.getData();
+        final var dbGuild = ctx.getDBGuild();
+        final var data = dbGuild.getData();
+        final var blackListedImageTags = data.getBlackListedImageTags();
 
-                if (list.stream().anyMatch(tag -> data.getBlackListedImageTags().contains(tag))) {
-                    ctx.sendLocalized("commands.imageboard.blacklisted_tag", EmoteReference.ERROR);
-                    return;
-                }
-
-                api.search(list, finalRating).async(requestedImages -> {
-                    //account for this
-                    if (isListNull(requestedImages, ctx))
-                        return;
-
-                    try {
-                        List<BoardImage> filter = (List<BoardImage>) requestedImages;
-                        if (filter.isEmpty()) {
-                            ctx.sendLocalized("commands.imageboard.no_images", EmoteReference.SAD);
-                            return;
-                        }
-
-                        BoardImage image = filter.get(r.nextInt(filter.size()));
-                        String imageTags = String.join(", ", image.getTags());
-                        sendImage(ctx, imageTags, imageboard, image, dbGuild);
-                    } catch (Exception e) {
-                        ctx.sendLocalized("commands.imageboard.no_results", EmoteReference.SAD);
-                    }
-                }, failure -> ctx.sendLocalized("commands.imageboard.error_tag", EmoteReference.SAD));
-            } catch (NumberFormatException nex) {
-                ctx.sendLocalized("commands.imageboard.wrong_argument", EmoteReference.ERROR, imageboard);
-            } catch (Exception ex) {
-                ctx.sendLocalized("commands.imageboard.error_tag", EmoteReference.SAD);
-            }
-        } else if (type == ImageRequestType.RANDOM) {
-            api.search(list, finalRating).async(requestedImages -> {
-                try {
-                    if (isListNull(requestedImages, ctx))
-                        return;
-
-                    List<BoardImage> filter = (List<BoardImage>) requestedImages;
-                    if (filter.isEmpty()) {
-                        ctx.sendLocalized("commands.imageboard.no_images", EmoteReference.SAD);
-                        return;
-                    }
-
-                    int number = r.nextInt(filter.size());
-                    BoardImage image = filter.get(number);
-                    String tags = String.join(", ", image.getTags());
-
-                    sendImage(ctx, tags, imageboard, image, ctx.getDBGuild());
-                } catch (Exception e) {
-                    ctx.sendLocalized("commands.imageboard.error_random", EmoteReference.SAD);
-                }
-            }, failure -> ctx.sendLocalized("commands.imageboard.error_random", EmoteReference.SAD));
-        }
-    }
-
-    private static void sendImage(Context ctx, String imageTags, String imageboard, BoardImage image, DBGuild dbGuild) {
-        if (foundMinorTags(ctx, imageTags, image.getRating())) {
-            return;
-        }
-
-        if (image.getTags().stream().anyMatch(tag -> dbGuild.getData().getBlackListedImageTags().contains(tag))) {
+        if (list.stream().anyMatch(blackListedImageTags::contains)) {
             ctx.sendLocalized("commands.imageboard.blacklisted_tag", EmoteReference.ERROR);
             return;
         }
 
+        try {
+            if (type == ImageRequestType.TAGS) {
+                api.search(list, finalRating).async(
+                        requestedImages -> sendImage0(ctx, requestedImages, imageboard, blackListedImageTags),
+                        failure -> ctx.sendLocalized("commands.imageboard.error_tag", EmoteReference.ERROR)
+                );
+            } else if (type == ImageRequestType.RANDOM) {
+                api.search(finalRating).async(
+                        requestedImages -> sendImage0(ctx, requestedImages, imageboard, blackListedImageTags),
+                        failure -> ctx.sendLocalized("commands.imageboard.error_random", EmoteReference.ERROR)
+                );
+            }
+        } catch (Exception e) {
+            ctx.sendLocalized("commands.imageboard.error_general", EmoteReference.ERROR);
+        }
+    }
+
+    private static <T extends BoardImage> void sendImage0(Context ctx, List<T> images, String imageboard, Set<String> blacklisted) {
+        var filter = filterImages(images, ctx);
+        if (filter == null) {
+            return;
+        }
+
+        final var image = filter.get(r.nextInt(filter.size()));
+        if (image.getTags().stream().anyMatch(blacklisted::contains)) {
+            ctx.sendLocalized("commands.imageboard.blacklisted_tag", EmoteReference.ERROR);
+            return;
+        }
+
+        sendImage(ctx, imageboard, image, ctx.getDBGuild());
+    }
+
+    private static <T extends BoardImage> List<T> filterImages(List<T> images, Context ctx) {
+        if (images == null) {
+            ctx.sendLocalized("commands.imageboard.null_image_notice", EmoteReference.ERROR);
+            return null;
+        }
+
+        final var filter = images.stream()
+                // This is a pain and a half.
+                .filter(img -> !img.isPending())
+                // Somehow Danbooru and e621 are returning null images when a image is deleted?
+                .filter(img -> img.getURL() != null)
+                // There should be no need for searches to contain loli content anyway, if it's gonna get locked away.
+                // This is more of a quality-of-life improvement, don't make them search again if random happened
+                // to pick undesirable lewd content.
+                // This also gets away with the need to re-roll, unless they looked up a prohibited tag.
+                .filter(img -> !containsExcludedTags(img.getTags()))
+                // Safe images can have undesirable tags too
+                // Say, stuff that isn't so safe.
+                .filter(img -> img.getRating() != Rating.SAFE || !containsSafeExcludedTags(img.getTags()))
+                .collect(Collectors.toList());
+
+        if (filter.isEmpty()) {
+            ctx.sendLocalized("commands.imageboard.no_images", EmoteReference.SAD);
+            return null;
+        }
+
+        return filter;
+    }
+
+    private static void sendImage(Context ctx, String imageboard, BoardImage image, DBGuild dbGuild) {
+        final var tags = image.getTags();
+        final var blackListedImageTags = dbGuild.getData().getBlackListedImageTags();
+
+        // This is the last line of defense. It should filter *all* minor tags from all sort of images on
+        // the method that calls this.
+        if (containsExcludedTags(tags) && image.getRating() != Rating.SAFE) {
+            ctx.sendLocalized("commands.imageboard.loli_content_disallow", EmoteReference.WARNING);
+            return;
+        }
+
+        if (tags.stream().anyMatch(blackListedImageTags::contains)) {
+            ctx.sendLocalized("commands.imageboard.blacklisted_tag", EmoteReference.ERROR);
+            return;
+        }
+
+        // Format the tags output so it's actually human-readable.
+        final var imageTags = String.join(", ", tags);
         imageEmbed(
                 ctx.getLanguageContext(), image.getURL(), String.valueOf(image.getWidth()),
                 String.valueOf(image.getHeight()), imageTags, image.getRating(), imageboard, ctx.getChannel()
         );
 
-        if (image.getRating().equals(Rating.EXPLICIT)) {
-            Player player = ctx.getPlayer();
-            if (player.getData().addBadgeIfAbsent(Badge.LEWDIE))
-                player.saveAsync();
+        if (image.getRating().equals(Rating.EXPLICIT) && r.nextBoolean()) {
+            var player = ctx.getPlayer();
+            if (player.getData().addBadgeIfAbsent(Badge.LEWDIE)) {
+                player.saveUpdating();
+            }
 
-            TextChannelGround.of(ctx.getEvent()).dropItemWithChance(13, 3);
+            // Drop a lewd magazine.
+            TextChannelGround.of(ctx.getEvent()).dropItemWithChance(ItemReference.LEWD_MAGAZINE, 4);
         }
     }
 
-    public static boolean nsfwCheck(Context ctx, boolean isGlobal, boolean sendMessage, Rating rating) {
-        if (ctx.getChannel().isNSFW())
-            return true;
-
-        Rating finalRating = rating == null ? Rating.SAFE : rating;
-        boolean trigger = finalRating.equals(Rating.SAFE) && !isGlobal;
-
-        if (!trigger) {
-            if (sendMessage)
-                ctx.sendLocalized("commands.imageboard.non_nsfw_channel", EmoteReference.ERROR);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    private static boolean foundMinorTags(Context ctx, String tags, Rating rating) {
-        boolean trigger = (tags.contains("loli") || tags.contains("shota") ||
-                tags.contains("lolicon") || tags.contains("shotacon") ||
-                //lol @ e621
-                tags.contains("child") || tags.contains("young")) ||
-                //lol @ danbooru
-                tags.contains("younger") ||
-                //lol @ rule34
-                tags.contains("underage") || tags.contains("under_age")
-                //lol @ rule34 / @ e621
-                || tags.contains("cub")
-                && !rating.equals(Rating.SAFE);
-
-        if (!trigger) {
-            return false;
-        }
-
-        ctx.sendLocalized("commands.imageboard.loli_content_disallow", EmoteReference.WARNING);
-        return true;
-    }
-
-    private static boolean isListNull(List<?> l, Context ctx) {
-        if (l == null) {
-            ctx.sendLocalized("commands.imageboard.null_image_notice", EmoteReference.ERROR);
+    public static boolean nsfwCheck(Context ctx, boolean nsfwImageboard, boolean sendMessage, Rating rating) {
+        if (ctx.getChannel().isNSFW()) {
             return true;
         }
 
-        return false;
+        var finalRating = rating == null ? Rating.SAFE : rating;
+        var isSafe = finalRating.equals(Rating.SAFE) && !nsfwImageboard;
+        if (!isSafe && sendMessage) {
+            ctx.sendLocalized("commands.imageboard.non_nsfw_channel", EmoteReference.ERROR);
+        }
+
+        return isSafe;
     }
 
-    private static void imageEmbed(I18nContext languageContext, String url, String width, String height, String tags, Rating rating, String imageboard, TextChannel channel) {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.setAuthor(languageContext.get("commands.imageboard.found_image"), url, null)
+    // List of tags to exclude from *safe* searches
+    // This isn't exactly safe wdym
+    private final static List<String> excludedSafeTags = List.of(
+            "underwear", "bikini", "ass", "wet", "see_through"
+    );
+
+    private static boolean containsSafeExcludedTags(List<String> tags) {
+        return tags.stream().anyMatch(excludedSafeTags::contains);
+    }
+
+    // The list of tags to exclude from searches.
+    private final static List<String> excludedTags = List.of(
+            // minor tags
+            "loli", "shota", "lolicon", "shotacon", "child", "underage", "young", "younger",
+            "under_age", "cub",
+            // questionable whether this one leads to minor images or not, but
+            // sometimes they're tagged like this and not with any of the tags above
+            "flat_chest",
+            // tagme means it hasn't been tagged yet, so it's very unsafe to show
+            // you know what the other one means
+            "tagme",
+            // why
+            "bestiality", "zoophilia",
+            // very nsfl tags
+            "dismemberment", "death", "decapitation", "guro", "eye_socket", "necrophilia",
+            "rape", "gangrape", "gore", "gross", "bruise", "asphyxiation", "scat",
+            "strangling", "torture"
+    );
+
+    private static boolean containsExcludedTags(List<String> tags) {
+        return tags.stream().anyMatch(excludedTags::contains);
+    }
+
+    private static void imageEmbed(I18nContext languageContext, String url, String width, String height,
+                                   String tags, Rating rating, String imageboard, TextChannel channel) {
+        var builder = new EmbedBuilder()
+                .setAuthor(languageContext.get("commands.imageboard.found_image"), url, null)
                 .setImage(url)
+                .setColor(Color.PINK)
                 .setDescription(String.format(languageContext.get("commands.imageboard.description_image"),
                         rating.getLongName(), imageboard)
-                ).addField(languageContext.get("commands.imageboard.width"), width, true)
+                )
+                .addField(languageContext.get("commands.imageboard.width"), width, true)
                 .addField(languageContext.get("commands.imageboard.height"), height, true)
-                .addField(languageContext.get("commands.imageboard.tags"), "`" + (tags == null ? "None" : tags) + "`", false)
-                .setFooter(languageContext.get("commands.imageboard.load_notice") + (imageboard.equals("rule34") ? " " +
-                        languageContext.get("commands.imageboard.rule34_notice") : ""), null
+                .addField(languageContext.get("commands.imageboard.tags"),
+                        "`" + (tags == null ? "None" : tags) + "`", false
+                )
+                .setFooter(
+                        languageContext.get("commands.imageboard.load_notice") +
+                                (imageboard.equals("rule34") ? " " + languageContext.get("commands.imageboard.rule34_notice") : ""),
+                        null
                 );
 
         channel.sendMessage(builder.build()).queue();
+    }
+
+    // This is so random is a valid rating.
+    private static Rating lookupRating(String rating) {
+        if (rating.equalsIgnoreCase("random")) {
+            var values = Rating.values();
+            return values[r.nextInt(values.length)];
+        } else {
+            return Rating.lookupFromString(rating);
+        }
+    }
+
+    // This is so random (R) is a valid rating.
+    private static Rating lookupShortRating(String shortRating) {
+        if (shortRating.equalsIgnoreCase("r")) {
+            var values = Rating.values();
+            return values[r.nextInt(values.length)];
+        } else {
+            return Rating.lookupFromStringShort(shortRating);
+        }
     }
 }

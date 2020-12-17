@@ -17,8 +17,6 @@
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.game.Character;
 import net.kodehawa.mantarobot.commands.game.*;
@@ -29,20 +27,16 @@ import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleTreeCommand;
 import net.kodehawa.mantarobot.core.modules.commands.SubCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
+import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.ManagedDatabase;
-import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.db.entities.PremiumKey;
-import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.commands.IncreasingRateLimiter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -53,32 +47,28 @@ import static net.kodehawa.mantarobot.utils.StringUtils.SPLIT_PATTERN;
 import static net.kodehawa.mantarobot.utils.Utils.createLinkedList;
 
 @Module
-@SuppressWarnings("unused")
 public class GameCmds {
-    private static final Logger log = LoggerFactory.getLogger(GameCmds.class);
     private final Map<String, Function<TriviaDifficulty, Game<?>>> games = new HashMap<>();
 
     @Subscribe
     public void game(CommandRegistry cr) {
-        final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
+        final var rateLimiter = new IncreasingRateLimiter.Builder()
                 .limit(1)
-                .spamTolerance(1)
-                .cooldown(7, TimeUnit.SECONDS)
+                .spamTolerance(3)
+                .cooldown(5, TimeUnit.SECONDS)
                 .cooldownPenaltyIncrease(5, TimeUnit.SECONDS)
                 .maxCooldown(10, TimeUnit.MINUTES)
                 .pool(MantaroData.getDefaultJedisPool())
                 .premiumAware(true)
                 .prefix("game")
                 .build();
-        final ManagedDatabase db = MantaroData.db();
 
-        //Does it even make sense to do this if I only had to add a parameter to one? Oh well...
         games.put("pokemon", (d) -> new Pokemon());
         games.put("number", (d) -> new GuessTheNumber());
         games.put("character", (d) -> new Character());
         games.put("trivia", Trivia::new);
 
-        SimpleTreeCommand gameCommand = (SimpleTreeCommand) cr.register("game", new SimpleTreeCommand(Category.GAMES) {
+        SimpleTreeCommand gameCommand = cr.register("game", new SimpleTreeCommand(CommandCategory.GAMES) {
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
@@ -95,7 +85,7 @@ public class GameCmds {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
                 startGame(new Character(), ctx);
             }
         }).addSubCommand("pokemon", new SubCommand() {
@@ -105,7 +95,7 @@ public class GameCmds {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
                 startGame(new Pokemon(), ctx);
             }
         }).addSubCommand("number", new SubCommand() {
@@ -115,12 +105,12 @@ public class GameCmds {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
                 startGame(new GuessTheNumber(), ctx);
             }
         }));
 
-        gameCommand.setPredicate(ctx -> Utils.handleIncreasingRatelimit(rateLimiter, ctx.getAuthor(), ctx.getEvent(), null));
+        gameCommand.setPredicate(ctx -> RatelimitUtils.ratelimit(rateLimiter, ctx, null));
 
         //Sub-commands.
         gameCommand.addSubCommand("wins", new SubCommand() {
@@ -130,83 +120,78 @@ public class GameCmds {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                Member member = Utils.findMember(ctx.getEvent(), ctx.getMember(), content);
-                if (member == null)
-                    return;
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                    var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
+                    if (member == null) {
+                        return;
+                    }
 
-                ctx.sendStrippedLocalized("commands.game.won_games",
-                        EmoteReference.POPPER, member.getEffectiveName(), db.getPlayer(member).getData().getGamesWon()
-                );
+                    ctx.sendStrippedLocalized("commands.game.won_games",
+                            EmoteReference.POPPER, member.getEffectiveName(), ctx.getPlayer(member).getData().getGamesWon()
+                    );
+                });
             }
         });
 
         gameCommand.addSubCommand("lobby", new SubCommand() {
             @Override
             public String description() {
-                return "Starts a game lobby. For example `~>game lobby pokemon, trivia` will start pokemon and then trivia\n" +
-                        "If you want to specify the difficulty of trivia, you can use the `-diff` parameter. Example: `~>game lobby pokemon, trivia -diff hard`";
+                return """
+                        Starts a game lobby. For example `~>game lobby pokemon, trivia` will start pokemon and then trivia.
+                        If you want to specify the difficulty of trivia, you can use the `-diff` parameter.
+                        Example: `~>game lobby pokemon, trivia -diff hard`
+                        """;
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                GuildData guildData = ctx.getDBGuild().getData();
-
-                if(guildData.isGameMultipleDisabled()) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var guildData = ctx.getDBGuild().getData();
+                if (guildData.isGameMultipleDisabled()) {
                     ctx.sendLocalized("commands.game.disabled_multiple", EmoteReference.ERROR);
                     return;
                 }
 
-                String[] args = net.kodehawa.mantarobot.utils.StringUtils.advancedSplitArgs(content, 0);
-                Map<String, String> t = ctx.getOptionalArguments();
-                String difficultyArgument = "diff";
-                content = Utils.replaceArguments(t, content, difficultyArgument);
+                var args = ctx.getOptionalArguments();
+                var difficulty = getTriviaDifficulty(ctx);
+                content = Utils.replaceArguments(args, content, "diff");
+                if (difficulty != null) {
+                    content = content.replace(args.get("diff"), "").trim();
+                }
 
                 if (content.isEmpty()) {
                     ctx.sendLocalized("commands.game.nothing_specified", EmoteReference.ERROR);
                     return;
                 }
 
-                //Trivia difficulty handling.
-                TriviaDifficulty difficulty = null;
-                if (t.containsKey(difficultyArgument) && t.get(difficultyArgument) != null) {
-                    String d = t.get(difficultyArgument);
-                    TriviaDifficulty enumDiff = TriviaDifficulty.lookupFromString(d);
-                    if (enumDiff != null) {
-                        difficulty = enumDiff;
-                        content = content.replace(d, "").trim();
-                    }
-                }
-                //End of trivia difficulty handling.
-
-                //Stripe all mentions from this.
-                String[] split = Utils.mentionPattern.matcher(content).replaceAll("").split(", ");
-
+                var split = Utils.mentionPattern.matcher(content).replaceAll("").split(", ");
                 if (split.length <= 1) {
                     ctx.sendLocalized("commands.game.not_enough_games", EmoteReference.ERROR);
                     return;
                 }
 
-                UserData userData = db.getUser(ctx.getAuthor()).getData();
-                PremiumKey key = db.getPremiumKey(userData.getPremiumKey());
-                boolean premium = key != null && key.getDurationDays() > 1;
+                var userData = ctx.getDBUser().getData();
+                var key = MantaroData.db().getPremiumKey(userData.getPremiumKey());
+                var premium = key != null && key.getDurationDays() > 1;
                 if (split.length > (premium ? 8 : 5)) {
                     ctx.sendLocalized("commands.game.too_many_games", EmoteReference.ERROR);
                     return;
                 }
 
                 LinkedList<Game<?>> gameList = new LinkedList<>();
-                for (String s : split) {
-                    Function<TriviaDifficulty, Game<?>> f = games.get(s.trim());
+                for (var arg : split) {
+                    var game = games.get(arg.trim());
 
-                    if (f == null)
+                    if (game == null) {
                         continue;
+                    }
 
-                    Game<?> g = f.apply(difficulty);
-                    if (g == null)
+                    var finalGame = game.apply(difficulty);
+                    if (finalGame == null) {
                         continue;
+                    }
 
-                    gameList.add(g);
+                    gameList.add(finalGame);
                 }
 
                 if (gameList.size() <= 1) {
@@ -221,45 +206,40 @@ public class GameCmds {
         gameCommand.addSubCommand("multiple", new SubCommand() {
             @Override
             public String description() {
-                return "Starts multiple instances of one game, for example `~>game multiple trivia 5` will start trivia 5 times.";
+                return """
+                        Starts multiple instances of one game. For example `~>game multiple trivia 5` will start trivia 5 times.
+                        To do it with multiple users, you can use `~>game multiple <game> [@user...] <amount>`
+                        """;
             }
 
             @Override
-            protected void call(Context ctx, String content) {
-                GuildData guildData = ctx.getDBGuild().getData();
-                if(guildData.isGameMultipleDisabled()) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var guildData = ctx.getDBGuild().getData();
+                if (guildData.isGameMultipleDisabled()) {
                     ctx.sendLocalized("commands.game.disabled_multiple", EmoteReference.ERROR);
                     return;
                 }
 
-                String[] args = net.kodehawa.mantarobot.utils.StringUtils.advancedSplitArgs(content, 0);
-                Map<String, String> t = ctx.getOptionalArguments();
-                String difficultyArgument = "diff";
-                content = Utils.replaceArguments(t, content, difficultyArgument);
-
-                //Trivia difficulty handling.
-                TriviaDifficulty difficulty = null;
-
-                if (t.containsKey(difficultyArgument) && t.get(difficultyArgument) != null) {
-                    String d = t.get(difficultyArgument);
-                    TriviaDifficulty enumDiff = TriviaDifficulty.lookupFromString(d);
-
-                    if (enumDiff != null) {
-                        difficulty = enumDiff;
-                        content = content.replace(d, "").trim();
-                    }
+                content = Utils.replaceArguments(ctx.getOptionalArguments(), content, "diff");
+                if (content.isEmpty()) {
+                    ctx.sendLocalized("commands.game.nothing_specified", EmoteReference.ERROR);
+                    return;
                 }
-                //End of trivia difficulty handling.
 
-                String strippedContent = Utils.mentionPattern.matcher(content).replaceAll("");
-                String[] values = SPLIT_PATTERN.split(strippedContent, 2);
+                var difficulty = getTriviaDifficulty(ctx);
+                var args = ctx.getOptionalArguments();
+                if (difficulty != null) {
+                    content = content.replace(args.get("diff"), "").trim();
+                }
 
+                var strippedContent = Utils.mentionPattern.matcher(content).replaceAll("");
+                var values = SPLIT_PATTERN.split(strippedContent, 2);
                 if (values.length < 2) {
                     ctx.sendLocalized("commands.game.multiple.invalid", EmoteReference.ERROR);
                     return;
                 }
 
-                int number;
+                var number = 0;
                 try {
                     number = Integer.parseInt(values[1]);
                 } catch (Exception e) {
@@ -273,19 +253,21 @@ public class GameCmds {
                 }
 
                 LinkedList<Game<?>> gameList = new LinkedList<>();
-                for (int i = 0; i < number; i++) {
-                    String value = values[0];
-                    String trimmedValue = value.trim();
+                for (var i = 0; i < number; i++) {
+                    var value = values[0];
+                    var trimmedValue = value.trim();
 
-                    if (trimmedValue.length() == 0)
+                    if (trimmedValue.length() == 0) {
                         continue;
+                    }
 
-                    Function<TriviaDifficulty, Game<?>> f = games.get(trimmedValue);
+                    var game = games.get(trimmedValue);
 
-                    if (f == null)
+                    if (game == null) {
                         continue;
+                    }
 
-                    Game<?> g = f.apply(difficulty);
+                    var g = game.apply(difficulty);
                     gameList.add(g);
                 }
 
@@ -306,30 +288,32 @@ public class GameCmds {
 
     @Subscribe
     public void trivia(CommandRegistry cr) {
-        cr.register("trivia", new SimpleCommand(Category.GAMES) {
-            final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
-                    .spamTolerance(1)
-                    .limit(1)
-                    .cooldown(16, TimeUnit.SECONDS)
-                    .cooldownPenaltyIncrease(5, TimeUnit.SECONDS)
-                    .maxCooldown(15, TimeUnit.MINUTES)
-                    .pool(MantaroData.getDefaultJedisPool())
-                    .prefix("trivia")
-                    .build();
+        final var rateLimiter = new IncreasingRateLimiter.Builder()
+                .spamTolerance(1)
+                .limit(1)
+                .cooldown(16, TimeUnit.SECONDS)
+                .cooldownPenaltyIncrease(5, TimeUnit.SECONDS)
+                .maxCooldown(15, TimeUnit.MINUTES)
+                .pool(MantaroData.getDefaultJedisPool())
+                .prefix("trivia")
+                .build();
 
+        cr.register("trivia", new SimpleCommand(CommandCategory.GAMES) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                if (!Utils.handleIncreasingRatelimit(rateLimiter, ctx.getAuthor(), ctx.getEvent(), ctx.getLanguageContext()))
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
                     return;
+                }
 
-                String diff = "";
-                List<User> mentions = ctx.getMentionedUsers();
-                List<Role> roleMentions = ctx.getMessage().getMentionedRoles();
+                var diff = "";
+                var mentions = ctx.getMentionedUsers();
+                var roleMentions = ctx.getMessage().getMentionedRoles();
 
-                if (args.length > 0)
+                if (args.length > 0) {
                     diff = args[0].toLowerCase();
+                }
 
-                TriviaDifficulty difficulty = TriviaDifficulty.lookupFromString(diff);
+                var difficulty = Utils.lookupEnumString(diff, TriviaDifficulty.class);
 
                 if (difficulty == null && (mentions.isEmpty() && roleMentions.isEmpty()) && !content.isEmpty()) {
                     ctx.sendLocalized("commands.game.trivia.wrong_diff", EmoteReference.ERROR);
@@ -342,10 +326,16 @@ public class GameCmds {
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Starts an instance of trivia. You have 10 attempts and 60 seconds to answer, otherwise the game ends.")
+                        .setDescription(
+                                """
+                                Starts an instance of a trivia game.
+                                You have 10 attempts and 60 seconds to answer, otherwise the game ends.
+                                """
+                        )
                         .setUsage("`~>trivia [@user] [difficulty]` - Starts a new game of trivia")
                         .addParameterOptional("@user", "Whoever you want to play trivia with.")
-                        .addParameterOptional("difficulty", "The difficulty of the game, it can be easy, medium or hard.")
+                        .addParameterOptional("difficulty",
+                                "The difficulty of the game, it can be easy, medium or hard.")
                         .build();
             }
         });
@@ -356,36 +346,37 @@ public class GameCmds {
     }
 
     private void startGames(LinkedList<Game<?>> games, Context ctx) {
-        if (checkRunning(ctx))
+        if (checkRunning(ctx)) {
             return;
+        }
 
         List<String> players = new ArrayList<>();
         players.add(ctx.getAuthor().getId());
-        final List<Role> mentionedRoles = ctx.getMessage().getMentionedRoles();
+        final var mentionedRoles = ctx.getMessage().getMentionedRoles();
 
         if (!mentionedRoles.isEmpty()) {
-            StringBuilder b = new StringBuilder();
+            var strBuilder = new StringBuilder();
             mentionedRoles.forEach(role ->
                     ctx.getGuild().getMembersWithRoles(role).forEach(user -> {
-                        if (!user.getUser().getId().equals(ctx.getSelfUser().getId()))
+                        if (!user.getUser().getId().equals(ctx.getSelfUser().getId())) {
                             players.add(user.getUser().getId());
+                        }
 
-                        b.append(user.getEffectiveName())
-                                .append(" ");
+                        strBuilder.append(user.getEffectiveName()).append(" ");
                     })
             );
 
-            ctx.sendLocalized("commands.game.started_mp_role", EmoteReference.MEGA, b.toString());
+            ctx.sendLocalized("commands.game.started_mp_role", EmoteReference.MEGA, strBuilder.toString());
         }
 
-        final List<User> mentionedUsers = ctx.getMentionedUsers();
+        final var mentionedUsers = ctx.getMentionedUsers();
         if (!mentionedUsers.isEmpty()) {
-            String users = mentionedUsers.stream()
+            var users = mentionedUsers.stream()
                     .filter(u -> !u.isBot())
                     .map(User::getName)
                     .collect(Collectors.joining("\n"));
 
-            for (User user : mentionedUsers) {
+            for (var user : mentionedUsers) {
                 if (!user.getId().equals(ctx.getSelfUser().getId()) && !user.isBot())
                     players.add(user.getId());
             }
@@ -395,18 +386,22 @@ public class GameCmds {
         }
 
         if (games.size() > 1) {
-            ctx.sendLocalized("commands.game.lobby_started", games.stream().map(Game::name).collect(Collectors.joining(", ")));
+            ctx.sendLocalized("commands.game.lobby_started", EmoteReference.CORRECT, games.stream()
+                    .map(Game::name)
+                    .collect(Collectors.joining(", "))
+            );
         }
 
-        GameLobby lobby = new GameLobby(ctx.getEvent(), ctx.getLanguageContext(), players, games);
+        var lobby = new GameLobby(ctx.getEvent(), ctx.getLanguageContext(), players, games);
         lobby.startFirstGame();
     }
 
     private boolean checkRunning(Context ctx) {
         if (GameLobby.LOBBYS.containsKey(ctx.getChannel().getIdLong())) {
-            DBGuild dbGuild = MantaroData.db().getGuild(ctx.getGuild());
+            var dbGuild = MantaroData.db().getGuild(ctx.getGuild());
 
-            if (dbGuild.getData().getGameTimeoutExpectedAt() != null && (Long.parseLong(dbGuild.getData().getGameTimeoutExpectedAt()) < System.currentTimeMillis())) {
+            if (dbGuild.getData().getGameTimeoutExpectedAt() != null &&
+                    (Long.parseLong(dbGuild.getData().getGameTimeoutExpectedAt()) < System.currentTimeMillis())) {
                 ctx.sendLocalized("commands.game.game_timeout_drop", EmoteReference.ERROR);
                 return false;
             } else {
@@ -415,7 +410,21 @@ public class GameCmds {
             }
         }
 
-        //not currently running
+        // not currently running
         return false;
+    }
+
+    private TriviaDifficulty getTriviaDifficulty(Context ctx) {
+        var arguments = ctx.getOptionalArguments();
+        TriviaDifficulty difficulty = null;
+        var arg = arguments.get("diff");
+        if (arg != null) {
+            var enumDiff = Utils.lookupEnumString(arg, TriviaDifficulty.class);
+            if (enumDiff != null) {
+                difficulty = enumDiff;
+            }
+        }
+
+        return difficulty;
     }
 }

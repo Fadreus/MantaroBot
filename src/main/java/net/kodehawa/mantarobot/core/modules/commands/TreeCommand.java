@@ -16,10 +16,8 @@
 
 package net.kodehawa.mantarobot.core.modules.commands;
 
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.core.modules.commands.base.*;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
-import net.kodehawa.mantarobot.utils.TriPredicate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,15 +28,15 @@ import static net.kodehawa.mantarobot.utils.StringUtils.splitArgs;
 
 public abstract class TreeCommand extends AbstractCommand implements ITreeCommand {
 
-    private Map<String, SubCommand> subCommands = new HashMap<>();
+    private final Map<String, SubCommand> subCommands = new HashMap<>();
     //By default let all commands pass.
     private Predicate<Context> predicate = event -> true;
 
-    public TreeCommand(Category category) {
+    public TreeCommand(CommandCategory category) {
         super(category);
     }
 
-    public TreeCommand(Category category, CommandPermission permission) {
+    public TreeCommand(CommandCategory category, CommandPermission permission) {
         super(category, permission);
     }
 
@@ -63,22 +61,21 @@ public abstract class TreeCommand extends AbstractCommand implements ITreeComman
 
         if (!predicate.test(context)) return;
 
-        command.run(context, commandName + (isDefault ? "" : " " + args[0]), ct);
+        command.run(new Context(context.getEvent(), context.getLanguageContext(), ct), commandName + (isDefault ? "" : " " + args[0]), ct);
     }
 
     public TreeCommand addSubCommand(String name, BiConsumer<Context, String> command) {
         subCommands.put(name, new SubCommand() {
             @Override
-            protected void call(Context context, String content) {
+            protected void call(Context context, I18nContext lang, String content) {
                 command.accept(context, content);
             }
         });
         return this;
     }
 
-    public ITreeCommand setPredicate(Predicate<Context> predicate) {
+    public void setPredicate(Predicate<Context> predicate) {
         this.predicate = predicate;
-        return this;
     }
 
     @Override

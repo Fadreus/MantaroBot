@@ -25,7 +25,6 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
 import com.sedmelluq.lava.extensions.youtuberotator.YoutubeIpRotatorSetup;
 import com.sedmelluq.lava.extensions.youtuberotator.planner.AbstractRoutePlanner;
 import com.sedmelluq.lava.extensions.youtuberotator.planner.RotatingNanoIpRoutePlanner;
@@ -33,16 +32,11 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.IpBlock;
 import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.kodehawa.mantarobot.ExtraRuntimeOptions;
 import net.kodehawa.mantarobot.commands.music.requester.AudioLoader;
-import net.kodehawa.mantarobot.commands.music.requester.TrackScheduler;
 import net.kodehawa.mantarobot.commands.music.utils.AudioCmdUtils;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
-import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.Lazy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -60,8 +54,6 @@ public class MantaroAudioManager {
                     .build()
     ));
 
-    private static final Logger log = LoggerFactory.getLogger(MantaroAudioManager.class);
-
     private final Map<String, GuildMusicManager> musicManagers;
     private final AudioPlayerManager playerManager;
 
@@ -71,22 +63,24 @@ public class MantaroAudioManager {
         this.playerManager = new DefaultAudioPlayerManager();
 
         //Youtube is special because rotation stuff.
-        YoutubeAudioSourceManager youtubeAudioSourceManager = new YoutubeAudioSourceManager(true);
+        var youtubeAudioSourceManager = new YoutubeAudioSourceManager(true);
 
         //IPv6 rotation config start
-        Config config = MantaroData.config().get();
+        var config = MantaroData.config().get();
         if (!config.getIpv6Block().isEmpty()) {
             AbstractRoutePlanner planner;
-            String block = config.getIpv6Block();
+            var block = config.getIpv6Block();
             List<IpBlock> blocks = Collections.singletonList(new Ipv6Block(block));
 
             //Damn you, YouTube.
-            if (config.getExcludeAddress().isEmpty())
+            if (config.getExcludeAddress().isEmpty()) {
                 planner = new RotatingNanoIpRoutePlanner(blocks);
-            else {
+            } else {
                 try {
-                    InetAddress blacklistedGW = InetAddress.getByName(config.getExcludeAddress());
-                    planner = new RotatingNanoIpRoutePlanner(blocks, inetAddress -> !inetAddress.equals(blacklistedGW));
+                    var blacklistedGW = InetAddress.getByName(config.getExcludeAddress());
+                    planner = new RotatingNanoIpRoutePlanner(
+                            blocks, inetAddress -> !inetAddress.equals(blacklistedGW)
+                    );
                 } catch (Exception e) {
                     //Fallback: did I screw up putting the IP in? lmao
                     planner = new RotatingNanoIpRoutePlanner(blocks);
@@ -107,31 +101,37 @@ public class MantaroAudioManager {
         playerManager.registerSourceManager(new VimeoAudioSourceManager());
         playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
         playerManager.registerSourceManager(new BeamAudioSourceManager());
-        if (!ExtraRuntimeOptions.DISABLE_NON_ALLOCATING_BUFFER) {
-            log.info("Enabled non-allocating audio buffer.");
-            playerManager.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
-        }
     }
 
     public GuildMusicManager getMusicManager(Guild guild) {
         return musicManagers.computeIfAbsent(guild.getId(), id -> new GuildMusicManager(guild.getId()));
     }
 
+    public void resetMusicManagerFor(String id) {
+        var previousManager = musicManagers.get(id);
+        previousManager.onDestroy();
+
+        musicManagers.remove(id);
+    }
+
     public long getTotalQueueSize() {
         return musicManagers.values().stream().map(m -> m.getTrackScheduler().getQueue().size()).mapToInt(Integer::intValue).sum();
     }
 
-    public void loadAndPlay(GuildMessageReceivedEvent event, String trackUrl, boolean skipSelection, boolean addFirst, I18nContext lang) {
-        AudioCmdUtils.connectToVoiceChannel(event, lang).thenAcceptAsync(b -> {
-            if (b) {
-                GuildMusicManager musicManager = getMusicManager(event.getGuild());
-                TrackScheduler scheduler = musicManager.getTrackScheduler();
+    public void loadAndPlay(GuildMessageReceivedEvent event, String trackUrl,
+                            boolean skipSelection, boolean addFirst, I18nContext lang) {
+        AudioCmdUtils.connectToVoiceChannel(event, lang).thenAcceptAsync(bool -> {
+            if (bool) {
+                var musicManager = getMusicManager(event.getGuild());
+                var scheduler = musicManager.getTrackScheduler();
+
                 scheduler.getMusicPlayer().setPaused(false);
 
-                if (scheduler.getQueue().isEmpty())
+                if (scheduler.getQueue().isEmpty()) {
                     scheduler.setRepeatMode(null);
+                }
 
-                AudioLoader loader = new AudioLoader(musicManager, event, skipSelection, addFirst);
+                var loader = new AudioLoader(musicManager, event, skipSelection, addFirst);
                 playerManager.loadItemOrdered(musicManager, trackUrl, loader);
             }
         }, LOAD_EXECUTOR.get());

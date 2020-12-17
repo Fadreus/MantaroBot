@@ -17,7 +17,6 @@
 package net.kodehawa.mantarobot.commands.music;
 
 import lavalink.client.io.jda.JdaLink;
-import net.dv8tion.jda.api.entities.Guild;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.music.requester.TrackScheduler;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
@@ -36,38 +35,45 @@ public class GuildMusicManager {
     public GuildMusicManager(String guildId) {
         this.guildId = guildId;
 
-        JdaLink lavaLink = MantaroBot.getInstance().getLavaLink().getLink(guildId);
+        var lavaLink = MantaroBot.getInstance().getLavaLink().getLink(guildId);
         trackScheduler = new TrackScheduler(lavaLink, guildId);
 
         lavaLink.getPlayer().addListener(trackScheduler);
     }
 
     private void leave() {
-        Guild guild = trackScheduler.getGuild();
+        var guild = trackScheduler.getGuild();
 
-        if (guild == null) return;
+        if (guild == null) {
+            getLavaLink().destroy();
+            return;
+        }
 
         isAwaitingDeath = false;
-        trackScheduler.getQueue().clear();
+
         if (trackScheduler.getRequestedTextChannel() != null) {
-            trackScheduler.getRequestedTextChannel().sendMessageFormat(trackScheduler.getLanguage().get("commands.music_general.listener.leave"),
+            trackScheduler.getRequestedTextChannel().sendMessageFormat(
+                    trackScheduler.getLanguage().get("commands.music_general.listener.leave"),
                     EmoteReference.SAD, guild.getSelfMember().getVoiceState().getChannel().getName()
             ).queue();
         }
 
-        trackScheduler.nextTrack(true, true);
+        //This should destroy it.
+        trackScheduler.stop();
     }
 
     public void scheduleLeave() {
-        if (leaveTask != null)
+        if (leaveTask != null) {
             return;
+        }
 
         leaveTask = MantaroBot.getInstance().getExecutorService().schedule(this::leave, 2, TimeUnit.MINUTES);
     }
 
     public void cancelLeave() {
-        if (leaveTask == null)
+        if (leaveTask == null) {
             return;
+        }
 
         leaveTask.cancel(true);
         leaveTask = null;
@@ -79,6 +85,12 @@ public class GuildMusicManager {
 
     public TrackScheduler getTrackScheduler() {
         return this.trackScheduler;
+    }
+
+    public void onDestroy() {
+        getLavaLink().getPlayer().removeListener(trackScheduler);
+        getLavaLink().resetPlayer();
+        getLavaLink().destroy();
     }
 
     public boolean isAwaitingDeath() {

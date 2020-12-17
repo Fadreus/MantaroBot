@@ -28,11 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 public class I18n {
     private static final Logger log = LoggerFactory.getLogger(MantaroListener.class);
@@ -43,30 +41,32 @@ public class I18n {
 
     static {
         Map<String, I18n> m = new HashMap<>();
-        ObjectMapper mapper = new ObjectMapper();
-        try (InputStream is = I18n.class.getResourceAsStream("/assets/languages/list.txt")) {
-            for (String s : IOUtils.toString(is, StandardCharsets.UTF_8).trim().split("\n")) {
-                String language = s.trim();
+        var mapper = new ObjectMapper();
+
+        try (var is = I18n.class.getResourceAsStream("/assets/languages/list.txt")) {
+            for (var lang : IOUtils.toString(is, StandardCharsets.UTF_8).trim().split("\n")) {
+                var language = lang.trim();
                 LANGUAGES.add(language);
             }
-
         } catch (IOException e) {
             throw new ExceptionInInitializerError(e);
         }
 
-        for (String s : LANGUAGES) {
-            InputStream is = I18n.class.getResourceAsStream("/assets/languages/" + s);
+        for (String lang : LANGUAGES) {
+            var is = I18n.class.getResourceAsStream("/assets/languages/" + lang);
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, ?> map = (Map<String, ?>) mapper.readValue(is, Map.class);
-                var name = s.replace(".json", "");
-                m.put(name, new I18n(map, s));
+
+                var name = lang.replace(".json", "");
+                m.put(name, new I18n(map, lang));
 
                 log.debug("Initialized I18n for: {}", name);
             } catch (Exception e) {
                 throw new Error("Unable to initialize I18n", e);
             }
         }
+
         LANGUAGE_MAP = Collections.unmodifiableMap(m);
     }
 
@@ -79,12 +79,12 @@ public class I18n {
     }
 
     public static I18n of(String guildId) {
-        String lang = MantaroData.db().getGuild(guildId).getData().getLang();
+        var lang = MantaroData.db().getGuild(guildId).getData().getLang();
         return getForLanguage(lang);
     }
 
     public static I18n ofUser(String userId) {
-        String lang = MantaroData.db().getUser(userId).getData().getLang();
+        var lang = MantaroData.db().getUser(userId).getData().getLang();
         return getForLanguage(lang);
     }
 
@@ -101,9 +101,12 @@ public class I18n {
     }
 
     public static I18n getForLanguage(String language) {
-        I18n i = LANGUAGE_MAP.get(language);
-        if (i == null) return LANGUAGE_MAP.get("en_US");
-        return i;
+        var lang = LANGUAGE_MAP.get(language);
+        if (lang == null) {
+            return LANGUAGE_MAP.get("en_US");
+        }
+
+        return lang;
     }
 
     public static boolean isValidLanguage(String lang) {
@@ -116,22 +119,26 @@ public class I18n {
 
     @SuppressWarnings("unchecked")
     private String get(Map<String, ?> map, String[] parts, boolean recursion) {
-        int index = 0;
+        var index = 0;
         while (index != parts.length - 1) {
             Object maybeMap = map.get(parts[index]);
             if (maybeMap instanceof Map) {
                 map = (Map<String, ?>) maybeMap;
                 index++;
             } else {
-                if (language.equals("en_US") || recursion)
-                    throw new LanguageKeyNotFoundException("Missing i18n key " + Arrays.stream(parts).collect(Collectors.joining(".")));
+                if (language.equals("en_US") || recursion) {
+                    throw new LanguageKeyNotFoundException("Missing i18n key " + String.join(".", parts));
+                }
+
                 return get(LANGUAGE_MAP.get("en_US").map, parts, true);
             }
         }
+
         Object maybeString = map.get(parts[index]);
         if (maybeString instanceof String) {
             return (String) maybeString;
         }
+
         if (maybeString instanceof Collection) {
             Collection<String> c = ((Collection<String>) maybeString);
             return c.stream()
@@ -139,28 +146,31 @@ public class I18n {
                     .findFirst()
                     .orElseThrow(AssertionError::new);
         }
-        if (language.equals("en_US") || recursion)
-            throw new LanguageKeyNotFoundException("Missing i18n key " + Arrays.stream(parts).collect(Collectors.joining(".")));
+
+        if (language.equals("en_US") || recursion) {
+            throw new LanguageKeyNotFoundException("Missing i18n key " + String.join(".", parts));
+        }
 
         return get(LANGUAGE_MAP.get("en_US").map, parts, true);
     }
 
     public String get(String query) {
-        String root = ROOT.get();
+        var root = ROOT.get();
         String actualQuery;
+
         if (root == null) {
             actualQuery = query;
         } else {
             actualQuery = root + "." + query;
         }
 
-        //TODO: apply the fix to all at startup or lazily modify the map?
         return Utils.fixInlineCodeblockDirection(get(map, actualQuery.split("\\."), false));
     }
 
     public String withRoot(String root, String query) {
-        String s = ROOT.get();
+        var s = ROOT.get();
         ROOT.set(root);
+
         try {
             return get(query);
         } finally {

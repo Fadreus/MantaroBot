@@ -18,56 +18,46 @@ package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.kodehawa.mantarobot.commands.currency.TextChannelGround;
 import net.kodehawa.mantarobot.commands.moderation.ModLog;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.utils.StringUtils;
-import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 @Module
-@SuppressWarnings("unused")
 public class ModerationCmds {
     private static final Logger log = LoggerFactory.getLogger(ModerationCmds.class);
 
     @Subscribe
     public void softban(CommandRegistry cr) {
-        cr.register("softban", new SimpleCommand(Category.MODERATION) {
+        cr.register("softban", new SimpleCommand(CommandCategory.MODERATION) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                Guild guild = ctx.getGuild();
-                User author = ctx.getAuthor();
+                if (!ctx.getMember().hasPermission(Permission.BAN_MEMBERS)) {
+                    ctx.sendLocalized("commands.softban.no_permission", EmoteReference.ERROR);
+                    return;
+                }
 
-                Message receivedMessage = ctx.getMessage();
-                String reason = content;
+                var guild = ctx.getGuild();
+                var author = ctx.getAuthor();
+                var reason = content;
 
                 if (ctx.getMentionedUsers().isEmpty()) {
                     ctx.sendLocalized("commands.softban.no_users", EmoteReference.ERROR);
                     return;
                 }
 
-                if (!ctx.getMember().hasPermission(Permission.BAN_MEMBERS)) {
-                    ctx.sendLocalized("commands.softban.no_permission", EmoteReference.ERROR);
-                    return;
-                }
-
-                Member selfMember = ctx.getSelfMember();
+                var selfMember = ctx.getSelfMember();
 
                 if (!selfMember.hasPermission(Permission.BAN_MEMBERS)) {
                     ctx.sendLocalized("commands.softban.no_permission_self", EmoteReference.ERROR2);
@@ -82,10 +72,10 @@ public class ModerationCmds {
                     reason = "Reason not specified";
                 }
 
-                final String finalReason = String.format("Softbanned by %#s: %s", author, reason);
+                var finalReason = "Softbanned by %#s: %s".formatted(author, reason);
 
-                Member member = ctx.getMentionedMembers().get(0);
-                User user = member.getUser();
+                var member = ctx.getMentionedMembers().get(0);
+                var user = member.getUser();
 
                 if (!ctx.getMember().canInteract(member)) {
                     ctx.sendLocalized("commands.softban.hierarchy_conflict", EmoteReference.ERROR);
@@ -103,19 +93,24 @@ public class ModerationCmds {
                     return;
                 }
 
-                final DBGuild db = ctx.getDBGuild();
+                var dbGuild = ctx.getDBGuild();
                 var languageContext = ctx.getLanguageContext();
 
                 guild.ban(member, 7).reason(finalReason).queue(
                         success -> {
                             user.openPrivateChannel()
                                     .flatMap(privateChannel ->
-                                            privateChannel.sendMessage(String.format("%sYou were **softbanned** by %s#%s for reason %s on server **%s**.",
-                                            EmoteReference.MEGA, author.getName(), author.getDiscriminator(), finalReason, ctx.getGuild().getName()))
+                                            privateChannel.sendMessage("%sYou were **softbanned** by %s#%s for reason %s on server **%s**."
+                                                    .formatted(
+                                                            EmoteReference.MEGA,
+                                                            author.getName(),
+                                                            author.getDiscriminator(),
+                                                            finalReason,
+                                                            ctx.getGuild().getName()))
                                     ).queue();
 
-                            db.getData().setCases(db.getData().getCases() + 1);
-                            db.saveAsync();
+                            dbGuild.getData().setCases(dbGuild.getData().getCases() + 1);
+                            dbGuild.saveAsync();
 
                             ctx.sendLocalized("commands.softban.success", EmoteReference.ZAP, languageContext.get("general.mod_quotes"), user.getName());
                             guild.unban(user).reason(finalReason).queue(aVoid -> {
@@ -133,7 +128,7 @@ public class ModerationCmds {
                                 }
                             });
 
-                            ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, db.getData().getCases());
+                            ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, dbGuild.getData().getCases());
                             TextChannelGround.of(ctx.getEvent()).dropItemWithChance(2, 2);
                         },
                         error -> {
@@ -150,13 +145,19 @@ public class ModerationCmds {
                             }
                         });
 
+
             }
 
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Softban the mentioned user and clears their messages from the past week. (You need the Ban Members permission, so does the bot)♥n" +
-                                "A soft ban is a ban & instant unban, usually useful to kick and clear messages.")
+                        .setDescription(
+                                """
+                                Softban the mentioned user and clears their messages from the past week.
+                                You need the Ban Members permission, so does the bot.
+                                A soft ban is a ban & instant unban, usually useful to kick and clear messages.
+                                """
+                        )
                         .setUsage("`~>softban <@user> [reason]`")
                         .addParameter("@user", "The user to softban.")
                         .addParameter("reason", "The reason of the softban. This is optional.")
@@ -167,27 +168,25 @@ public class ModerationCmds {
 
     @Subscribe
     public void ban(CommandRegistry cr) {
-        cr.register("ban", new SimpleCommand(Category.MODERATION) {
+        cr.register("ban", new SimpleCommand(CommandCategory.MODERATION) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                Guild guild = ctx.getGuild();
-                User author = ctx.getAuthor();
+                if (!ctx.getMember().hasPermission(Permission.BAN_MEMBERS)) {
+                    ctx.sendLocalized("commands.ban.no_permission", EmoteReference.ERROR);
+                    return;
+                }
 
-                Message receivedMessage = ctx.getMessage();
-                String reason = content;
-                List<Member> mentionedMembers = ctx.getMentionedMembers();
+                var guild = ctx.getGuild();
+                var author = ctx.getAuthor();
+                var reason = content;
+                var mentionedMembers = ctx.getMentionedMembers();
 
                 if (mentionedMembers.isEmpty()) {
                     ctx.sendLocalized("commands.ban.no_users", EmoteReference.ERROR);
                     return;
                 }
 
-                if (!ctx.getMember().hasPermission(Permission.BAN_MEMBERS)) {
-                    ctx.sendLocalized("commands.ban.no_permission", EmoteReference.ERROR);
-                    return;
-                }
-
-                Member selfMember = ctx.getSelfMember();
+                var selfMember = ctx.getSelfMember();
 
                 if (!selfMember.hasPermission(Permission.BAN_MEMBERS)) {
                     ctx.sendLocalized("commands.ban.no_permission_self", EmoteReference.ERROR);
@@ -202,11 +201,11 @@ public class ModerationCmds {
                     reason = "Reason not specified";
                 }
 
-                final String finalReason = String.format("Banned by %#s: %s", author, reason);
+                final var finalReason = "Banned by %#s: %s".formatted(author, reason);
                 final var languageContext = ctx.getLanguageContext();
 
-                for (Member member : mentionedMembers) {
-                    User user = member.getUser();
+                for (var member : mentionedMembers) {
+                    var user = member.getUser();
 
                     if (!ctx.getMember().canInteract(member)) {
                         ctx.sendLocalized("commands.ban.hierarchy_conflict", EmoteReference.ERROR, EmoteReference.SMILE);
@@ -223,24 +222,31 @@ public class ModerationCmds {
                         return;
                     }
 
-                    final DBGuild db = MantaroData.db().getGuild(ctx.getGuild());
+                    final var db = MantaroData.db().getGuild(ctx.getGuild());
+
+                    // DM's before success, because it might be the "c"ast mutual guild.
+                    user.openPrivateChannel().queue(privateChannel -> {
+                        if (!user.isBot()) {
+                            privateChannel.sendMessage("%sYou were **kicked** by %s with reason: %s on server **%s**.".formatted(
+                                    EmoteReference.MEGA,
+                                    author.getAsTag(),
+                                    finalReason,
+                                    ctx.getGuild().getName())
+                            ).queue();
+                        }
+                    });
 
                     guild.ban(member, 7).reason(finalReason).queue(
-                            success -> user.openPrivateChannel().queue(privateChannel -> {
-                                if (!user.isBot()) {
-                                    privateChannel.sendMessage(String.format("%sYou were **banned** by %s#%s on server **%s**. Reason: %s.",
-                                            EmoteReference.MEGA, author.getName(), author.getDiscriminator(), ctx.getGuild().getName(), finalReason)).queue();
-                                }
-
+                            success -> {
                                 db.getData().setCases(db.getData().getCases() + 1);
-                                db.saveAsync();
+                                db.saveUpdating();
 
                                 if (mentionedMembers.size() == 1)
                                     ctx.sendLocalized("commands.ban.success", EmoteReference.ZAP, languageContext.get("general.mod_quotes"), user.getName());
 
                                 ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.BAN, db.getData().getCases());
                                 TextChannelGround.of(ctx.getEvent()).dropItemWithChance(1, 2);
-                            }),
+                            },
                             error ->
                             {
                                 if (error instanceof PermissionException) {
@@ -271,32 +277,29 @@ public class ModerationCmds {
 
     @Subscribe
     public void kick(CommandRegistry cr) {
-        cr.register("kick", new SimpleCommand(Category.MODERATION) {
+        cr.register("kick", new SimpleCommand(CommandCategory.MODERATION) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                Guild guild = ctx.getGuild();
-                User author = ctx.getAuthor();
+                if (!ctx.getMember().hasPermission(Permission.KICK_MEMBERS)) {
+                    ctx.sendLocalized("commands.kick.no_permission", EmoteReference.ERROR2);
+                    return;
+                }
 
-                Message receivedMessage = ctx.getMessage();
-                String reason = content;
 
                 if (args.length == 0) {
                     ctx.sendLocalized("commands.kick.no_users", EmoteReference.ERROR);
                     return;
                 }
 
-                if (!ctx.getMember().hasPermission(Permission.KICK_MEMBERS)) {
-                    ctx.sendLocalized("commands.kick.no_permission", EmoteReference.ERROR2);
-                    return;
-                }
-
-                Member selfMember = guild.getSelfMember();
+                var guild = ctx.getGuild();
+                var selfMember = guild.getSelfMember();
 
                 if (!selfMember.hasPermission(Permission.KICK_MEMBERS)) {
                     ctx.sendLocalized("commands.kick.no_permission_self", EmoteReference.ERROR2);
                     return;
                 }
 
+                var reason = content;
                 if (args.length > 1) {
                     reason = StringUtils.splitArgs(content, 2)[1];
                 }
@@ -305,56 +308,66 @@ public class ModerationCmds {
                     reason = "Reason not specified";
                 }
 
-                final String finalReason = String.format("Kicked by %#s: %s", ctx.getAuthor(), reason);
-                Member member = Utils.findMember(ctx.getEvent(), ctx.getMember(), args[0]);
-                if (member == null)
-                    return;
+                final var finalReason = "Kicked by %#s: %s".formatted(ctx.getAuthor(), reason);
+                var memberRaw = args[0];
 
-                User user = member.getUser();
+                ctx.findMember(memberRaw, ctx.getMessage()).onSuccess(members -> {
+                    var member = CustomFinderUtil.findMember(memberRaw, members, ctx);
+                    if (member == null)
+                        return;
 
-                if (!ctx.getMember().canInteract(member)) {
-                    ctx.sendLocalized("commands.kick.hierarchy_conflict", EmoteReference.ERROR);
-                    return;
-                }
+                    var user = member.getUser();
 
-                if (ctx.getAuthor().getId().equals(user.getId())) {
-                    ctx.sendLocalized("commands.kick.yourself_note", EmoteReference.ERROR);
-                    return;
-                }
+                    if (!ctx.getMember().canInteract(member)) {
+                        ctx.sendLocalized("commands.kick.hierarchy_conflict", EmoteReference.ERROR);
+                        return;
+                    }
 
-                //If one of them is in a higher hierarchy than the bot, cannot kick.
-                if (!selfMember.canInteract(member)) {
-                    ctx.sendLocalized("commands.kick.self_hierarchy_conflict", EmoteReference.ERROR2, user.getName());
-                    return;
-                }
-                final DBGuild db = MantaroData.db().getGuild(ctx.getGuild());
+                    if (ctx.getAuthor().getId().equals(user.getId())) {
+                        ctx.sendLocalized("commands.kick.yourself_note", EmoteReference.ERROR);
+                        return;
+                    }
 
-                guild.kick(member).reason(finalReason).queue(
-                        success -> {
-                            if (!user.isBot()) {
-                                user.openPrivateChannel()
-                                        .flatMap(privateChannel ->
-                                                privateChannel.sendMessage(String.format("%sYou were **kicked** by %s#%s with reason: %s on server **%s**.",
-                                                EmoteReference.MEGA, ctx.getAuthor().getName(), ctx.getAuthor().getDiscriminator(), finalReason, ctx.getGuild().getName()))
-                                        ).queue();
+                    //If one of them is in a higher hierarchy than the bot, cannot kick.
+                    if (!selfMember.canInteract(member)) {
+                        ctx.sendLocalized("commands.kick.self_hierarchy_conflict", EmoteReference.ERROR2, user.getName());
+                        return;
+                    }
+
+                    final var db = MantaroData.db().getGuild(ctx.getGuild());
+
+                    if (!user.isBot()) {
+                        user.openPrivateChannel()
+                                .flatMap(privateChannel ->
+                                        privateChannel.sendMessage("%sYou were **kicked** by %s with reason: %s on server **%s**.".formatted(
+                                                EmoteReference.MEGA,
+                                                ctx.getAuthor().getAsTag(),
+                                                finalReason,
+                                                ctx.getGuild().getName()))
+                                ).queue();
+                    }
+
+                    guild.kick(member).reason(finalReason).queue(
+                            success -> {
+                                db.getData().setCases(db.getData().getCases() + 1);
+                                db.saveAsync();
+
+                                ctx.sendLocalized("commands.kick.success", EmoteReference.ZAP, ctx.getLanguageContext().get("general.mod_quotes"), user.getName());
+                                ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, db.getData().getCases());
+                                TextChannelGround.of(ctx.getEvent()).dropItemWithChance(2, 2);
+                            },
+                            error -> {
+                                if (error instanceof PermissionException) {
+                                    ctx.sendLocalized("commands.kick.error", EmoteReference.ERROR, user.getName(),
+                                            ((PermissionException) error).getPermission().getName()
+                                    );
+                                } else {
+                                    ctx.sendLocalized("commands.kick.unknown_error", EmoteReference.ERROR, user.getName());
+                                    log.warn("Unexpected error while kicking someone.", error);
+                                }
                             }
-
-                            db.getData().setCases(db.getData().getCases() + 1);
-                            db.saveAsync();
-
-                            ctx.sendLocalized("commands.kick.success", EmoteReference.ZAP, ctx.getLanguageContext().get("general.mod_quotes"), user.getName());
-                            ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, db.getData().getCases());
-                            TextChannelGround.of(ctx.getEvent()).dropItemWithChance(2, 2);
-                        },
-                        error -> {
-                            if (error instanceof PermissionException) {
-                                ctx.sendLocalized("commands.kick.error", EmoteReference.ERROR, user.getName(), ((PermissionException) error).getPermission().getName());
-                            } else {
-                                ctx.sendLocalized("commands.kick.unknown_error", EmoteReference.ERROR, user.getName());
-                                log.warn("Unexpected error while kicking someone.", error);
-                            }
-                        }
-                );
+                    );
+                });
             }
 
             @Override

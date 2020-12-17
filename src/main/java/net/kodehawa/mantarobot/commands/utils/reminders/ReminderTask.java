@@ -16,17 +16,19 @@
 
 package net.kodehawa.mantarobot.commands.utils.reminders;
 
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.data.MantaroData;
+import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -37,46 +39,49 @@ public class ReminderTask {
         log.debug("Checking reminder data...");
         try (Jedis j = MantaroData.getDefaultJedisPool().getResource()) {
             Set<String> reminders = j.zrange("zreminder", 0, 14);
-            MantaroBot bot = MantaroBot.getInstance();
+            var bot = MantaroBot.getInstance();
 
             log.debug("Reminder check - remainder is: {}", reminders.size());
 
-            for (String rem : reminders) {
+            for (var rem : reminders) {
                 try {
-                    JSONObject data = new JSONObject(rem);
+                    var data = new JSONObject(rem);
+                    var fireAt = data.getLong("at");
 
-                    long fireAt = data.getLong("at");
-                    //If the time has passed...
-                    //System.out.println("time: " + System.currentTimeMillis() + ", expected: " + fireAt);
-
+                    // If the time has passed...
                     if (System.currentTimeMillis() >= fireAt) {
                         log.debug("Reminder date has passed, remind accordingly.");
-                        String userId = data.getString("user");
-                        String fullId = data.getString("id") + ":" + userId;
-                        String guildId = data.getString("guild");
-                        long scheduledAt = data.getLong("scheduledAt");
+                        var userId = data.getString("user");
+                        var fullId = data.getString("id") + ":" + userId;
+                        var guildId = data.getString("guild");
+                        var scheduledAt = data.getLong("scheduledAt");
 
-                        //1 day passed already, assuming it's a stale reminder: Done because ReminderTask wasn't working.
-                        if(System.currentTimeMillis() - fireAt > TimeUnit.DAYS.toMillis(1)) {
-                            Reminder.cancel(userId, fullId);
+                        // 1 day passed already, assuming it's a stale reminder:
+                        // Done because ReminderTask wasn't working.
+                        if (System.currentTimeMillis() - fireAt > TimeUnit.DAYS.toMillis(1)) {
+                            Reminder.cancel(userId, fullId, Reminder.CancelReason.CANCEL);
                             return;
                         }
 
-                        String reminder = data.getString("reminder"); //The actual reminder data
-                        Guild guild = bot.getShardManager().getGuildById(guildId);
-
+                        var reminder = data.getString("reminder"); //The actual reminder data
+                        var guild = bot.getShardManager().getGuildById(guildId);
+                        var scheduledTime = OffsetDateTime.ofInstant(Instant.ofEpochMilli(scheduledAt), ZoneId.systemDefault());
                         bot.getShardManager().retrieveUserById(userId)
                                 .flatMap(User::openPrivateChannel)
-                                .flatMap(privateChannel -> privateChannel.sendMessage(
-                                            EmoteReference.POPPER + "**Reminder!**\n" + "You asked me to remind you of: " + reminder +
-                                                    "\nAt: " + new Date(scheduledAt) + (guild != null ? "\n*Asked on: " + guild.getName() + "*" : "")
+                                .flatMap(privateChannel -> privateChannel
+                                        .sendMessageFormat("""
+                                                        %s**Reminder!**
+                                                        
+                                                        You asked me to remind you of: **%s**
+                                                        *Asked at:* %s%s""",
+                                                EmoteReference.POPPER,
+                                                reminder, Utils.formatDate(scheduledTime),
+                                                (guild != null ? "\n*Asked on: %s*".formatted(guild.getName()) : "")
                                         )
                                 ).queue(success -> {
-                                    //FYI: This only logs on debug the id data, no personal stuff. We don't see your personal data. I don't wanna see it either, lmao.
                                     log.debug("Reminded {}. Removing from remind database", fullId);
-                                    //Remove reminder from our database.
-                                    Reminder.cancel(userId, fullId);
-                                }, err -> Reminder.cancel(userId, fullId)
+                                    Reminder.cancel(userId, fullId, Reminder.CancelReason.REMINDED);
+                                }, err -> Reminder.cancel(userId, fullId, Reminder.CancelReason.ERROR_DELIVERING)
                         );
                     }
                 } catch (Exception e) {

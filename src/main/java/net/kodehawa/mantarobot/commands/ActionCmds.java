@@ -26,15 +26,11 @@ import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.data.DataManager;
 import net.kodehawa.mantarobot.utils.data.SimpleFileDataManager;
 
-import java.awt.*;
 import java.util.List;
 
 @Module
-@SuppressWarnings("unused")
 public class ActionCmds {
-    //Images.
     private final DataManager<List<String>> BLOODSUCK = new SimpleFileDataManager("assets/mantaro/texts/bloodsuck.txt");
-    //Speech.
     private final DataManager<List<String>> MEOW = new SimpleFileDataManager("assets/mantaro/texts/meow.txt");
     private final DataManager<List<String>> NUZZLE = new SimpleFileDataManager("assets/mantaro/texts/nuzzle.txt");
     private final DataManager<List<String>> TSUNDERE = new SimpleFileDataManager("assets/mantaro/texts/tsundere.txt");
@@ -121,10 +117,12 @@ public class ActionCmds {
         cr.register("cuddle", new ImageActionCmd("Cuddle", "Cuddles someone", EmoteReference.HEART,
                 "commands.action.cuddle", "cuddle", "commands.action.lonely.cuddle", "commands.action.self.cuddle"));
 
+        //blush();
+        cr.register("blush", new ImageActionCmd("Blush", "Blushes at someone", EmoteReference.HEART,
+                "commands.action.blush", "blush", "commands.action.lonely.blush", "commands.action.self.blush", true));
+
         //tsundere();
-        cr.register("tsundere", new TextActionCmd("Tsundere Command", "Y-You baka!",
-                Color.PINK, EmoteReference.MEGA + "%s", TSUNDERE.get()
-        ));
+        cr.register("tsundere", new TextActionCmd("Y-You baka!", EmoteReference.MEGA + "%s", TSUNDERE.get()));
 
         //nuzzle();
         cr.register("nuzzle", new ImageActionCmd("Nuzzle Command", "Nuzzles the specified user.", EmoteReference.TALKING,
@@ -137,17 +135,17 @@ public class ActionCmds {
         );
 
         //lewd();
-        cr.register("lewd", new ImageCmd("Lewd", "T-Too lewd!", "lewd", "lewd", "commands.action.lewd"));
+        cr.register("lewd", new ImageCmd("T-Too lewd!", "lewd", "lewd", "commands.action.lewd"));
 
         //meow();
-        cr.register("meow", new ImageCmd("Meow", "Meows at the specified user.", "meow", MEOW.get(), "commands.action.meow"));
+        cr.register("meow", new ImageCmd("Meows at the specified user.", "meow", MEOW.get(), "commands.action.meow"));
         cr.registerAlias("meow", "mew");
 
         //nom();
-        cr.register("nom", new ImageCmd("Nom", "*nom nom*", "nom", "nom", "commands.action.nom"));
+        cr.register("nom", new ImageCmd("*nom nom*", "nom", "nom", "commands.action.nom"));
 
         //facedesk();
-        cr.register("facedesk", new ImageCmd("Facedesk", "When it's just too much to handle.", "facedesk", "banghead",
+        cr.register("facedesk", new ImageCmd("When it's just too much to handle.", "facedesk", "banghead",
                 "commands.action.facedesk", true));
     }
 }

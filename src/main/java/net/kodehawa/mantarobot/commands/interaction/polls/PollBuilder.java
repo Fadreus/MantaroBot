@@ -21,6 +21,7 @@ import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 
 import java.util.UUID;
 
+@SuppressWarnings("UnusedReturnValue")
 public class PollBuilder {
     private GuildMessageReceivedEvent event;
     private String name = "";
@@ -60,15 +61,24 @@ public class PollBuilder {
     }
 
     public Poll build() {
-        if (options == null)
+        if (options == null) {
             throw new IllegalArgumentException("Cannot create a poll with null options");
-        if (event == null)
-            throw new IllegalArgumentException("Cannot create a poll with null event");
-        if (timeout == 0)
-            throw new IllegalArgumentException("Cannot create a poll without a timeout");
-        if (languageContext == null)
-            throw new IllegalArgumentException("Cannot create a poll without a language context!");
+        }
 
-        return new Poll(UUID.randomUUID().toString(), event.getGuild().getId(), event.getChannel().getId(), event.getAuthor().getId(), name, timeout, languageContext, image, options);
+        if (event == null) {
+            throw new IllegalArgumentException("Cannot create a poll with null event");
+        }
+
+        if (timeout == 0) {
+            throw new IllegalArgumentException("Cannot create a poll without a timeout");
+        }
+        if (languageContext == null) {
+            throw new IllegalArgumentException("Cannot create a poll without a language context!");
+        }
+
+        return new Poll(UUID.randomUUID().toString(),
+                event.getGuild().getId(), event.getChannel().getId(), event.getAuthor().getId(),
+                name, timeout, languageContext, image, options
+        );
     }
 }

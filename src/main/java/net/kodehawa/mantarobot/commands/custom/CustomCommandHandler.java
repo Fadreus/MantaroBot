@@ -19,20 +19,18 @@ package net.kodehawa.mantarobot.commands.custom;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.MiscCmds;
 import net.kodehawa.mantarobot.commands.custom.legacy.ConditionalCustoms;
 import net.kodehawa.mantarobot.commands.custom.legacy.DynamicModifiers;
 import net.kodehawa.mantarobot.commands.custom.v3.CCv3;
 import net.kodehawa.mantarobot.commands.custom.v3.Parser;
+import net.kodehawa.mantarobot.commands.info.stats.CategoryStatsManager;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
-import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
 import net.kodehawa.mantarobot.utils.StringUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.data.GsonDataManager;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -44,7 +42,8 @@ public class CustomCommandHandler {
     private static final Map<String, Func> specialHandlers = new LinkedHashMap<>();
     //there's no way in hell this would work but ok
     //actually p sure this is just to make me feel safer and serves no purpose whatsoever.
-    private static final Pattern filtered1 = Pattern.compile("([a-zA-Z0-9]{24}\\.[a-zA-Z0-9]{6}\\.[a-zA-Z0-9_\\-])\\w+");
+    private static final Pattern filtered = Pattern.compile("([a-zA-Z0-9]{24}\\.[a-zA-Z0-9]{6}\\.[a-zA-Z0-9_\\-])\\w+");
+    private static final Pattern escape = Pattern.compile("\\\\");
     private final String args;
     private final Context ctx;
     private String response;
@@ -77,8 +76,9 @@ public class CustomCommandHandler {
 
         specialHandlers.put("embed", (ctx, value, args) -> {
             try {
-                EmbedJSON embed = GsonDataManager.gson(false)
-                        .fromJson('{' + value + '}', EmbedJSON.class);
+                // Matcher: Replace all \ with \\.
+                var json = escape.matcher(value).replaceAll("\\\\\\\\");
+                EmbedJSON embed = JsonDataManager.fromJson('{' + json + '}', EmbedJSON.class);
 
                 ctx.send(embed.gen(ctx.getMember()));
             } catch (IllegalArgumentException invalid) {
@@ -87,7 +87,8 @@ public class CustomCommandHandler {
                 } else {
                     ctx.sendLocalized("commands.custom.invalid_string", EmoteReference.ERROR2, value);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
+                ex.printStackTrace();
                 ctx.sendLocalized("commands.custom.invalid_json", EmoteReference.ERROR2, value);
             }
         });
@@ -150,20 +151,22 @@ public class CustomCommandHandler {
             return;
         }
 
-        MessageBuilder builder = new MessageBuilder().setContent(filtered1.matcher(response).replaceAll("-filtered regex-"));
+        MessageBuilder builder = new MessageBuilder().setContent(filtered.matcher(response).replaceAll("-filtered regex-"));
         if (preview) {
             builder.append("\n\n")
                     .append(EmoteReference.WARNING)
                     .append("**This is a preview of how a CC with this content would look like, ALL MENTIONS ARE DISABLED ON THIS MODE.**\n")
-                    .append("`Command Preview Requested By: ")
-                    .append(ctx.getAuthor().getName())
-                    .append("#")
-                    .append(ctx.getAuthor().getDiscriminator())
-                    .append("`")
-                    .stripMentions(ctx.getJDA());
+                    .append("`Command preview requested by: ")
+                    .append(ctx.getAuthor().getAsTag())
+                    .append("`");
+
+            builder.denyMentions(Message.MentionType.ROLE, Message.MentionType.USER, Message.MentionType.EVERYONE, Message.MentionType.HERE);
+        } else {
+            builder.denyMentions(Message.MentionType.ROLE, Message.MentionType.EVERYONE, Message.MentionType.HERE);
         }
 
-        builder.stripMentions(ctx.getJDA(), Message.MentionType.HERE, Message.MentionType.EVERYONE).sendTo(ctx.getChannel()).queue();
+        ctx.send(builder.build());
+        CategoryStatsManager.log("custom");
     }
 
     public void handle() {
@@ -196,14 +199,17 @@ public class CustomCommandHandler {
 
     private boolean specialHandling() {
         int c = response.indexOf(':');
-        if (c == -1) return false;
+        if (c == -1) {
+            return false;
+        }
 
         String prefix = response.substring(0, c);
         String value = response.substring(c + 1);
 
         Func func = specialHandlers.get(prefix);
-        if (func == null)
+        if (func == null) {
             return false;
+        }
 
         func.handle(ctx, value, args);
 

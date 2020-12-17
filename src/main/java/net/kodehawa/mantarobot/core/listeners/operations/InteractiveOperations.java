@@ -22,8 +22,9 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.kodehawa.mantarobot.core.listeners.operations.core.InteractiveOperation;
 import net.kodehawa.mantarobot.core.listeners.operations.core.Operation;
-import net.kodehawa.mantarobot.utils.Prometheus;
+import net.kodehawa.mantarobot.utils.exporters.Metrics;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
@@ -31,7 +32,8 @@ import java.util.stream.Collectors;
 
 /**
  * Utility class to create, get or use a {@link InteractiveOperation}.
- * An InteractiveOperation is an Operation that listens for upcoming messages. It can be used for all kind of stuff, like listening for user input, etc.
+ * An InteractiveOperation is an Operation that listens for upcoming messages.
+ * It can be used for all kind of stuff, like listening for user input, etc.
  */
 public class InteractiveOperations {
     //The listener used to check interactive operations.
@@ -47,7 +49,7 @@ public class InteractiveOperations {
             return t;
         });
 
-        Prometheus.THREAD_POOL_COLLECTOR.add("interactive-operations-timeout", s);
+        Metrics.THREAD_POOL_COLLECTOR.add("interactive-operations-timeout", s);
 
         s.scheduleAtFixedRate(() -> OPS.values().removeIf(list -> {
             list.removeIf(RunningOperation::isTimedOut);
@@ -136,7 +138,7 @@ public class InteractiveOperations {
      */
     public static class InteractiveListener implements EventListener {
         @Override
-        public void onEvent(GenericEvent e) {
+        public void onEvent(@Nonnull GenericEvent e) {
             if (!(e instanceof GuildMessageReceivedEvent))
                 return;
 
@@ -149,10 +151,11 @@ public class InteractiveOperations {
             long channelId = event.getChannel().getIdLong();
             List<RunningOperation> l = OPS.get(channelId);
 
-            if (l == null || l.isEmpty())
+            if (l == null || l.isEmpty()) {
                 return;
+            }
 
-            l.removeIf(o -> {
+            l.removeIf (o -> {
                 try {
                     int i = o.operation.run(event);
                     if (i == Operation.COMPLETED) {
@@ -171,15 +174,15 @@ public class InteractiveOperations {
         }
     }
 
-    //Represents an eventually-running Operation.
+    // Represents an eventually-running Operation.
     private static final class RunningOperation {
         final OperationFuture future;
         final InteractiveOperation operation;
         final long timeout;
         long timeoutTime;
-        long userId;
+        final long userId;
 
-        //timeout (argument) is in millis, field is in nanos
+        // timeout (argument) is in millis, field is in nanos
         RunningOperation(InteractiveOperation operation, long userId, long channelId, long timeout) {
             this.operation = operation;
             this.future = new OperationFuture(channelId, this);
@@ -210,8 +213,9 @@ public class InteractiveOperations {
         public boolean cancel(boolean mayInterruptIfRunning) {
             List<RunningOperation> l = OPS.get(id);
 
-            if (l == null || !l.remove(operation))
+            if (l == null || !l.remove(operation)) {
                 return false;
+            }
 
             operation.operation.onCancel();
             return true;

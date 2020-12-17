@@ -27,13 +27,16 @@ import java.util.regex.Pattern;
 
 /**
  * Converts a number to a string in <a href="http://en.wikipedia.org/wiki/Metric_prefix">metric prefix</a> format.
- * For example, 7800000 will be formatted as '7.8M'. Numbers under 1000 will be unchanged. Refer to the tests for further examples.
+ * For example, 7800000 will be formatted as '7.8M'.
+ * Numbers under 1000 will be unchanged. Refer to the tests for further examples.
  * <p>
  * <p>
- * Literally taken out of https://stackoverflow.com/questions/4753251/how-to-go-about-formatting-1200-to-1-2k-in-java
+ * Literally taken out of
+ * https://stackoverflow.com/questions/4753251/how-to-go-about-formatting-1200-to-1-2k-in-java
  * Answer isn't the first one so gotta scroll up.
  * Decided to take this answer as I felt like it was the most complete one and had support for reversal.
  */
+@SuppressWarnings("ALL")
 public class RoundedMetricPrefixFormat extends Format {
     private static final long serialVersionUID = 1;
 
@@ -50,14 +53,15 @@ public class RoundedMetricPrefixFormat extends Format {
 
     @Override
     public StringBuffer format(Object obj, @NotNull StringBuffer output, @NotNull FieldPosition pos) {
-        double number = Double.parseDouble(obj.toString());
-        // if the number is negative, convert it to a positive number and add the minus sign to the output at the end
-        boolean isNegative = number < 0;
+        var number = Double.parseDouble(obj.toString());
+        // if the number is negative,
+        // convert it to a positive number and add the minus sign to the output at the end
+        var isNegative = number < 0;
         number = Math.abs(number);
 
-        String result = new DecimalFormat("##0E0").format(number);
+        var result = new DecimalFormat("##0E0").format(number);
 
-        int index = Character.getNumericValue(result.charAt(result.length() - 1)) / 3;
+        var index = Character.getNumericValue(result.charAt(result.length() - 1)) / 3;
         result = result.replaceAll("E[0-9]", METRIC_PREFIXES[index]);
 
         while (result.length() > MAX_LENGTH || TRAILING_DECIMAL_POINT.matcher(result).matches()) {
@@ -96,13 +100,13 @@ public class RoundedMetricPrefixFormat extends Format {
             pos.setIndex(source.length());
             return Long.parseLong(source);
         } else if (METRIC_PREFIXED_NUMBER.matcher(source).matches()) {
-            boolean isNegative = source.charAt(0) == '-';
-            int length = source.length();
+            var isNegative = source.charAt(0) == '-';
+            var length = source.length();
 
-            String number = isNegative ? source.substring(1, length - 1) : source.substring(0, length - 1);
-            String metricPrefix = Character.toString(source.charAt(length - 1));
+            var number = isNegative ? source.substring(1, length - 1) : source.substring(0, length - 1);
+            var metricPrefix = Character.toString(source.charAt(length - 1));
 
-            long absoluteNumber = 0;
+            var absoluteNumber = 0L;
             try {
                 absoluteNumber = Long.parseLong(number);
             } catch (NumberFormatException ignored) {
@@ -116,12 +120,13 @@ public class RoundedMetricPrefixFormat extends Format {
                 }
             }
 
-            int exponent = 3 * index;
-            double factor = Math.pow(10, exponent);
+            var exponent = 3 * index;
+            var factor = Math.pow(10, exponent);
             factor *= isNegative ? -1 : 1;
 
             pos.setIndex(source.length());
-            float result = (float) absoluteNumber * (long) factor;
+            var result = (float) absoluteNumber * (long) factor;
+
             return (long) result;
         }
 

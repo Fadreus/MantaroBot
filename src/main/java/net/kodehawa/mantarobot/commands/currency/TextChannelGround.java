@@ -16,96 +16,190 @@
 
 package net.kodehawa.mantarobot.commands.currency;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.commands.currency.item.Item;
+import net.kodehawa.mantarobot.commands.currency.item.ItemHelper;
 import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
-import net.kodehawa.mantarobot.commands.currency.item.Items;
+import net.kodehawa.mantarobot.data.MantaroData;
+import net.kodehawa.mantarobot.db.entities.helpers.Inventory;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 
+import java.beans.ConstructorProperties;
+import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import static net.kodehawa.mantarobot.db.entities.helpers.Inventory.Resolver.serialize;
+import static net.kodehawa.mantarobot.db.entities.helpers.Inventory.Resolver.unserialize;
 
 public class TextChannelGround {
-    //TODO: Move to redis as channel id -> int, int (item id, value)
-    private static final Map<String, List<ItemStack>> DROPPED_ITEMS = new HashMap<>();
-    private static final Map<String, AtomicInteger> DROPPED_MONEY = new HashMap<>();
-    private static final Random r = new Random(System.currentTimeMillis());
-    private final AtomicInteger money;
-    private final List<ItemStack> stacks;
+    private static final SecureRandom random = new SecureRandom();
 
-    private TextChannelGround(List<ItemStack> stacks, AtomicInteger money) {
-        this.stacks = stacks;
-        this.money = money;
+    public static Ground of(String id) {
+        final var identifier =  "textchannelground:" + id;
+        try (var jedis = MantaroData.getDefaultJedisPool().getResource()) {
+            final var json = jedis.get(identifier);
+            if (json == null) {
+                // No ground found, create new one.
+                var ground = new Ground(new HashMap<>(), 0, id);
+                var newJson = JsonDataManager.toJson(ground);
+                jedis.set(identifier, newJson);
+
+                return ground;
+            } else {
+                return JsonDataManager.fromJson(json, Ground.class);
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return new Ground(new HashMap<>(), 0, id);
+        }
     }
 
-    public static TextChannelGround of(String id) {
-        return new TextChannelGround(
-                DROPPED_ITEMS.computeIfAbsent(id, k -> new ArrayList<>()),
-                DROPPED_MONEY.computeIfAbsent(id, k -> new AtomicInteger(0))
-        );
-    }
-
-    public static TextChannelGround of(TextChannel ch) {
+    public static Ground of(TextChannel ch) {
         return of(ch.getId());
     }
 
-    public static TextChannelGround of(GuildMessageReceivedEvent event) {
+    public static void delete(TextChannel ch) {
+        final var identifier = "textchannelground:" + ch.getId();
+        try (var jedis = MantaroData.getDefaultJedisPool().getResource()) {
+            // We don't need to check whether it exists or not
+            // Redis will happily run it anyway, so we can save one query.
+            jedis.del(identifier);
+        }
+    }
+
+    public static Ground of(GuildMessageReceivedEvent event) {
         return of(event.getChannel());
     }
 
-    public List<ItemStack> collectItems() {
-        List<ItemStack> finalStacks = new ArrayList<>();
-        for (ItemStack stack : stacks) {
-            finalStacks.add(new ItemStack(stack.getItem(), Math.min(stack.getAmount(), 25)));
+    public static class Ground {
+        @JsonProperty("groundItems")
+        final Inventory groundItems = new Inventory();
+        int money;
+        String channel;
+
+        @JsonCreator
+        @ConstructorProperties({"groundItems", "money", "channel"})
+        public Ground(Map<Integer, Integer> inventory, int money, String channel) {
+            this.money = money;
+            this.channel = channel;
+            this.groundItems.replaceWith(unserialize(inventory));
         }
 
-        stacks.clear();
-        return finalStacks;
-    }
+        @JsonProperty("groundItems")
+        public Map<Integer, Integer> rawGround() {
+            return serialize(groundItems.asList());
+        }
 
-    public int collectMoney() {
-        return money.getAndSet(0);
-    }
+        @JsonIgnore
+        public List<ItemStack> getGroundItems() {
+            return groundItems.asList();
+        }
 
-    public TextChannelGround dropItem(Item item) {
-        return dropItems(new ItemStack(item, 1));
-    }
+        public void setGroundItems(List<ItemStack> groundItems) {
+            this.groundItems.replaceWith(groundItems);
+        }
 
-    public TextChannelGround dropItem(int item) {
-        return dropItem(Items.ALL[item]);
-    }
+        public int getMoney() {
+            return money;
+        }
 
-    public boolean dropItemWithChance(Item item, int weight) {
-        boolean doDrop = r.nextInt(weight) == 0;
-        if (doDrop)
-            dropItem(item);
+        public void setMoney(int money) {
+            this.money = money;
+        }
 
-        return doDrop;
-    }
+        @JsonIgnore
+        public int dropMoney(int amount) {
+            int m = money += amount;
+            save();
+            return m;
+        }
 
-    public boolean dropItemWithChance(int item, int weight) {
-        return dropItemWithChance(Items.fromId(item), weight);
-    }
+        public String getChannel() {
+            return channel;
+        }
 
-    public TextChannelGround dropItems(List<ItemStack> stacks) {
-        List<ItemStack> finalStacks = new ArrayList<>(stacks);
-        this.stacks.addAll(finalStacks);
-        return this;
-    }
+        public void setChannel(String channel) {
+            this.channel = channel;
+        }
 
-    public TextChannelGround dropItems(ItemStack... stacks) {
-        return dropItems(Arrays.asList(stacks));
-    }
+        @JsonIgnore
+        public ArrayList<ItemStack> collectItems() {
+            ArrayList<ItemStack> finalStacks = new ArrayList<>();
+            for (var stack : groundItems.asList()) {
+                finalStacks.add(new ItemStack(stack.getItem(), Math.min(stack.getAmount(), 25)));
+            }
 
-    public void dropMoney(int money) {
-        this.money.addAndGet(money);
-    }
+            groundItems.clear();
+            save();
+            return finalStacks;
+        }
 
-    public boolean dropMoneyWithChance(int money, int weight) {
-        boolean doDrop = r.nextInt(weight) == 0;
-        if (doDrop)
-            dropMoney(money);
+        @JsonIgnore
+        public int collectMoney() {
+            var oldMoney = money;
+            setMoney(0);
+            save();
+            return oldMoney;
+        }
 
-        return doDrop;
+        @JsonIgnore
+        public void dropItem(Item item) {
+            if (groundItems.getAmount(item) >= ItemStack.MAX_STACK_SIZE) {
+                return;
+            }
+
+            dropItems(new ItemStack(item, 1));
+            save();
+        }
+
+        @JsonIgnore
+        public void dropItemWithChance(Item item, int weight) {
+            var doDrop = random.nextInt(weight) == 0;
+            if (doDrop) {
+                if (groundItems.getAmount(item) >= ItemStack.MAX_STACK_SIZE) {
+                    return;
+                }
+
+                dropItem(item);
+                save();
+            }
+        }
+
+        @JsonIgnore
+        public void dropItemWithChance(int item, int weight) {
+            if (groundItems.getAmount(ItemHelper.fromId(item)) >= ItemStack.MAX_STACK_SIZE) {
+                return;
+            }
+
+            dropItemWithChance(ItemHelper.fromId(item), weight);
+            save();
+        }
+
+        @JsonIgnore
+        public void dropItems(List<ItemStack> stacks) {
+            this.groundItems.process(stacks);
+            save();
+        }
+
+        @JsonIgnore
+        public void dropItems(ItemStack... stacks) {
+            dropItems(Arrays.asList(stacks));
+            save();
+        }
+
+        @JsonIgnore
+        public void save() {
+            final var identifier =  "textchannelground:" + channel;
+            try (var jedis = MantaroData.getDefaultJedisPool().getResource()) {
+                jedis.set(identifier, JsonDataManager.toJson(this));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

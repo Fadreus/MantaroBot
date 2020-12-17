@@ -94,7 +94,7 @@ public class TokenIterator implements Iterator<Token> {
         public List<Token> tokenize() {
             for (; i < source.length(); i++) {
                 switch (source.charAt(i)) {
-                    case '$': {
+                    case '$' -> {
                         if (i < source.length() - 1 && source.charAt(i + 1) == '(') {
                             pushCurrentLiteral();
                             i++;
@@ -102,9 +102,8 @@ public class TokenIterator implements Iterator<Token> {
                         } else {
                             current.append('$');
                         }
-                        break;
                     }
-                    case '@': {
+                    case '@' -> {
                         if (i < source.length() - 1 && source.charAt(i + 1) == '{') {
                             pushCurrentLiteral();
                             i++;
@@ -112,23 +111,11 @@ public class TokenIterator implements Iterator<Token> {
                         } else {
                             current.append('@');
                         }
-                        break;
                     }
-                    case ')': {
-                        push(TokenType.RIGHT_PAREN);
-                        break;
-                    }
-                    case '}': {
-                        push(TokenType.RIGHT_BRACE);
-                        break;
-                    }
-                    case ';': {
-                        push(TokenType.SEMICOLON);
-                        break;
-                    }
-                    default: {
-                        current.append(source.charAt(i));
-                    }
+                    case ')' -> push(TokenType.RIGHT_PAREN);
+                    case '}' -> push(TokenType.RIGHT_BRACE);
+                    case ';' -> push(TokenType.SEMICOLON);
+                    default -> current.append(source.charAt(i));
                 }
             }
             pushCurrentLiteral();
@@ -136,70 +123,4 @@ public class TokenIterator implements Iterator<Token> {
         }
     }
 
-    /*private static List<Token> tokenize(String input) {
-        List<Token> out = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int i = 0;
-        for(; i < input.length(); i++) {
-            switch(input.charAt(i)) {
-                case '$': {
-                    if(i < input.length() - 1 && input.charAt(i + 1) == '(') {
-                        if(current.length() > 0) {
-                            out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-                            current.setLength(0);
-                        }
-                        i++;
-                        out.add(new Token(i - 1, i, position, TokenType.START_VAR, "$("));
-                    } else {
-                        current.append('$');
-                    }
-                    break;
-                }
-                case ')': {
-                    if(current.length() > 0) {
-                        out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-                        current.setLength(0);
-                    }
-                    out.add(new Token(i, i, position, TokenType.RIGHT_PAREN, ")"));
-                    break;
-                }
-                case '@': {
-                    if(i < input.length() - 1 && input.charAt(i + 1) == '{') {
-                        if(current.length() > 0) {
-                            out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-                            current.setLength(0);
-                        }
-                        i++;
-                        out.add(new Token(i - 1, i, position, TokenType.START_OP, "@{"));
-                    } else {
-                        current.append('@');
-                    }
-                    break;
-                }
-                case '}': {
-                    if(current.length() > 0) {
-                        out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-                        current.setLength(0);
-                    }
-                    out.add(new Token(i, i, position, TokenType.RIGHT_BRACE, "}"));
-                    break;
-                }
-                case ';': {
-                    if(current.length() > 0) {
-                        out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-                        current.setLength(0);
-                    }
-                    out.add(new Token(i, i, position, TokenType.SEMICOLON, ";"));
-                    break;
-                }
-                default: {
-                    current.append(input.charAt(i));
-                }
-            }
-        }
-        if(current.length() > 0) {
-            out.add(new Token(i - current.length(), i - 1, position, TokenType.LITERAL, current.toString()));
-        }
-        return out;
-    }*/
 }

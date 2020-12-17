@@ -20,13 +20,11 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.commands.game.core.GameLobby;
 import net.kodehawa.mantarobot.commands.game.core.ImageGame;
 import net.kodehawa.mantarobot.commands.game.core.PokemonGameData;
-import net.kodehawa.mantarobot.commands.info.stats.manager.GameStatsManager;
 import net.kodehawa.mantarobot.core.listeners.operations.InteractiveOperations;
 import net.kodehawa.mantarobot.core.listeners.operations.core.InteractiveOperation;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.utils.APIUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.data.GsonDataManager;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +32,7 @@ import java.util.List;
 
 public class Pokemon extends ImageGame {
     private static final Logger log = LoggerFactory.getLogger("Game [Pokemon Trivia]");
-    private final int maxAttempts = 5;
+    private static final int maxAttempts = 5;
     private List<String> expectedAnswer;
 
     public Pokemon() {
@@ -56,7 +54,11 @@ public class Pokemon extends ImageGame {
                     return;
                 }
 
-                lobby.getChannel().sendMessageFormat(lobby.getLanguageContext().get("commands.game.lobby_timed_out"), EmoteReference.ERROR, String.join(", ", expectedAnswer)).queue();
+                lobby.getChannel().sendMessageFormat(
+                        lobby.getLanguageContext().get("commands.game.lobby_timed_out"),
+                        EmoteReference.ERROR, String.join(", ", expectedAnswer)
+                ).queue();
+
                 GameLobby.LOBBYS.remove(lobby.getChannel().getIdLong());
             }
 
@@ -68,11 +70,10 @@ public class Pokemon extends ImageGame {
     }
 
     public boolean onStart(GameLobby lobby) {
-        final I18nContext languageContext = lobby.getLanguageContext();
+        final var languageContext = lobby.getLanguageContext();
 
         try {
-            GameStatsManager.log(name());
-            PokemonGameData data = GsonDataManager.GSON_PRETTY.fromJson(APIUtils.getFrom("/mantaroapi/bot/pokemon"), PokemonGameData.class);
+            var data = JsonDataManager.fromJson(APIUtils.getFrom("/mantaroapi/bot/pokemon"), PokemonGameData.class);
             expectedAnswer = data.getNames();
             sendEmbedImage(lobby.getChannel(), data.getImage(), eb ->
                     eb.setTitle(languageContext.get("commands.game.pokemon.header"), null)

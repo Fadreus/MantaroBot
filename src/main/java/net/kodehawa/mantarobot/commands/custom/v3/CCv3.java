@@ -28,7 +28,7 @@ import net.kodehawa.mantarobot.commands.custom.v3.interpreter.InterpreterVisitor
 import net.kodehawa.mantarobot.commands.custom.v3.interpreter.Operation;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.data.GsonDataManager;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 
 import java.time.DateTimeException;
 import java.time.OffsetDateTime;
@@ -49,6 +49,7 @@ public class CCv3 {
     private static final Pattern USER_MENTION_PATTERN = Pattern.compile("(?:<@!?)?(\\d{1,20})>?");
     private static final Map<String, Operation> DEFAULT_OPERATIONS = new HashMap<>();
     private static final Pattern FILTER = Pattern.compile("([a-zA-Z0-9]{24}\\.[a-zA-Z0-9]{6}\\.[a-zA-Z0-9_\\-])\\w+");
+    private static final Pattern ESCAPE = Pattern.compile("\\\\");
     private static final DateTimeFormatter DEFAULT_TIMESTAMP_FORMATTER = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
             .append(ISO_LOCAL_DATE)
@@ -193,14 +194,11 @@ public class CCv3 {
                 return "{Not: missing required parameter <value>}";
             }
             String s = args.get(0).evaluate();
-            switch (s) {
-                case "true":
-                    return "false";
-                case "false":
-                    return "true";
-                default:
-                    return "{Not: value " + s + " is not a boolean}";
-            }
+            return switch (s) {
+                case "true" -> "false";
+                case "false" -> "true";
+                default -> "{Not: value " + s + " is not a boolean}";
+            };
         });
 
         //@{not-empty[;arg]+?}
@@ -227,10 +225,10 @@ public class CCv3 {
 
         DEFAULT_OPERATIONS.put("embed", (interpreter, args) -> {
             try {
-                EmbedJSON embed = GsonDataManager.gson(false)
-                        .fromJson('{' +
+                EmbedJSON embed = JsonDataManager.fromJson('{' +
                                 args.stream()
                                         .map(Operation.Argument::evaluate)
+                                        .map(s -> ESCAPE.matcher(s).replaceAll("\\\\\\\\"))
                                         .collect(Collectors.joining(";"))
                                 + '}', EmbedJSON.class);
                 interpreter.set("embed", embed);
@@ -361,16 +359,14 @@ public class CCv3 {
             builder.append("\n\n")
                     .append(EmoteReference.WARNING)
                     .append("**This is a preview of how a CC with this content would look like, ALL MENTIONS ARE DISABLED ON THIS MODE.**\n")
-                    .append("`Command Preview Requested By: ")
-                    .append(ctx.getAuthor().getName())
-                    .append("#")
-                    .append(ctx.getAuthor().getDiscriminator())
-                    .append("`")
-                    .stripMentions(ctx.getJDA());
+                    .append("`Command preview requested by: ")
+                    .append(ctx.getAuthor().getAsTag())
+                    .append("`");
         }
 
         builder.setEmbed(embed == null ? null : embed.gen(ctx.getMember()))
-                .stripMentions(ctx.getJDA(), Message.MentionType.HERE, Message.MentionType.EVERYONE)
-                .sendTo(ctx.getChannel()).queue();
+                .denyMentions(Message.MentionType.ROLE, Message.MentionType.EVERYONE, Message.MentionType.HERE);
+
+        ctx.send(builder.build());
     }
 }

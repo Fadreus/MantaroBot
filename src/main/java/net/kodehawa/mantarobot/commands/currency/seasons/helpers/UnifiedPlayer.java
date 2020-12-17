@@ -25,13 +25,12 @@ import net.kodehawa.mantarobot.db.ManagedDatabase;
 import net.kodehawa.mantarobot.db.entities.Player;
 
 public class UnifiedPlayer {
-    private static ManagedDatabase managedDatabase = MantaroData.db();
+    private static final ManagedDatabase managedDatabase = MantaroData.db();
 
     public Player player;
     public SeasonPlayer seasonalPlayer;
 
-    private UnifiedPlayer() {
-    }
+    private UnifiedPlayer() { }
 
     private UnifiedPlayer(Player player, SeasonPlayer seasonalPlayer) {
         this.player = player;
@@ -57,13 +56,16 @@ public class UnifiedPlayer {
      * @return pls dont overflow.
      */
     public boolean addMoney(long money) {
-        if (money < 0) return false;
+        if (money < 0) {
+            return false;
+        }
+
         try {
-            player.setMoney(Math.addExact(player.getMoney(), money));
+            player.setCurrentMoney(Math.addExact(player.getCurrentMoney(), money));
             seasonalPlayer.setMoney(Math.addExact(seasonalPlayer.getMoney(), money));
             return true;
         } catch (ArithmeticException ignored) {
-            player.setMoney(0L);
+            player.setCurrentMoney(0L);
             seasonalPlayer.setMoney(0L);
             return false;
         }
@@ -85,15 +87,16 @@ public class UnifiedPlayer {
      * @param money How much?
      */
     public boolean removeMoney(long money) {
-        if (player.getMoney() - money < 0 && seasonalPlayer.getMoney() - money < 0) {
+        if (player.getCurrentMoney() - money < 0 && seasonalPlayer.getMoney() - money < 0) {
             return false;
         }
+
         if (seasonalPlayer.getMoney() - money > 0) {
             seasonalPlayer.setMoney(Math.subtractExact(seasonalPlayer.getMoney(), money));
         }
 
-        if (player.getMoney() - money > 0) {
-            player.setMoney(Math.subtractExact(player.getMoney(), money));
+        if (player.getCurrentMoney() - money > 0) {
+            player.setCurrentMoney(Math.subtractExact(player.getCurrentMoney(), money));
         }
 
         return true;
@@ -102,6 +105,11 @@ public class UnifiedPlayer {
     public void save() {
         player.save();
         seasonalPlayer.save();
+    }
+
+    public void saveUpdating() {
+        player.saveUpdating();
+        seasonalPlayer.saveUpdating();
     }
 
     public void saveAsync() {

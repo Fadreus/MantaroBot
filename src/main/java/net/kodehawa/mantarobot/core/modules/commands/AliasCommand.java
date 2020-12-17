@@ -16,13 +16,11 @@
 
 package net.kodehawa.mantarobot.core.modules.commands;
 
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Command;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandPermission;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.options.core.Option;
 
 import java.util.List;
@@ -31,7 +29,7 @@ public class AliasCommand implements Command {
     private final Command command;
     private final String commandName;
     private final String originalName;
-    private List<String> aliases;
+    private final List<String> aliases;
 
     public AliasCommand(String commandName, String originalName, Command command) {
         this.commandName = commandName;
@@ -40,7 +38,7 @@ public class AliasCommand implements Command {
         this.aliases = command.getAliases();
     }
 
-    public Category parentCategory() {
+    public CommandCategory parentCategory() {
         return command.category();
     }
 
@@ -49,7 +47,7 @@ public class AliasCommand implements Command {
     }
 
     @Override
-    public Category category() {
+    public CommandCategory category() {
         return null; //Alias Commands are hidden
     }
 

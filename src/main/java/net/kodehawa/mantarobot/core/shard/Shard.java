@@ -44,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.kodehawa.mantarobot.data.MantaroData.config;
-import static net.kodehawa.mantarobot.utils.Utils.pretty;
 
 public class Shard {
     private static final Logger log = LoggerFactory.getLogger(Shard.class);
@@ -67,8 +66,9 @@ public class Shard {
                     statusChange.cancel(true);
                 }
 
-                statusChange = MantaroBot.getInstance().getExecutorService()
-                        .scheduleAtFixedRate(Shard.this::changeStatus, 0, 10, TimeUnit.MINUTES);
+                statusChange = MantaroBot.getInstance()
+                        .getExecutorService()
+                        .scheduleAtFixedRate(Shard.this::changeStatus, 0, 3, TimeUnit.HOURS);
             }
         };
     }
@@ -142,8 +142,8 @@ public class Shard {
                 .replace("%usercount%", users.toString())
                 .replace("%guildcount%", guilds.toString())
                 .replace("%shardcount%", String.valueOf(MantaroBot.getInstance().getShardManager().getShardsTotal()))
-                .replace("%prettyusercount%", pretty(users.get()))
-                .replace("%prettyguildcount%", pretty(guilds.get()));
+                .replace("%prettyusercount%", String.valueOf(users.get()))
+                .replace("%prettyguildcount%", String.valueOf(guilds.get()));
 
         getJDA().getPresence().setActivity(Activity.playing(String.format("%shelp | %s | [%d]", config().get().prefix[0], newStatus, getId())));
         log.debug("Changed status to: " + newStatus);

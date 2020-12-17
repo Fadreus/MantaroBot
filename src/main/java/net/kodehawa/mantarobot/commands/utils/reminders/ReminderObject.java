@@ -18,14 +18,15 @@ package net.kodehawa.mantarobot.commands.utils.reminders;
 
 //This just exists for the sake of serializing (!)
 public class ReminderObject {
-    public String id;
-    public String reminder;
-    public long time;
+    public final String id;
+    public final String reminder;
+    public final long time;
     private final long scheduledAtMillis;
     private final String userId;
     private final String guildId;
 
-    ReminderObject(String id, String reminder, long time, long scheduledAtMillis, String userId, String guildId) {
+    ReminderObject(String id, String reminder, long time,
+                   long scheduledAtMillis, String userId, String guildId) {
         this.id = id;
         this.reminder = reminder;
         this.time = time;
@@ -70,8 +71,7 @@ public class ReminderObject {
         private String userId;
         private String guildId;
 
-        ReminderObjectBuilder() {
-        }
+        ReminderObjectBuilder() { }
 
         public ReminderObject.ReminderObjectBuilder id(String id) {
             this.id = id;
@@ -105,10 +105,6 @@ public class ReminderObject {
 
         public ReminderObject build() {
             return new ReminderObject(id, reminder, time, scheduledAtMillis, userId, guildId);
-        }
-
-        public String toString() {
-            return "ReminderObject.ReminderObjectBuilder(id=" + this.id + ", reminder=" + this.reminder + ", time=" + this.time + ", scheduledAtMillis=" + this.scheduledAtMillis + ", userId=" + this.userId + ", guildId=" + this.guildId + ")";
         }
     }
 }

@@ -20,8 +20,8 @@ import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.kodehawa.mantarobot.commands.CustomCmds;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
-import net.kodehawa.mantarobot.core.processor.DefaultCommandProcessor;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
+import net.kodehawa.mantarobot.core.command.processor.CommandProcessor;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
@@ -29,8 +29,8 @@ import net.kodehawa.mantarobot.options.annotations.Option;
 import net.kodehawa.mantarobot.options.core.OptionHandler;
 import net.kodehawa.mantarobot.options.core.OptionType;
 import net.kodehawa.mantarobot.options.event.OptionRegistryEvent;
-import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
+import net.kodehawa.mantarobot.utils.commands.FinderUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class CommandOptions extends OptionHandler {
 
                     String commandName = args[0];
                     //Check for CCs too
-                    boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandName) == null &&
+                    boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandName) == null &&
                             CustomCmds.getCustomCommand(event.getGuild().getId(), commandName) == null;
                     if (noCommand) {
                         event.getChannel().sendMessageFormat(lang.get("options.no_command"), EmoteReference.ERROR, commandName).queue();
@@ -90,7 +90,7 @@ public class CommandOptions extends OptionHandler {
                     String commandName = args[0];
 
                     //Check for CCs too
-                    boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandName) == null &&
+                    boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandName) == null &&
                             CustomCmds.getCustomCommand(event.getGuild().getId(), commandName) == null;
 
                     if (noCommand) {
@@ -118,7 +118,7 @@ public class CommandOptions extends OptionHandler {
                     String commandName = args[1];
 
                     //Check for CCs too
-                    boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandName) == null &&
+                    boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandName) == null &&
                             CustomCmds.getCustomCommand(event.getGuild().getId(), commandName) == null;
 
                     if (noCommand) {
@@ -133,7 +133,7 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    TextChannel channel = Utils.findChannel(event, channelName);
+                    TextChannel channel = FinderUtils.findChannel(event, channelName);
                     if (channel == null) return;
 
                     String id = channel.getId();
@@ -158,7 +158,7 @@ public class CommandOptions extends OptionHandler {
                     String channelName = args[0];
                     String commandName = args[1];
                     //Check for CCs too
-                    boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandName) == null &&
+                    boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandName) == null &&
                             CustomCmds.getCustomCommand(event.getGuild().getId(), commandName) == null;
 
                     if (noCommand) {
@@ -168,7 +168,7 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    TextChannel channel = Utils.findChannel(event, channelName);
+                    TextChannel channel = FinderUtils.findChannel(event, channelName);
                     if (channel == null) return;
 
                     String id = channel.getId();
@@ -204,7 +204,7 @@ public class CommandOptions extends OptionHandler {
                         event.getChannel().sendMessageFormat(lang.get("options.server_channel_disallow.success"), EmoteReference.OK, textChannel.getAsMention()).queue();
                     };
 
-                    TextChannel channel = Utils.findChannelSelect(event, args[0], consumer);
+                    TextChannel channel = FinderUtils.findChannelSelect(event, args[0], consumer);
 
                     if (channel != null) {
                         consumer.accept(channel);
@@ -230,7 +230,7 @@ public class CommandOptions extends OptionHandler {
                         event.getChannel().sendMessageFormat(lang.get("options.server_channel_allow.success"), EmoteReference.OK, textChannel.getAsMention()).queue();
                     };
 
-                    TextChannel channel = Utils.findChannelSelect(event, args[0], consumer);
+                    TextChannel channel = FinderUtils.findChannelSelect(event, args[0], consumer);
 
                     if (channel != null) {
                         consumer.accept(channel);
@@ -238,10 +238,10 @@ public class CommandOptions extends OptionHandler {
                 });
         addOptionAlias("server:channel:allow", "channel:enable");
 
-        registerOption("category:disable", "Disable categories",
-                "Disables a specified category.\n" +
-                        "If a non-valid category it's specified, it will display a list of valid categories\n" +
-                        "You need the category name, for example ` ~>opts category disable Action`",
+        registerOption("category:disable", "Disable categories", """
+                        Disables a specified category.
+                        If a non-valid category it's specified, it will display a list of valid categories
+                        You need the category name, for example ` ~>opts category disable Action`""",
                 "Disables a specified category", (event, args, lang) -> {
                     if (args.length == 0) {
                         event.getChannel().sendMessageFormat(lang.get("options.category_disable.no_category"), EmoteReference.ERROR).queue();
@@ -250,12 +250,12 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    Category toDisable = Category.lookupFromString(args[0]);
+                    CommandCategory toDisable = CommandCategory.lookupFromString(args[0]);
 
                     if (toDisable == null) {
                         AtomicInteger at = new AtomicInteger();
                         event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                                EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                                EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                         .collect(Collectors.joining("\n"))
                         ).queue();
                         return;
@@ -266,7 +266,7 @@ public class CommandOptions extends OptionHandler {
                         return;
                     }
 
-                    if (toDisable == Category.MODERATION) {
+                    if (toDisable == CommandCategory.MODERATION) {
                         event.getChannel().sendMessageFormat(lang.get("options.category_disable.moderation_notice"), EmoteReference.WARNING).queue();
                         return;
                     }
@@ -276,10 +276,10 @@ public class CommandOptions extends OptionHandler {
                     event.getChannel().sendMessageFormat(lang.get("options.category_disable.success"), EmoteReference.CORRECT, lang.get(toDisable.toString())).queue();
                 });
 
-        registerOption("category:enable", "Enable categories",
-                "Enables a specified category.\n" +
-                        "If a non-valid category it's specified, it will display a list of valid categories\n" +
-                        "You need the category name, for example ` ~>opts category enable Action`",
+        registerOption("category:enable", "Enable categories", """
+                        Enables a specified category.
+                        If a non-valid category it's specified, it will display a list of valid categories
+                        You need the category name, for example ` ~>opts category enable Action`""",
                 "Enables a specified category", (event, args, lang) -> {
                     if (args.length == 0) {
                         event.getChannel().sendMessageFormat(lang.get("options.category_enable.no_category"), EmoteReference.ERROR).queue();
@@ -288,12 +288,12 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    Category toEnable = Category.lookupFromString(args[0]);
+                    CommandCategory toEnable = CommandCategory.lookupFromString(args[0]);
 
                     if (toEnable == null) {
                         AtomicInteger at = new AtomicInteger();
                         event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                                EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                                EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                         .collect(Collectors.joining("\n"))
                         ).queue();
                         return;
@@ -304,10 +304,10 @@ public class CommandOptions extends OptionHandler {
                     event.getChannel().sendMessageFormat(lang.get("options.category_enable.success"), EmoteReference.CORRECT, lang.get(toEnable.toString())).queue();
                 });
 
-        registerOption("category:specific:disable", "Disable categories on a specific channel",
-                "Disables a specified category on a specific channel.\n" +
-                        "If a non-valid category it's specified, it will display a list of valid categories\n" +
-                        "You need the category name and the channel name, for example ` ~>opts category specific disable Action general`",
+        registerOption("category:specific:disable", "Disable categories on a specific channel", """
+                        Disables a specified category on a specific channel.
+                        If a non-valid category it's specified, it will display a list of valid categories
+                        You need the category name and the channel name, for example ` ~>opts category specific disable Action general`""",
                 "Disables a specified category", (event, args, lang) -> {
                     if (args.length < 2) {
                         event.getChannel().sendMessageFormat(lang.get("options.category_specific_disable.invalid"), EmoteReference.ERROR).queue();
@@ -316,14 +316,14 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    Category toDisable = Category.lookupFromString(args[0]);
+                    CommandCategory toDisable = CommandCategory.lookupFromString(args[0]);
 
                     String channelName = args[1];
                     Consumer<TextChannel> consumer = selectedChannel -> {
                         if (toDisable == null) {
                             AtomicInteger at = new AtomicInteger();
                             event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                                    EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                                    EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                             .collect(Collectors.joining("\n"))
                             ).queue();
                             return;
@@ -336,7 +336,7 @@ public class CommandOptions extends OptionHandler {
                             return;
                         }
 
-                        if (toDisable == Category.MODERATION) {
+                        if (toDisable == CommandCategory.MODERATION) {
                             event.getChannel().sendMessageFormat(lang.get("options.category_specific_disable.moderation_notice"), EmoteReference.WARNING).queue();
                             return;
                         }
@@ -348,17 +348,17 @@ public class CommandOptions extends OptionHandler {
                         ).queue();
                     };
 
-                    TextChannel channel = Utils.findChannelSelect(event, channelName, consumer);
+                    TextChannel channel = FinderUtils.findChannelSelect(event, channelName, consumer);
 
                     if (channel != null) {
                         consumer.accept(channel);
                     }
                 });
 
-        registerOption("category:specific:enable", "Enable categories on a specific channel",
-                "Enables a specified category on a specific channel.\n" +
-                        "If a non-valid category it's specified, it will display a list of valid categories\n" +
-                        "You need the category name and the channel name, for example ` ~>opts category specific enable Action general`",
+        registerOption("category:specific:enable", "Enable categories on a specific channel", """
+                        Enables a specified category on a specific channel.
+                        If a non-valid category it's specified, it will display a list of valid categories
+                        You need the category name and the channel name, for example ` ~>opts category specific enable Action general`""",
                 "Enables a specified category", (event, args, lang) -> {
                     if (args.length < 2) {
                         event.getChannel().sendMessageFormat(lang.get("options.category_specific_enable.invalid"), EmoteReference.ERROR).queue();
@@ -367,14 +367,14 @@ public class CommandOptions extends OptionHandler {
 
                     DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
                     GuildData guildData = dbGuild.getData();
-                    Category toEnable = Category.lookupFromString(args[0]);
+                    CommandCategory toEnable = CommandCategory.lookupFromString(args[0]);
                     String channelName = args[1];
 
                     Consumer<TextChannel> consumer = selectedChannel -> {
                         if (toEnable == null) {
                             AtomicInteger at = new AtomicInteger();
                             event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                                    EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                                    EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                             .collect(Collectors.joining("\n"))
                             ).queue();
                             return;
@@ -398,7 +398,7 @@ public class CommandOptions extends OptionHandler {
                         ).queue();
                     };
 
-                    TextChannel channel = Utils.findChannelSelect(event, channelName, consumer);
+                    TextChannel channel = FinderUtils.findChannelSelect(event, channelName, consumer);
 
                     if (channel != null) {
                         consumer.accept(channel);
@@ -406,9 +406,10 @@ public class CommandOptions extends OptionHandler {
                 });
 
 
-        registerOption("server:role:specific:disallow", "Disallows a role from executing an specific command", "Disallows a role from executing an specific command\n" +
-                "This command takes the command to disallow and the role name afterwards. If the role name contains spaces, wrap it in quotes \"like this\"\n" +
-                "Example: `~>opts server role specific disallow daily Member`", "Disallows a role from executing an specific command", (event, args, lang) -> {
+        registerOption("server:role:specific:disallow", "Disallows a role from executing an specific command", """
+                Disallows a role from executing an specific command
+                This command takes the command to disallow and the role name afterwards. If the role name contains spaces, wrap it in quotes "like this"
+                Example: `~>opts server role specific disallow daily Member`""", "Disallows a role from executing an specific command", (event, args, lang) -> {
             if (args.length < 2) {
                 event.getChannel().sendMessageFormat(lang.get("options.server_role_specific_disallow.invalid"), EmoteReference.ERROR).queue();
                 return;
@@ -433,7 +434,7 @@ public class CommandOptions extends OptionHandler {
                 GuildData guildData = dbGuild.getData();
 
                 //Check for CCs too
-                boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandDisallow) == null &&
+                boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandDisallow) == null &&
                         CustomCmds.getCustomCommand(event.getGuild().getId(), commandDisallow) == null;
 
                 if (noCommand) {
@@ -460,7 +461,7 @@ public class CommandOptions extends OptionHandler {
                 ).queue();
             };
 
-            Role role = Utils.findRoleSelect(event, roleDisallow, consumer);
+            Role role = FinderUtils.findRoleSelect(event, roleDisallow, consumer);
 
             if (role != null) {
                 consumer.accept(role);
@@ -469,9 +470,10 @@ public class CommandOptions extends OptionHandler {
         addOptionAlias("server:role:specific:disallow", "role:specific:disable");
 
 
-        registerOption("server:role:specific:allow", "Allows a role from executing an specific command", "Allows a role from executing an specific command\n" +
-                "This command takes either the role name, id or mention and the command to disallow afterwards. If the role name contains spaces, wrap it in quotes \"like this\"\n" +
-                "Example: `~>opts server role specific allow daily Member`", "Allows a role from executing an specific command", (event, args, lang) -> {
+        registerOption("server:role:specific:allow", "Allows a role from executing an specific command", """
+                Allows a role from executing an specific command
+                This command takes either the role name, id or mention and the command to disallow afterwards. If the role name contains spaces, wrap it in quotes "like this"
+                Example: `~>opts server role specific allow daily Member`""", "Allows a role from executing an specific command", (event, args, lang) -> {
             if (args.length < 2) {
                 event.getChannel().sendMessageFormat(lang.get("options.server_role_specific_allow.invalid"), EmoteReference.ERROR).queue();
                 return;
@@ -490,7 +492,7 @@ public class CommandOptions extends OptionHandler {
                 GuildData guildData = dbGuild.getData();
 
                 //Check for CCs too
-                boolean noCommand = DefaultCommandProcessor.REGISTRY.commands().get(commandAllow) == null &&
+                boolean noCommand = CommandProcessor.REGISTRY.commands().get(commandAllow) == null &&
                         CustomCmds.getCustomCommand(event.getGuild().getId(), commandAllow) == null;
 
                 if (noCommand) {
@@ -511,7 +513,7 @@ public class CommandOptions extends OptionHandler {
                 ).queue();
             };
 
-            Role role = Utils.findRoleSelect(event, roleAllow, consumer);
+            Role role = FinderUtils.findRoleSelect(event, roleAllow, consumer);
 
             if (role != null) {
                 consumer.accept(role);
@@ -519,9 +521,10 @@ public class CommandOptions extends OptionHandler {
         });
         addOptionAlias("server:role:specific:allow", "role:specific:enable");
 
-        registerOption("category:role:specific:disable", "Disables a role from executing commands in an specified category.", "Disables a role from executing commands in an specified category\n" +
-                "This command takes the category name and the role to disable afterwards. If the role name contains spaces, wrap it in quotes \"like this\"\n" +
-                "Example: `~>opts category role specific disable Currency Member`", "Disables a role from executing commands in an specified category.", (event, args, lang) -> {
+        registerOption("category:role:specific:disable", "Disables a role from executing commands in an specified category.", """
+                Disables a role from executing commands in an specified category
+                This command takes the category name and the role to disable afterwards. If the role name contains spaces, wrap it in quotes "like this"
+                Example: `~>opts category role specific disable Currency Member`""", "Disables a role from executing commands in an specified category.", (event, args, lang) -> {
             if (args.length < 2) {
                 event.getChannel().sendMessageFormat(lang.get("options.category_role_specific_disable.invalid"), EmoteReference.ERROR).queue();
                 return;
@@ -529,14 +532,14 @@ public class CommandOptions extends OptionHandler {
 
             DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
             GuildData guildData = dbGuild.getData();
-            Category toDisable = Category.lookupFromString(args[0]);
+            CommandCategory toDisable = CommandCategory.lookupFromString(args[0]);
 
             String roleName = args[1];
             Consumer<Role> consumer = role -> {
                 if (toDisable == null) {
                     AtomicInteger at = new AtomicInteger();
                     event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                            EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                            EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                     .collect(Collectors.joining("\n"))
                     ).queue();
                     return;
@@ -560,7 +563,7 @@ public class CommandOptions extends OptionHandler {
                     return;
                 }
 
-                if (toDisable == Category.MODERATION) {
+                if (toDisable == CommandCategory.MODERATION) {
                     event.getChannel().sendMessageFormat(lang.get("options.category_role_specific_disable.moderation_notice"), EmoteReference.WARNING).queue();
                     return;
                 }
@@ -570,16 +573,17 @@ public class CommandOptions extends OptionHandler {
                 event.getChannel().sendMessageFormat(lang.get("options.category_role_specific_disable.success"), EmoteReference.CORRECT, toDisable.toString(), role.getName()).queue();
             };
 
-            Role role = Utils.findRoleSelect(event, roleName, consumer);
+            Role role = FinderUtils.findRoleSelect(event, roleName, consumer);
 
             if (role != null) {
                 consumer.accept(role);
             }
         });
 
-        registerOption("category:role:specific:enable", "Enables a role from executing commands in an specified category.", "Enables a role from executing commands in an specified category\n" +
-                "This command takes the category name and the role to enable afterwards. If the role name contains spaces, wrap it in quotes \"like this\"\n" +
-                "Example: `~>opts category role specific enable Currency Member`", "Enables a role from executing commands in an specified category.", (event, args, lang) -> {
+        registerOption("category:role:specific:enable", "Enables a role from executing commands in an specified category.", """
+                Enables a role from executing commands in an specified category
+                This command takes the category name and the role to enable afterwards. If the role name contains spaces, wrap it in quotes "like this"
+                Example: `~>opts category role specific enable Currency Member`""", "Enables a role from executing commands in an specified category.", (event, args, lang) -> {
             if (args.length < 2) {
                 event.getChannel().sendMessageFormat(lang.get("options.category_role_specific_enable.invalid"), EmoteReference.ERROR).queue();
                 return;
@@ -587,14 +591,14 @@ public class CommandOptions extends OptionHandler {
 
             DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
             GuildData guildData = dbGuild.getData();
-            Category toEnable = Category.lookupFromString(args[0]);
+            CommandCategory toEnable = CommandCategory.lookupFromString(args[0]);
             String roleName = args[1];
 
             Consumer<Role> consumer = role -> {
                 if (toEnable == null) {
                     AtomicInteger at = new AtomicInteger();
                     event.getChannel().sendMessageFormat(lang.get("options.invalid_category"),
-                            EmoteReference.ERROR, Category.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
+                            EmoteReference.ERROR, CommandCategory.getAllNames().stream().map(name -> "#" + at.incrementAndGet() + ". " + name)
                                     .collect(Collectors.joining("\n"))
                     ).queue();
                     return;
@@ -615,7 +619,7 @@ public class CommandOptions extends OptionHandler {
                 event.getChannel().sendMessageFormat(lang.get("options.category_role_specific_enable.success"), EmoteReference.CORRECT, toEnable.toString(), role.getName()).queue();
             };
 
-            Role role = Utils.findRoleSelect(event, roleName, consumer);
+            Role role = FinderUtils.findRoleSelect(event, roleName, consumer);
 
             if (role != null) {
                 consumer.accept(role);

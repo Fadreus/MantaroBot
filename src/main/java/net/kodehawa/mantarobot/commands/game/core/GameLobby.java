@@ -22,8 +22,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.commands.interaction.Lobby;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.utils.Prometheus;
+import net.kodehawa.mantarobot.utils.exporters.Metrics;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class GameLobby extends Lobby {
     );
 
     static {
-        Prometheus.THREAD_POOL_COLLECTOR.add("game-lobbies", executorService);
+        Metrics.THREAD_POOL_COLLECTOR.add("game-lobbies", executorService);
     }
 
     public boolean gameLoaded = false;
@@ -72,7 +71,8 @@ public class GameLobby extends Lobby {
         if (gamesToPlay.getFirst().onStart(this)) {
             setGameLoaded(false);
             LOBBYS.put(event.getChannel().getIdLong(), this);
-            DBGuild dbGuild = MantaroData.db().getGuild(guild);
+
+            var dbGuild = MantaroData.db().getGuild(guild);
             dbGuild.getData().setGameTimeoutExpectedAt(String.valueOf(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(70)));
             dbGuild.save();
 
@@ -89,17 +89,19 @@ public class GameLobby extends Lobby {
         executorService.execute(() -> {
             setGameLoaded(false);
             try {
-                if (!success)
+                if (!success) {
                     gamesToPlay.clear();
-                else
+                }
+                else {
                     gamesToPlay.removeFirst();
+                }
 
-                if (gamesToPlay.isEmpty() || !success) {
+                if (gamesToPlay.isEmpty()) {
                     LOBBYS.remove(getChannel().getIdLong());
                     return;
                 }
 
-                //fuck userbots
+                // fuck userbots
                 Thread.sleep(250); //250ms.
                 if (gamesToPlay.getFirst().onStart(this)) {
                     gamesToPlay.getFirst().call(this, players);

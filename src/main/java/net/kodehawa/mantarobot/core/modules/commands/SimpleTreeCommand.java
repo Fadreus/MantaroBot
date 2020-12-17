@@ -16,9 +16,8 @@
 
 package net.kodehawa.mantarobot.core.modules.commands;
 
-import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.core.modules.commands.base.*;
+import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
 import java.util.HashMap;
@@ -32,43 +31,45 @@ public abstract class SimpleTreeCommand extends AbstractCommand implements ITree
     private final Map<String, SubCommand> subCommands = new HashMap<>();
     private Predicate<Context> predicate = event -> true;
 
-    public SimpleTreeCommand(Category category) {
+    public SimpleTreeCommand(CommandCategory category) {
         super(category);
     }
 
-    public SimpleTreeCommand(Category category, CommandPermission permission) {
+    public SimpleTreeCommand(CommandCategory category, CommandPermission permission) {
         super(category, permission);
     }
 
     /**
      * Invokes the command to be executed.
      *
-     * @param event       the event that triggered the command
+     * @param context     the context of the event that triggered the command
      * @param commandName the command name that was used
      * @param content     the arguments of the command
      */
     @Override
     public void run(Context context, String commandName, String content) {
-        String[] args = splitArgs(content, 2);
+        var args = splitArgs(content, 2);
 
         if (subCommands.isEmpty()) {
             throw new IllegalArgumentException("No subcommands registered!");
         }
 
-        Command command = subCommands.get(args[0]);
+        var command = subCommands.get(args[0]);
 
         if (command == null) {
             defaultTrigger(context, commandName, args[0]);
             return;
         }
 
-        if (!predicate.test(context)) return;
-        command.run(context, commandName + " " + args[0], args[1]);
+        if (!predicate.test(context)) {
+            return;
+        }
+
+        command.run(new Context(context.getEvent(), context.getLanguageContext(), args[1]), commandName + " " + args[0], args[1]);
     }
 
-    public ITreeCommand setPredicate(Predicate<Context> predicate) {
+    public void setPredicate(Predicate<Context> predicate) {
         this.predicate = predicate;
-        return this;
     }
 
     public SimpleTreeCommand addSubCommand(String name, String description, BiConsumer<Context, String> command) {
@@ -79,7 +80,7 @@ public abstract class SimpleTreeCommand extends AbstractCommand implements ITree
             }
 
             @Override
-            protected void call(Context context, String content) {
+            protected void call(Context context, I18nContext languageContext, String content) {
                 command.accept(context, content);
             }
         });
@@ -98,13 +99,13 @@ public abstract class SimpleTreeCommand extends AbstractCommand implements ITree
 
     @Override
     public SimpleTreeCommand createSubCommandAlias(String name, String alias) {
-        SubCommand cmd = subCommands.get(name);
+        var cmd = subCommands.get(name);
         if (cmd == null) {
             throw new IllegalArgumentException("Cannot create an alias of a non-existent sub command!");
         }
 
         //Creates a fully new instance. Without this, it'd be dependant on the original instance, and changing the child status would change it's parent's status too.
-        SubCommand clone = SubCommand.copy(cmd);
+        var clone = SubCommand.copy(cmd);
         clone.setChild(true);
         subCommands.put(alias, clone);
 
@@ -119,19 +120,19 @@ public abstract class SimpleTreeCommand extends AbstractCommand implements ITree
     /**
      * Handling for when the Sub-Command isn't found.
      *
-     * @param event       the Event
+     * @param ctx         the context of the event that triggered the command
      * @param commandName the Name of the not-found command.
      */
     public Command defaultTrigger(Context ctx, String mainCommand, String commandName) {
         //why?
-        if (commandName.isEmpty())
+        if (commandName.isEmpty()) {
             commandName = "none";
+        }
 
-        new MessageBuilder()
-                .append(String.format("%1$sNo subcommand `%2$s` found in the `%3$s` command!. Check `~>help %3$s` for available subcommands", EmoteReference.ERROR, commandName, mainCommand))
-                .stripMentions(ctx.getJDA())
-                .sendTo(ctx.getChannel())
-                .queue();
+        ctx.sendStripped(String.format(
+                "%1$sNo subcommand `%2$s` found in the `%3$s` command!. Check `~>help %3$s` for available subcommands",
+                EmoteReference.ERROR, commandName, mainCommand)
+        );
 
         return null;
     }

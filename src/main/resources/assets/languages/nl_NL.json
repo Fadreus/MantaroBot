@@ -25,17 +25,20 @@
     "options": "Opties",
     "find_members_failure": "%1$sGeen gebruikers gevonden met jouw zoekcriteria :(",
     "too_many_members": "%1$sTe veel gebruikers gevonden, probeer specifieker te zijn (bijv. gebruik naam#discriminator)\n**Gebruikers gevonden:** %2$s",
+    "too_many_mentions": "%1$sAsjeblieft mention maar 1 persoon per member lookup.",
+    "query_too_small": "%1$sJe zoekopdracht is te klein. Zorg ervoor dat je minimaal 4 karakters zoekt. Als de gebruikersnaam te kort is, kun je beter gebruikersnaam#discriminator of een gebruikers-Id gebruiken.",
     "dust": "Er is hier niets te vinden",
     "invalid_syntax": "Ongeldige syntax.",
     "item_lookup": {
       "no_item_emoji": "Er is geen voorwerp gekoppeld aan deze emoji.",
       "no_item_name": "Er is geen voorwerp gekoppeld aan deze naam.",
-      "not_found": "Kon geen gerelateerde voorwerpen vinden met jouw zoekopdracht.",
+      "not_found": "Kon geen gerelateerde voorwerpen vinden met jouw zoekopdracht. Als je verdwaald bent, probeer dan de korte naam te gebruiken, bijvoorbeeld voor `Energie drank`, gebruik `energie`. Of plaats de naam tussen aanhalingstekens.",
       "claim_key": "Je kunt geen claim sleutel overdragen."
     },
     "misc_item_usage": {
       "mop": "%1$sAl het stof in je kamer is opgeruimd. Yay.",
-      "milk": "%1$sHet potion effect is opgeheven.",
+      "mop_not_enough": "%1$sJe stof level is minder dan 5%%, dus afstoffen zal niet zo nuttig zijn.",
+      "milk": "%1$sHet Toverdrank effect is opgeheven.",
       "stamina": "%1$sStamina is geactiveerd voor 5 mining sessies.",
       "stamina_used": "%1$s Je hebt al een actief uithoudingsvermogen effect!",
       "haste": "%1$sHaast is geactiveerd voor 2 minuten.",
@@ -45,66 +48,75 @@
       "pill": "%1$s Je hebt een waifu pil gedronken! (Geactiveerd voor 5 sessies)",
       "pill_used": "%1$s Je hebt al een actieve waifu pil!",
       "crate": {
-        "no_key": "%1$sJe hebt een loot crate sleutel nodig om een loot crate te openen. Hij zit nog op slot!",
-        "no_crate": "%1$sJe hebt een loot crate nodig! Hoe wil je anders je loot crate sleutel gebruiken >.>... oh",
+        "no_key": "%1$sYou need a loot crate key to open a crate. It's locked! You can buy one using `~>market buy key`",
+        "no_crate": "%1$sYou need a loot crate! You usually get crates from currency commands.",
         "success": "%1$s**Je hebt gewonnen:** %2$s%3$s",
         "overflow": "Je hebt al te veel gekregen dus je hebt besloten om wat je te veel had, weg te gooien"
       },
-      "potion_active": "%1$s Je hebt al een actieve **%2$s** drankje effect en het maximale aantal er van!",
-      "potion_not_found": "%1$s ik kan dat drankje of item niet vinden!",
-      "potion_applied": "%1$sSuccessfully applied effect **%2$s** of type *%3$s* (%4$dx). Check your shiny new effect on `~>profile stats`",
-      "potion_applied_multiple": "%1$sSuccessfully applied **%2$s** of type *%3$s*.\nYou already had this effect applied, so we stacked it up. Current stack size: %4$s",
-      "max_stack_size": "%1$sYou already stacked the max amount of %2$s you possibly can.",
-      "max_stack_size_2": "%1$sYou can't stack that many %2$s.",
-      "not_same_potion": "%1$sYou already have a potion of type %2$s stacked and active, so you can't stack potions of type %3$s into it."
+      "potion_active": "%1$s Je hebt al een actieve **%2$s** Toverdrank effect en het maximale aantal er van!",
+      "potion_not_found": "%1$s ik kan dat Toverdrankje of item niet vinden!",
+      "potion_applied": "%1$sEffect succesvol toegepast **%2$s** van het type *%3$s* (%4$dx). Check glanzende nieuwe effect op `~>profile stats`",
+      "potion_applied_multiple": "%1$sSuccesvol toegepast **%2$s** of type *%3$s*.\nJe had dit effect al toegepast, dus we hebben het opgestapeld. Huidige stapelgrootte: %4$s",
+      "max_stack_size": "%1$sJe hebt al het maximale aantal van %2$s gestapeld dat mogelijk is. (Maximum: 15, na stapelen: %3$s)",
+      "max_stack_size_2": "%1$sJe kunt niet zoveel stapelen %2$s. (Maximum: 15, poging: %3$s)",
+      "not_same_potion": "%1$sje hebt al een toverdrank type %2$s gestapeld en actief, dus je kan er niet meer toverdrankjes type %3$s opstapelen."
+    },
+    "campaigns": {
+      "premium": {
+        "generic_sellout": "We hebben uw hulp nodig om Mantaro in leven te houden en de servers van Mantaro te verbeteren!\nMet Mantaro Premium ** kun je geweldige voordelen en ** tot verdubbeling van de credits krijgen! Lidmaatschappen beginnen bij $ 2 per maand, de prijs van een snack! Bekijk meer op <https://patreon.com/mantaro>. Het verder vertellen aan anderen helpt ook :heart:",
+        "daily_sellout": "We hebben jouw hulp nodig om Mantaro in leven te houden!\nU kunt geweldige voordelen krijgen en ** de dagelijkse credits verdubbelen** en toegang krijgen tot `~>dailycrate`! Lidmaatschappen beginnen bij slechts $2 per maand, kijk voor meer informatie op <https://patreon.com/mantaro>.",
+        "thanks_message": "Bedankt voor het steunen van Mantaro. Zonder hulp van mensen zoals jij konden we Mantaro niet in leven houden :heart:",
+        "thanks_message_daily": "Bedankt voor het steunen van Mantaro. Zonder hulp van mensen zoals jij konden we Mantaro niet in leven houden :heart: \nJe krijgt ook het dubbele van de credits als bonus!"
+      },
+      "twitter": "Wist je dat we een Twitter-account hebben? Ja dat doen we! Volg ons op (at)mantarodiscord <https://twitter.com/mantarodiscord> voor updates en gekke dingen."
     },
     "mention_user_required": "%1$sJe moet een gebruiker vermelden.",
     "invalid_character": "%1$sDat is geen toegestaan karakter.",
     "invalid_action": "Je kunt dat niet doen, gekkie.",
     "interactive_running": "%1$sEr is al een interactieve bewerking (eigendom van jou) op dit kanaal.",
-    "buy_sell_paged_react": "**Totale pagina's: %1$d.**\nGebruik de berichtreacties om tussen pagina's te bladeren.\n%2$s",
-    "buy_sell_paged_text": "**Totale pagina's: %1$d.**\nGebruik **&p >>** en **&p <<** om over pagina's te bladeren.\n%2$s",
+    "buy_sell_paged_react": "Gebruik de reacties onder het bericht om door de pagina`s te bladeren.\n%1$s",
+    "buy_sell_paged_text": "Gebruik **&p >>** en **&p <<** om door de pagina`s te bladeren.\n%1$s",
     "buy_sell_paged_reference": "**Verwijzing %1$s Koop %2$s Verkoop.**",
     "cancelled": "%1$sVerzoek geannuleerd.",
     "sellout": "Overweeg om te doneren op [Patreon](https://www.patreon.com/mantaro) als je mij leuk vindt. Zelfs een kleine donatie helpt om de bot in leven te houden!",
     "deprecated": "Niet langer in gebruik",
-    "space_notice": "If the name of it contains spaces, try \"wrapping it in quotes\"",
+    "space_notice": "Als de naam ervan spaties bevat, probeer het dan \"tussen aanhalingstekens te plaatsen\"",
     "ratelimit": {
-      "header": "%1$s%2$s (Ratelimited)\n **You'll be able to use this command again in %3$s.**",
-      "spam_1": "Please rest, it's good for your health :( *Remember that Ratelimit will keep increasing if you try before the cooldown resets!*",
+      "header": "%1$s%2$s (Ratelimited)\n **Je kunt deze opdracht over %3$s opnieuw gebruiken.**",
+      "spam_1": "Rust alsjeblieft, het is goed voor je gezondheid. **Onthoud dat de ratelimit blijft toenemen als je het opnieuw probeert voordat de afkoelperiode afgelopen is! **",
       "spam_2": "Ik denk dat stoppen voorlopig de beste optie is...",
-      "spam_3": "\nWouldn't it be better if you just go outside for a bit?",
-      "spam_4": "\nIs this thing even on?"
+      "spam_3": "\nZou het niet beter zijn als je even naar buiten gaat?",
+      "spam_4": "\nIs dit ding aan?"
     },
-    "generic_error": "If you want, join our **support server** (Link at `support.mantaro.site`), or check out our GitHub page (`https://github.com/Kodehawa/MantaroBot`). Please tell them to quit exploding me and please don't forget the Error ID when reporting!",
+    "generic_error": "Als je wilt, word dan lid van onze **support server** (`https://support.mantaro.site`), of bekijk onze GitHub-pagina (`https://github.com/Kodehawa/MantaroBot`). Zeg alsjeblieft dat ze moeten stoppen met het exploderen van mij en vergeet alsjeblieft de Error ID, het commando dat je hebt gebruikt en je node (te zien in `~>shard`) niet bij het rapporteren!",
     "boom_quotes": [
       "Schijnbaar ontplofte Megumin ons kasteel...",
-      "Uh-oh, seemingly my master forgot some zeros and ones on the floor :<",
-      "W-Wait, what just happened?",
-      "I-I think we got some fire going on here... you might want to tell my master to take a look.",
-      "I've mastered explosion magic, you see?",
-      "Maybe something just went wrong on here, but, u-uh, I can fix it!",
-      "U-Uhh.. What did you want?"
+      "Uh-oh, schijnbaar vergat mijn meester enkele nullen en enen op de vloer :<",
+      "W-Wacht, wat is er juist gebeurd?",
+      "I-Ik denk dat er hier wat in de brand staat... misschien wil je mijn meester zeggen dat hij even moet kijken.",
+      "Ik heb explosiemagie onder de knie, zie je?",
+      "Misschien is er hier gewoon iets misgegaan, maar, u-uh, ik kan het oplossen!",
+      "U-Uhh.. Wat wilde je?"
     ],
     "ratelimit_quotes": [
-      "Woah... you're calling me a bit too fast... I might get dizzy!",
-      "Don't be greedy!",
-      "Y-You're calling me so fast that I'm getting dizzy...",
-      "Halt in there buddy!",
-      "Wait just a tiiiiny bit more uwu",
-      "Seems like we're gonna get a speed ticket if we continue going this fast!",
-      "I wanna do this... but halt for a bit please.",
-      "Hey, wait up, I'm not done with my break yet!",
-      "Can you slow down a little bit?"
+      "Woah... je wilt een beetje te snel... Ik kan misschien duizelig worden!",
+      "Niet gierig worden!",
+      "J-Je gaat ​​zo snel dat ik duizelig word...",
+      "Stop daar maatje!",
+      "Wacht nog een kleeeiiiin beetje meer uwu",
+      "Het lijkt erop dat we een snelheidsticket krijgen als we zo snel doorgaan!",
+      "Ik wil dit doen... maar stop even alsjeblieft.",
+      "Hé, wacht even, ik ben nog niet klaar met mijn pauze!",
+      "Kun je een beetje langzamer gaan?"
     ],
     "mod_quotes": [
-      "Uh-oh, seems like someone just got hit hard!",
-      "Just wholesome admin work happening over here...",
-      "The boot has been thrown!",
-      "You'll be missed... not really",
-      "I hope I did the right thing...",
-      "Woah there, mods have spoken!",
-      "U-Uh... w-well, someone just went through the door."
+      "Uh-oh, het lijkt alsof iemand zojuist hard is geraakt!",
+      "Gewoon gezond administratief werk dat hier gebeurt...",
+      "De laars is gegooid!",
+      "Je zult worden gemist... maar niet heus",
+      "Ik hoop dat ik het juiste gedaan heb...",
+      "Woah daar, mods hebben gesproken!",
+      "U-Uh... n-nou, iemand ging net door de deur."
     ]
   },
   "categories": {
@@ -124,7 +136,7 @@
   "commands": {
     "fish": {
       "dust": "%1$sDe dag is voorbij en je visemmer kon alleen stof verzamelen. (Dust level %2$s%%)",
-      "no_rod": "%1$sJe hebt geen hengel om mee te vissen!",
+      "no_rod": "%1$sYou don't have any equipped rod. Use `~>equip <rod name>` to equip a rod and start your fishing trip! If you don't have any rod, first run `~>market buy rod`",
       "trash": {
         "overflow": "%1$sJe vond wat afval tijdens het vissen, maar je inventaris was vol, dus we moesten het terug in het water gooien...",
         "success": "%1$sTerwijl je rustig aan het vissen was, vond je een drijvend %2$s, maar helaas was het afval :("
@@ -133,11 +145,11 @@
         "extra": "En je vond ook %1$s, je hebt geluk!"
       },
       "crate": {
-        "overflow": "You found a **%1$s** while fishing, but you had too many already, so we threw it back into the ocean...",
-        "success": "You found a %1$s **%2$s** while fishing and you proceeded to pick it up. Go and open it with `~>opencrate <crate name>`. You need a crate key!"
+        "overflow": "Je vond een **%1$s** tijdens het vissen, maar je had er al te veel, dus we gooiden het terug in de oceaan...",
+        "success": "Je hebt een %1$s **%2$s** gevonden tijdens het vissen en je bent verder gegaan met het omhoog halen. Ga en open het met `~>opencrate <crate name>`. Je hebt een kist sleutel nodig!"
       },
       "autoequip": {
-        "success": "%1$sAutomatically equipped a **%2$s** on your fish slot."
+        "success": "%1$sAutomatisch uitgerust met een **%2$s** op uw vis slot."
       },
       "overflow": "%1$sJe hebt wat vis gevonden, maar een deel van je inventaris was vol, dus we moesten een deel ervan terug in het water gooien ...",
       "success": "%1$s Terwijl je rustig aan het vissen was, vond je %2$s en deze heb je in je emmer bewaard.",
@@ -145,13 +157,13 @@
       "success_money_noitem": "%1$s Terwijl je rustig aan het vissen was, vond je **$%2$d credits** en deze heb je in je zak bewaard.",
       "rod_broke": "%1$sJe vishengel ging kapot terwijl je een vis probeerde te vangen :(",
       "waifu_help": "Je waifu kwam langs en deed mee aan je visavontuur waardoor jullie allebei een grotere vangst krijgen!",
-      "not_suitable": "%1$sYou can't use this to fish.",
-      "shark_success": "%1$sSomehow, you managed to catch a shark. What a wonderful rod, huh?",
-      "fossil_success": "%1$sYou caught a fossil while trying to find a fish. This might be worth a fair bit or be used for casting, I believe.",
-      "bait": "The fish ate your bait in the process!",
-      "missing_equipped": "%1$sYou had an equipped %2$s rod, but you no longer have any of its kind on your inventory! Equipped rod has been reset.",
-      "broken_drop": "%1$sYour rod broke, but you can repair it. Got broken item: %2$s *%3$s*",
-      "no_rod_equipped": "%1$sYou have no rod equipped. To equip one you need to run `~>equip <rod name>` to start your adventure!"
+      "not_suitable": "%1$sJe kan hier niet mee vissen.",
+      "shark_success": "%1$sOp de een of andere manier heb je een haai kunnen vangen. Wat een geweldige hengel, hè?",
+      "fossil_success": "%1$sJe hebt een fossiel gevangen terwijl je een vis probeerde te vinden. Dit is misschien een behoorlijk wat waard, of wordt gebruikt voor het gieten, denk ik.",
+      "bait": "De vis at je aas tijdens het proces!",
+      "missing_equipped": "%1$sJe had een %2$s hengel uitgerust, maar je hebt niets meer van deze soort in je inventaris! Uitgeruste hengel is gereset.",
+      "broken_drop": "%1$sJe hengel is kapot gegaan, maar je kunt hem repareren. ontvangen gebroken item: %2$s *%3$s*",
+      "no_rod_equipped": "%1$sJe hebt geen hengel uitgerust. Om er een uit te rusten moet je `~>equip <rod name>` gebruiken om je avontuur te beginnen!"
     },
     "softban": {
       "no_permission": "%1$sJe kunt niet soft-bannen: Je hebt de `Soft-ban gebruikers` toestemming nodig.",
@@ -172,7 +184,7 @@
       "yourself_note": "%1$sWaarom probeer je jezelf te bannen, gekkie?",
       "self_hierarchy_conflict": "%1$sKan de gebruiker niet bannen: %2$s, zij hebben dezelfde, of meer rechten dan ik heb!",
       "success": "%1$s%2$s (%3$s is verbannen)",
-      "success_multiple": "%1$s%2$s (%3$s people got banned)",
+      "success_multiple": "%1$s%2$s (%3$s is gebannen)",
       "error": "%1$sFoutmelding tijdens het bannen %2$s: (Ik heb eerst toestemming nodig: %3$s)",
       "unknown_error": "%1$sOh nee, ik kreeg een onbekende foutmelding tijdens het bannen %2$s"
     },
@@ -186,11 +198,6 @@
       "success": "%1$s%2$s (%3$s is gekicked)",
       "error": "%1$sFoutmelding tijdens het kicken %2$s: (Ik heb eerst toestemming nodig: %3$s)",
       "unknown_error": "%1$sOh nee, ik kreeg een onbekende foutmelding tijdens het kicken %2$s"
-    },
-    "tempban": {
-      "no_time": "%1$sJe kunt een gebruiker niet tijdelijk bannen zonder de lengte van de ban aan te geven.",
-      "no_reason": "%2$sJe kunt een gebruiker niet tijdelijk bannen zonder een reden op te geven.",
-      "success": "%1$s%2$s (%3$s is tijdelijk verbannen)"
     },
     "music_usage": {
       "1": "*Hoe gebruik je de muziekfunctie in Mantaro?*",
@@ -210,15 +217,15 @@
       "info": "%1$sJe kunt de server taal wijzigen (indien beschikbaar) door middel van  `~>opts language set <taal code>`. Je persoonlijke taalvoorkeur kan gewijzigd worden met `~>profile lang <taal code>`.\n**Beschikbare talen:** `%2$s`"
     },
     "season": {
-      "info": "A *season* is the span of time, of usually 6 months where players compete for the top 10 slots on the money or reputation leaderboard. The winners will get badges and prizes based on their seasonal performance.\nThis is to allow a more competitive frame (before, money was pretty much stale) and to make the game a bit more fun.\nYou can access seasonal stuff using `-season`. Commands like profile, mine, fish and balance will require it, while games, loot, daily and reputation will give money/rep to both your global and seasonal profile.",
-      "info_2": "\n\nThe current season is **%1$s** and **%2$s** players are currently taking part on it!\n\nThe fun begins, check `~>leaderboard money -season`; `~>leaderboard rep -season` and `~>leaderboard games -season`.\nGame on! <3\nThanks for enjoying Mantaro."
+      "info": "Een * seizoen * is de tijdspan van gewoonlijk 6 maanden waarin spelers strijden om de top 10 slots op het geld- of reputatieklassement. De winnaars ontvangen badges en prijzen op basis van hun seizoensprestaties.\nDit is om een ​​competitiever frame mogelijk te maken (voorheen was het geld behoorlijk oud en saai) en om het spel een beetje leuker te maken.\nJe hebt toegang tot seizoensgebonden dingen met behulp van `-season`. Commando's zoals profile, mine, fish en balance zullen het vereisen, terwijl games, loot, daily en reputation geld/rep opleveren voor zowel je globale als seizoensprofiel.",
+      "info_2": "\n\nHet huidige seizoen is **%1$s** en **%2$s** spelers nemen er momenteel aan deel!\n\nHet plezier begint, kijk bij `~>leaderboard money -season`; `~>leaderboard rep -season` en `~>leaderboard games -season`.\nGame on! <3\nBedankt dat je van Mantaro geniet."
     },
     "music_general": {
       "music_error": {
-        "timeout": "%1$sUnable to connect to %2$s: connection timed out. Try changing the server region and running the command again.",
-        "unknown": "%1$sUnable to connect to %2$s: unknown error"
+        "timeout": "%1$sKan geen verbinding maken met %2$s: verbinding is verlopen. Probeer de serverregio te wijzigen en voer de opdracht opnieuw uit.",
+        "unknown": "%1$sKan geen verbinding maken met %2$s: onbekende fout"
       },
-      "not_working": "%1$sMusic is currently not working due to Youtube blocking traffic from most big bots. Our Patreon bot still is working, so you can try it if you wish by donating $4/month to Mantaro. This will also help us redirect our efforts towards fixing music as a whole.\nPlease check <https://patreon.com/mantaro>\n\nWe're sorry for the inconveniences. Try using soundcloud search! (`~>play soundcloud <search term>)`",
+      "not_working": "%1$sMusic werkt momenteel niet omdat YouTube verkeer van de meeste grote bots blokkeert. Onze Patreon-bot werkt nog steeds, dus je kunt het proberen als je wilt door $ 4 / maand te doneren aan Mantaro. Dit zal ons ook helpen onze inspanningen om te buigen naar het repareren van muziek als geheel.\nalsjeblieft kijk op <https://patreon.com/mantaro>\n\nExcuses voor het ongemak. Probeer SoundCloud! (`~>play soundcloud <search term>)`",
       "no_song": "%1$sJe moet me vertellen welk nummer je wilt afspelen! *(YouTube, Soundcloud, Twitch URL of zoektermen zijn toegestaan)*",
       "not_playing": "%1$sOp dit moment speel ik geen muziek af",
       "dj_only": "%1$sOm dit commando te kunnen gebruiken moet je een DJ zijn.",
@@ -229,14 +236,17 @@
       "track_error": "%1$sOeps, er is iets mis gegaan tijdens het afspelen van dit nummer! Excuses voor het ongemak. Ik probeer het volgende nummer af te spelen als deze beschikbaar is.",
       "queue_finished": "%1$sIk ben klaar met het afspelen van de afspeellijst! Ik hoop dat je er van genoten hebt.\n%2$s",
       "soundcloud_no_args": "%1$sJe moet me de naam van het nummer geven, ik kan helaas je gedachten niet lezen :(",
-      "too_many_errors": "%1$sToo many errors on this session, stopping...",
-      "no_vc_found": "%1$sI'm not connected to any VC even though I should be? Try again.",
+      "too_many_errors": "%1$sTe veel fouten in deze sessie, gestopt...",
+      "no_vc_found": "%1$sIk ben niet verbonden met een spraak-kanaal, hoewel ik dat wel zou moeten zijn? Probeer het opnieuw.",
       "queue": {
+        "header_field": "Instructies",
+        "header_noreact": "Gebruik `&p >>` en `&p <<` om door de pagina`s te bladeren.",
         "no_track_found_np": "Niets, of de titel/afspeelduur niet gevonden.",
         "header": "afspeellijst voor de server %1$s",
         "nothing_playing": "Er wordt op dit moment geen muziek afgespeeld. Waarom zet je geen muziek in de afspeellijst?\nAls je denkt dat er wel nummers zijn maar ze verschijnen niet, probeer dan `~>queue 1`.",
         "nothing_playing_2": "**Als er een nummer wordt afgespeeld en er staan geen nummers in de wachtrij, dan wordt er geen muziek meer afgespeeld. Je kunt natuurlijk meer nummers in de wachtrij plaatsen!**",
         "np": "Speelt op dit moment",
+        "dj_np": "**In de wachtrij geplaatst door:** ",
         "page_overflow": "Er is hier niets te zien, probeer eens een pagina terug te gaan",
         "page_overflow_2": "Als je dacht dat er hier nummers stonden maar ze verschijnen niet, probeer eens `~>queue 1`.",
         "total_queue_time": "Totale afspeellijst duur",
@@ -248,14 +258,14 @@
         "page_react": " -> Reageer op veranderende pagina",
         "no_channel": "Geen kanaal :(",
         "songs": "nummer(s)",
-        "clear_error": "%1$sEither you're not connected to the VC or you're not the DJ.",
-        "clear_success": "%1$sSuccessfully cleared the current queue. The queue size was %2$s"
+        "clear_error": "%1$sJe hebt, of geen verbinding met het spraak-kanaal, of je bent geen DJ.",
+        "clear_success": "%1$sDe huidige wachtrij is succesvol gewist. De wachtrij was %2$s"
       },
       "connect": {
         "success": "%1$sSuccessvol verbinding gemaakt met het kanaal **%2$s**!",
         "full_channel": "%1$sIk kan geen verbinding maken met dit kanaal omdat hij vol is!",
         "non_existent_channel": "%1$sIk krijg terug dat dit kanaal niet bestaat. Het kan zijn dat je een spraak-kanaal hebt aangemaakt en daarna weer verwijderd.\n Ik heb het muziek-kanaal gereset dus probeer nogmaals om muziek af te spelen.",
-        "user_no_vc": "%1$s**Zou je een spraak-kanaal kunnen joinen? **",
+        "user_no_vc": "%1$s**Sluit u aan bij een spraakkanaal**. Als je in een spraakkanaal zit en de bot zojuist is losgekoppeld, sluit je dan opnieuw aan bij het kanaal.",
         "missing_permissions_connect": "%1$sIk kan geen verbinding maken met dit kanaal omdat ik daar geen toestemming voor heb (%2$s).",
         "missing_permission_speak": "%1$sIk kan geen geluid laten horen omdat ik daar geen toestemming voor heb (%2$s).",
         "channel_locked": "%1$sIk kan maar muziek afspelen in één kanaal **%2$s**.",
@@ -273,10 +283,10 @@
         "loaded_playlist": "%1$sIk heb **%2$d nummers** toegevoegd aan de afspeellijst van de afspeellijst: **%3$s** *(%4$s)*",
         "no_matches": "%1$sHet zoeken heeft geen resultaten opgeleverd. Als dit wordt weergegeven voor * alle nummers * waarnaar je probeert te zoeken, kun je '~>play soundcloud <zoekterm>' proberen te gebruiken. Directe koppelingen naar youtube zouden ook moeten werken.",
         "error_loading": "%1$sError bij het laden van de muziek: %2$s",
-        "over_queue_limit": "%1$sKan het nummer %2$s niet toevoegen aan de afspeellijst: Het limiet van het aantal nummers in de afspeellijst is bereikt (%3$s)!",
-        "over_32_minutes": "%1$sKan het nummer %2$s niet toevoegen aan de afspeellijst: Het nummer duurt langer dan 32 minuten! (%3$s)",
+        "over_queue_limit": "%1$sKan het nummer %2$s niet toevoegen aan de afspeellijst: Het limiet van het aantal nummers in de afspeellijst is bereikt (%3$s)",
+        "over_32_minutes": "%1$s**Kon `%2$s`: niet in de wachtrij plaatsen: track is langer dan %3$s.** (De lengte van het nummer is %4$s).\nU kunt een langere limiet voor de tracklengte krijgen en livestreams afspelen met Mantaro Premium! Kijk op <https://patreon.com/mantaro> voor meer info.",
         "fair_queue_limit_reached": "%1$s**Het nummer %2$d komt te vaak voor in de afspeellijst**",
-        "loaded_song": "%1$sToegevoegd aan afspeellijst -> **%2$s** **(%3$s)**",
+        "loaded_song": "%1$sToegevoegd aan wachtrij -> **%2$s** **(%3$s)**",
         "selection_text": "Nummer geselecteerd. Type het cijfer van het nummer om door te gaan.",
         "timeout_text": "Dit zal een time-out geven in 30 seconden. Type &cancel om dit te annuleren."
       },
@@ -309,6 +319,7 @@
       "success": "%1$sVooruitspoelen van het nummer naar: %2$s."
     },
     "move": {
+      "no_voice": "%1$sYou're not in a voice channel, or the bot isn't in one.",
       "attempt": "%1$sIk zal proberen om naar hetzelfde kanaal als jij te komen",
       "error_moving": "%1$sHet is niet gelukt om van spraak-kanaal te veranderen",
       "cannot_connect": "%1$sKan geen verbinding maken: Ik heb geen bevoegdheid om te praten of om van kanaal te wisselen.",
@@ -317,7 +328,7 @@
       "vc_not_found": "%1$sHet spraak-kanaal is niet gevonden of je hebt geen naam opgegeven!"
     },
     "shard": {
-      "info": "Ik ben in shard %1$d!"
+      "info": "**Ik zit in %1$d / %2$d** (Node %3$d / %4$d)!\n\n**Shard server:** %5$,d servers\n**Gebruikers in cache:** %6$,d gebruikers\n**Leden in cache:** %7$,d leden\n\nAls je hulp nodig hebt, ga dan naar <https://support.mantaro.site>. Bedankt voor het gebruik van Mantaro!"
     },
     "queue": {
       "clear": {
@@ -354,7 +365,7 @@
       "invalid_number": "(%1$s`%2$s`) Een van de reeksen is geen geldig nummer!",
       "invalid_number_range": "%1$s`%2$s` is geen geldig nummer of reeks!",
       "success": "%1$sHeeft **%2$d** nummer(s) verwijderd uit de afspeellijst.",
-      "not_dj": "%1$sYou need to be a DJ to perform this action."
+      "not_dj": "%1$sJe moet een DJ zijn om deze actie uit te voeren."
     },
     "stop": {
       "dj_stop": "%1$sDe server DJ heeft besloten om te stoppen",
@@ -367,35 +378,36 @@
       "cleanup": "%1$sHeeft **%2$d ** nummer(s) verwijderd uit de afspeellijst."
     },
     "volume": {
+      "no_player": "%1$sThere's nothing playing here.",
       "check": "%1$sHet huidige volume van deze sessie is: %2$d\n\n%3$s",
       "success": "%1$sVolume is gewijzigd naar %2$d\n\n%3$s",
       "no_args": "%1$sJe moet me vertellen op welk volume je wilt dat ik de muziek instel (5 tot 100).",
-      "premium_only": "%1$sThis is a premium-only feature. In order to get premium benefits like this one you can pledge on patreon (https://www.patreon.com/mantaro). Thanks for understanding.\nPremium features can be either bound to an user or a server, please, if you donate, join the support guild and ask for it."
+      "premium_only": "%1$sDit is een premiumfunctie. Om premiumvoordelen zoals deze te krijgen, kunt u een maandelijkse donatie doen via patreon (https://www.patreon.com/mantaro). Bedankt voor het begrip.\nPremium-functies kunnen aan een gebruiker of aan een server zijn gebonden. Als u doneert, meld u dan aan bij de ondersteunings server en vraag ernaar."
     },
     "lyrics": {
-      "no_current_track": "%1$sThere's no song currently playing on this server!",
-      "error_searching": "%1$sThere was an error searching for this track or there was no results found.",
-      "header": "%1$sLyrics for %2$s",
-      "footer": "Thanks for using Mantaro! Page: %1$d, Total: %2$d."
+      "no_current_track": "%1$sEr wordt momenteel geen nummer afgespeeld op deze server!",
+      "error_searching": "%1$sEr is een fout opgetreden bij het zoeken naar deze track of er zijn geen resultaten gevonden.",
+      "header": "%1$sSongtekst voor %2$s",
+      "footer": "Bedankt voor het gebruiken van Mantaro! Pagina: %1$d, Totaal: %2$d."
     },
     "prefix": {
-      "header": "%1$sThe default prefixes are %2$s (I respond to any of those!). The server prefix is `%3$s` (Only works on this server). You can set a new prefix by using `~>opts prefix set <prefix>`. Don't include the <>.\nIf you have any questions, you can join <https://support.mantaro.site>",
-      "none": "There's no custom prefix set on this server."
+      "header": "%1$sDe standaard voorvoegsels prefixes zijn %2$s (Ik reageer op beide!). De server prefix is `%3$s` (werkt alleen op deze server). Je kunt een nieuw prefix instellen met `~>opts prefix set <prefix>`. De <> niet gebruiken.\nAls je vragen hebt, kun je lid worden van <https://support.mantaro.site>",
+      "none": "Er is geen aangepaste prefix ingesteld op deze server."
     },
     "custom": {
       "no_args": "%1$sJe moet opgeven wat je wilt doen met dit commando. Check het help commando voor meer informatie!",
-      "incorrect_args": "%1$sIncorrect arguments. Check `~>help custom` or https://github.com/Mantaro/MantaroBot/wiki/Custom-Commands for more help on how to use this. If you have any further issues after reading the wiki, refer to <https://support.mantaro.site>",
+      "incorrect_args": "%1$sOnjuiste argumenten. Kijk op `~>help custom` of https://github.com/Mantaro/MantaroBot/wiki/Custom-Commands voor meer hulp bij het gebruik hiervan. Als je nog meer problemen hebt na het lezen van de wiki, ga dan naar <https://support.mantaro.site>",
       "error_running": "%1$sFout tijdens het uitvoeren van het eigen commando ... controleer de inhoud en lengte van de reactie (mag niet meer zijn dan 2000 tekens).",
-      "error_running_new": "%1$sError running custom command. Check response, content and length.\n**Error:**\n```%2$s```",
+      "error_running_new": "%1$sFoutmelding in eigen command. Controleer reactie, inhoud en lengte.\n**Foutmelding:**\n```%2$s```",
       "not_loaded": "De bot is nog niet volledig opgestart... eigen commando's zullen snel weer beschikbaar zijn!",
       "nsfw_enabled": "%1$sDit commando is succesvol gemarkeerd als NSFW.",
       "nsfw_disabled": "%1$sDit commando is succesvol gemarkeerd als SFW.",
       "nsfw_not_nsfw": "%1$sDit commando is gemarkeerd als NSFW waardoor je het alleen kunt gebruiken in NSFW kanalen.",
-      "new_error": "%1$sThe custom command you're trying to create has an error (v3, check content).\n**Error:**\n```%2$s```",
+      "new_error": "%1$sDe eigen command die u probeert te maken, bevat een foutmelding (v3, controleer inhoud).\n**Foutmelding:**\n```%2$s```",
       "ls": {
         "header": "Commando's voor deze guild",
-        "description": "**This shows all of the custom (user-made) commands of this server.** Every command here is not associated with the bot itself in any shape or form.\n\nCustom commands are commands created by users (usually server admins) which can handle a bunch of different situations, going as far as emulating action commands.\nFor more information on how to make custom commands refer to [this wiki page.](https://github.com/Mantaro/MantaroBot/wiki/Custom-Commands)\n \n**List:**",
-        "footer": "Total custom commands on this server: %1$s"
+        "description": "**Dit toont alle eigen (door de gebruiker gemaakte) commands van deze server.** Elke opdracht hier is in geen enkele vorm aan de bot zelf gekoppeld.\n\nEigen commands zijn commando's gemaakt door gebruikers (meestal serverbeheerders) die een heleboel verschillende situaties aankunnen, zoals het emuleren van actiecommando's.\nVoor meer informatie over het maken van eigen commands refereer je naar [deze wikipagina.](https://github.com/Mantaro/MantaroBot/wiki/Custom-Commands)\n \n**Lijs:**",
+        "footer": "Totaal aantal eigen commands op deze server: %1$s"
       },
       "invalid": "%1$sOngeldig commando selectie. Controlleer commando help (`help custom`).",
       "view": {
@@ -406,12 +418,13 @@
       },
       "raw": {
         "no_command": "%1$sJe zult me moeten vertellen welk commando je wilt bekijken.",
+        "not_found": "%1$sIk kan dit commando niet vinden.",
         "header": "Commando \"%1$s\":",
         "amount": "(Laat %1$d antwoorden zien van %2$d)",
-        "description": "This is a list of all the responses of this command on a raw format (what you input into the command)."
+        "description": "Dit is een lijst met alle reacties van dit commando in een onbewerkt formaat (wat je invoert in het commando)."
       },
       "clear": {
-        "success": "%1$s**%2$d Eigen Commando's verwijderd**"
+        "success": "%1$s** %2$d Eigen Commands gewist**. Vergrendelde/vastgezette opdrachten zijn niet verwijderd. Ontgrendel ze eerst als je dat wel wilt."
       },
       "make": {
         "start_text": "%1$sGestart met het **\"maken van Eigen Commando `%2$s`\"**!\nTyp `&~>stop` om het af te sluiten **zonder het commando op te slaan**.\nTyp `&~>save` om het af te sluiten en **het nieuwe commando op te slaan**. Typ een tekst die begint met `&` om deze toe ge voegen aan de Commando Antwoorden. Typ `~>nsfw` om het commando als NSFW te markeren en `~>sfw` om dit terug te draaien.\nDeze interactieve bewerking eindigt na 60 seconden inactiviteit zonder dat er iets wordt opgeslagen.",
@@ -421,46 +434,56 @@
         "no_name_specified": "%1$sJe hebt geen naam opgegeven aan het eigen commando dat je wilt maken!"
       },
       "eval": {
-        "not_specified": "You didn't specify anything to eval.",
-        "new_error": "%1$sThere was an error while evaluating this custom command.\n**Error**:\n```%2$s```",
-        "error": "%1$sEr is een error ontstaan bij het evalueren van het commando!%2$s"
+        "not_specified": "%1$sJe hebt niet opgegeven wat je wilt contorleren.",
+        "new_error": "%1$sEr is een error ontstaan bij het evalueren van het eigen commando.\n**Foutmelding**:\n```%2$s```",
+        "error": "%1$sEr is een error ontstaan bij het evalueren van het eigen commando!%2$s"
       },
       "remove": {
-        "no_command": "%1$sYou need to tell me what command you want to remove.",
+        "no_command": "%1$sJe zult me moeten vertellen welk commando je wilt verwijderen.",
         "success": "%1$sHet Eigen Commando `%2$s` is verwijderd."
       },
       "import": {
-        "no_command": "%1$sYou need to tell me what command you want to import.",
+        "no_command": "%1$sJe zult me moeten vertellen welk commando je wilt importeren.",
         "not_found": "%1$sEr zijn geen eigen commando's gevonden die voldoen aan je zoekopdracht.",
-        "header": "`%1$s` (Responses: %2$s) - Guild: `%3$s`",
+        "header": "`%1$s` (Reacties: %2$s) - Guild: `%3$s`",
         "selection": "Selecteer het Commando:",
         "note": "(Je kunt alleen eigen commando's selecteren van de Guild waarvan je lid bent)",
         "success": "Het eigen commando `%1$s` van Guild `%2$s` met een totaal van %3$d antwoorden is geïmporteerd."
       },
       "edit": {
-        "no_command": "%1$sYou need to specify what command you want to edit.",
+        "no_command": "%1$sJe moet aangeven welk commando je wilt bewerken.",
         "invalid_number": "%1$sJe moet een bestaand nummer opgeven om te wijzigen.",
         "no_index": "%1$sJe kunt geen niet bestaande index bewerken.",
         "empty_response": "%1$sKan geen leeg antwoord wijzigen.",
-        "not_enough_args": "%1$sYou need to specify the command, the index and the new response",
+        "not_enough_args": "%1$sJe moet het commando, de index en het nieuwe antwoord specificeren",
         "success": "%1$sAntwoord **#%2$d** van het commando `%3$s` is succesvol aangepast."
       },
       "deleteresponse": {
-        "no_command": "%1$sYou need to specify the command you want to remove a response from.",
-        "invalid_number": "%1$sYou need to specify a correct number to change.",
-        "no_index": "%1$sYou cannot remove a non-existent index.",
-        "not_enough_args": "%1$sYou need to specify the command and the index you want to delete.",
-        "success": "%1$sRemoved response **#%2$d** of the command `%3$s` correctly"
+        "no_command": "%1$sJe moet het commando specificeren waaruit u een antwoord wilt verwijderen.",
+        "invalid_number": "%1$sJe moet een juist nummer opgeven om te wijzigen.",
+        "no_index": "%1$sJe kunt geen niet bestaande index bewerken.",
+        "not_enough_args": "%1$sJe moet het commando en de index specificeren die u wilt verwijderen.",
+        "success": "%1$sReactie verwijderd **#%2$d** van het commando `%3$s` correct"
       },
       "rename": {
         "success": "%1$sNaam van commando gewijzigd van `%2$s` naar `%3$s`"
       },
       "add": {
-        "no_command": "%1$sYou need to specify the command you want to add.",
-        "not_enough_args": "%1$sYou need to specify the command name and the response of the command you want to add.",
+        "no_command": "%1$sJe moet aangeven welk commando je wilt toevoegen.",
+        "not_enough_args": "%1$sJe moet de commando naam specificeren en het antwoord van de opdracht die u wilt toevoegen.",
         "empty_content": "%1$sYou need to specify the content of this custom command",
         "success": "%1$sOpgeslagen aan commando `%2$s`",
         "too_many_commands": "%1%sThere are too many commands on this server, so you can't add more (+100). This can be bypassed by premium guilds (Check <https://patreon.com/mantaro>)."
+      },
+      "lockcommand": {
+        "no_permission": "%1$sYou need the Manage Server permission to lock and unlock commands.",
+        "no_command": "%1$sJe moet aangeven welk commando je wilt vast zetten.",
+        "success": "%1$sSuccesfully locked the `%2$s` command. You'll need to unlock it for further edits."
+      },
+      "unlockcommand": {
+        "no_command": "%1$sJe moet aangeven welk commando je wilt ontgrendelen.",
+        "not_locked": "%1$sThis command isn't locked.",
+        "success": "%1$sSuccesfully unlocked the `%2$s` command. You'll need to lock it later if you want to avoid further edits."
       },
       "character_not_allowed": "%1$sDit karakter is niet toegestaan in de naam van een eigen commando.",
       "already_exists": "%1$sHet commando `%2$s` bestaat al en is een standaard bot commando.",
@@ -471,7 +494,8 @@
       "invalid_image": "%1$sDit commando bevat een ongeldige afbeelding, probeer dit aan te passen...",
       "invalid_string": "%1$sDe string `{%2$s}` is niet geldig, of de uitvoer is langer dan 2000 karakters.",
       "invalid_json": "%1$sDe string `{%2$s}` is geen geldig JSON.",
-      "invalid_link": "%1$sDe string `%2$s` is geen geldige link."
+      "invalid_link": "%1$sDe string `%2$s` is geen geldige link.",
+      "locked_command": "%1$sYou can't edit or remove this command while it's locked, please run `~>custom unlockcommand <command name>` to unlock it."
     },
     "mute": {
       "no_permissions": "%1$sJe moet de machtiging 'ban' of 'kick members' hebben om iemand te kunnen muten.",
@@ -483,6 +507,7 @@
       "time_not_specified": "%1$sJe wilde een tijd toevoegen maar je hebt niet aangegeven hoelang dit moet zijn.",
       "negative_time_notice": "%1$sJe kunt iemand niet muten met een negatieve tijd. Of je moet kunnen tijdreizen.",
       "default_time_too_long": "%1$sDe lengte van de standaard mute tijd is te lang (Maximaal: 10 dagen)...",
+      "time_too_little": "%1$sThe specified mute timeout length is less than 20 seconds.\nYou sure you used the right format? For 20 minutes, use 20m, for 1 hour, use 1h, or any combination of both (1h45m) for example.",
       "time_too_long": "%1$sDe lengte van de mute tijd is te lang (Maximaal: 10 dagen)...",
       "already_muted": "%1$sDeze gebruiker heeft al een mute rol. Gebruik `~>unmute` als je hem of haar wilt unmuten.",
       "self_hierarchy_error": "%1$sIk kan de mute-rol niet toewijzen aan deze gebruiker omdat deze zich in een hogere hiërarchie bevindt dan ik, of de rol zich in een hogere hiërarchie bevindt!",
@@ -496,42 +521,25 @@
       "no_role_assigned": "%1$sAan deze gebruiker is geen mute-rol toegewezen."
     },
     "ping": {
-      "quotes": {
-        "1": "supersonic snelheid! :upside_down:",
-        "10": "sneller dan Sonic! :smiley:",
-        "69": "l-lewd! <:MantaroGasm:318869352851963904>",
-        "100": "super! :smiley:",
-        "200": "nice! :slight_smile:",
-        "300": "redelijk. :neutral_face:",
-        "400": "gemiddeld... :confused:",
-        "500": "beetje traag. :slight_frown:",
-        "600": "beetje sloom.. :frowning2:",
-        "700": "sloom.. :worried:",
-        "800": "te sloom. :disappointed:",
-        "900": "slecht. :sob: (helpme)",
-        "1600": "#BlameDiscord. :angry:",
-        "10000": "dit slaat nergens op :thinking: #BlameSteven",
-        "default": "sloom af*. :dizzy_face:"
-      },
       "display": [
-        "W-Was I fast enough?",
-        "What are you doing?",
-        "W-What are you looking at?!",
+        "W-Was ik snel genoeg?",
+        "Wat ben je aan het doen?",
+        "N-Naar wat ben je aan het kijken?!",
         "Huh.",
-        "Did I do well?",
-        "What do you think?",
-        "Does this happen often?",
+        "Heb ik het goed gedaan?",
+        "Wat denk je?",
+        "Gebeurd dit vaker?",
         "Am I performing p-properly?",
         "<3",
-        "*pats*",
+        "*Aaien*",
         "Pong.",
         "Pang.",
         "Pung.",
         "Peng.",
-        "Ping-pong? Yay!",
-        "U-Uh... h-hi"
+        "Pingpong? Yay!",
+        "Euhm.. h-hallo"
       ],
-      "text": "%1$s*%2$s* - Mijn ping: %3$d ms (%4$s) `Websocket:%5$dms`"
+      "text": "%1$s*%2$s* -- **My ping: %3$,d ms** (Websocket: %4$,d ms)"
     },
     "love": {
       "no_mention": "%1$sJe moet minimaal 1 gebruiker vermelden.",
@@ -559,10 +567,38 @@
       "status": {
         "no_marriage": "%1$sJe bent niet getrouwd, dus ik denk dat je status \"niet getrouwd\" is...",
         "header": "Huidige huwelijks status",
-        "description_format": "%1$sHuwelijks status tussen **%2$s#%3$s** en **%4$s#%5$s**",
+        "description_format": "%1$sMarriage status between **%2$s** and **%3$s**",
         "date": "Huwelijksdatum",
         "love_letter": "Liefdesbrief",
-        "waifus": "Waifu Eigendom"
+        "waifus": "Waifu Eigendom",
+        "house": "Huis Naam",
+        "car": "Auto Naam",
+        "pet": "Huisdier Naam (Type)"
+      },
+      "timezone": {
+        "no_content": "%1$sYou need to specify what timezone you want this marriage to track.",
+        "invalid": "%1$sNot a valid timezone or Zone ID.",
+        "success": "%1$sSuccessfully set marriage timezone to %2$s. Pet time will be the same as the marriage timezone."
+      },
+      "general": {
+        "not_married": "%1$sYou're not married."
+      },
+      "buyhouse": {
+        "not_married": "%1$sYou can only buy a house while you're married. This might change in the future.",
+        "no_house": "%1$sYou need a house item in your inventory. Use `~>market buy house` to get one.",
+        "not_enough_money": "%1$sYou don't have enough money to buy a house. (Current house price: %2$d credits)",
+        "no_name": "%1$sYou need to give your house a name! For example, `~>marry house cozy house`",
+        "confirm": "%1$sAre you sure you wanna buy this house? The price deducted from your wallet is %2$d and the name you gave the house is %3$s. Type `yes` to confirm and `no` to cancel.",
+        "success": "%1$sYou successfully bought a house for %2$d. The name of your new cozy house is %3$s, enjoy!",
+        "cancel_success": "%1$sCancelled operation."
+      },
+      "buycar": {
+        "no_car": "%1$sYou need to buy a car first! Use `~>market buy car` to get one.",
+        "not_enough_money": "%1$sYou don't have enough money to buy a car. (Current car price: %2$d credits)",
+        "no_name": "%1$sYou need to give your car a name! For example, `~>marry car vroom`",
+        "confirm": "%1$sAre you sure you wanna buy this car? The price deducted from your wallet is %2$d and the name you gave the car is %3$s. Type `yes` to confirm and `no` to cancel.",
+        "success": "%1$sYou successfully bought a car for %2$d. The name of your new fast car is %3$s, enjoy!",
+        "cancel_success": "%1$sCancelled operation."
       },
       "no_mention": "%1$sNoem de gebruiker met wie je wilt trouwen.",
       "marry_yourself_notice": "%1$sJe kunt niet met jezelf trouwen hoe graag je dit ook zou willen.",
@@ -577,8 +613,11 @@
       "denied": "%1$sHet huwelijksaanzoek van **%2$s** is afgewezen."
     },
     "divorce": {
+      "confirm": "%1$sAre you sure you want to end this marriage? The money spent in pets, houses and cars will be split in two. Type `yes` to continue and `no` to cancel. **Your pet will dissapear, since it's tied to the marriage**",
+      "cancelled": "%1$sCancelled divorce.",
       "not_married": "%1$sJe bent met niemand getrouwd, waarom ga je niet op zoek naar de ware?",
-      "success": "%1$sNu ben je weer single. Dat kan ook fijn zijn."
+      "success": "%1$sNow you're single. That's nice I guess.\n%2$s",
+      "split": "The money left was split between the two parties by selling their assets (pet, house, car). Each one got **%1$d** credits on their wallet."
     },
     "waifu": {
       "bot": "%1$sEen bot kan helaas geen waifu zijn, hoe graag je dit ook zou willen...",
@@ -611,7 +650,7 @@
         "player_locked": "%1$sJe kunt dit niet doen op dit moment.",
         "scrapped": "%1$sHet unclaimen van deze waifu is gecancelled.",
         "success": "%1$sHeeft `%2$s` succesvol ge-unclaimed voor **%3$s credits**.",
-        "not_found": "%1$sI can't find any user with this query. If you need to unclaim an unknown user, use their ID and append `-unknown` at the end."
+        "not_found": "%1$sI can't find any user with this query. If you need to unclaim an unknown user, use their ID (`~>waifu -id`) and append `-unknown` at the end."
       },
       "buyslot": {
         "locked": "%1$sJe kunt deze actie op dit moment niet uitvoeren.",
@@ -621,7 +660,7 @@
       },
       "optout": {
         "notice": "%1$sYou've opted out of the entire waifu system, so you can't use this.",
-        "warning": "%1$sDo you want to opt-out from the waifu system? THIS IS PERMANENT AND CAN'T BE REVERTED. \nIf you only want to be opted out of new claims and wanna use the waifu system as usual, please use `~>profile claimlock` instead.\nYou won't be able to claim or be claimed, and all the claims over you will be removed.\nType `yes` or `no`. Typing yes will opt you out, no will cancel it.",
+        "warning": "%1$sDo you want to opt-out from the waifu system? THIS IS PERMANENT AND CAN'T BE REVERTED. \nIf you only want to be opted out of new claims and wanna use the waifu system as usual, please use `~>profile claimlock` instead.\nYou won't be able to claim or be claimed, and all the claims over you will be removed.\nType `Yes, I want to opt out of the waifu system completely and irreversibly` or `no`. Typing the confirmation message will opt you out, no will cancel it.",
         "success": "%1$sYou successfully opted out of the waifu system.",
         "cancelled": "%1$sCancelled opt-out operation.",
         "claim_notice": "%1$sThe user you're trying to claim opted out."
@@ -646,37 +685,38 @@
     },
     "coinflip": {
       "over_limit": "%1$sStop eens! Het limiet is 1,000 coin flips",
-      "no_repetitions": "%1$sJe moet aangeven hoevaak je dit wilt herhalen",
+      "no_repetitions": "%1$sYou need to specify an Integer for the amount of repetitions (For example, `~>roll 100`)",
       "success": "%1$s Het resultaat van **%2$d** keer flippen gaf as resultaat; **%3$d** kop en **%4$d** munt"
     },
     "inventory": {
       "bot_notice": "%1$sHere, bots have no inventory. Well, sometimes you might wish they had one but then it would only be a `~>market dump`",
-      "brief": "**%1$s's inventory:** %2$s",
+      "brief": "**%1$s's item collection** %2$s\n\n*For a detailed version, use `~>inventory -info`. Enjoy your day!*",
       "calculate": "%1$s%2$s zal **%3$d credits** krijgen als alle items zijn verkocht.",
       "header": "%1$s's Inventaris",
       "format": "**Prijs**: 📥 %1$d 📤 %2$d\n%3$s",
       "empty": "%1$sJe inventaris is leeg! :(",
-      "brief_notice": "You can use `~>inventory -brief` to get a mobile friendly version."
+      "brief_notice": "You can use `~>inventory -brief` to get a mobile friendly version.",
+      "sorted_by": " *(sorted by: %1$s)*"
     },
     "cast": {
       "no_item_found": "%1$sIk kan geen voorwerpen vinden die hieraan voldoen.",
-      "item_not_cast": "%1$sJe kunt dit voorwerp niet casten. Je kan de castable voorwerpen bekijken via `~>cast ls`.",
-      "not_enough_money": "%1$sJe hebt niet genoeg geld om dit te casten. **(Kost: %2$s)**",
-      "no_item": "%1$sJe hebt het voorwerp *%2$s* niet dat nodig is om verder te gaan met deze cast.",
+      "item_not_cast": "%1$sJe kunt dit voorwerp niet gieten. Je kan de gietbare voorwerpen bekijken via `~>cast ls`",
+      "not_enough_money": "%1$sJe hebt niet genoeg geld om dit te gieten. **(Kost: %2$s)**",
+      "no_item": "%1$sJe hebt het voorwerp *%2$s* niet dat nodig is om verder te gaan met dit afgietsel.",
       "not_enough_items": "%1$sJe hebt niet genoeg van het voorwerp *%2$s* om verder te gaan. **(Nodig: %3$s, Huidig: %4$s)**",
-      "success": "%1$sJe hebt succesvol *%2$s %3$s gecast* voor %4$s credits. *Cast gebruikt: %5$s*",
-      "no_tool": "%1$sJe hebt %2$s nodig om verder te gaan met deze cast!",
+      "success": "%1$sJe hebt succesvol *%2$s %3$s gegoten* voor %4$s credits. *giet gebruikt: %5$s*",
+      "no_tool": "%1$sYou need to have a %2$s to proceed with this cast! Remember: You need to have two wrenches of the same required type to proceed with the cast.",
       "item_broke": "\nHelaas, je moersleutel brak tijdens het proces, maar je hebt wel je voorwerp gekregen!",
       "too_many": "%1$sYou'd have more than 5000 of this item if you proceed. Try casting less of this object?",
-      "low_tier": "%1$sYou need at least a tier 2 wrench (at least a Comet Wrench) to cast more items per call. You currently have a tier %2$s wrench.",
+      "low_tier": "%1$sYou need at least a tier 2 wrench (at least a Comet Wrench) to cast more items per call. You currently have a tier %2$s wrench. Remember: You need to have two wrenches of the same required type to proceed with the cast.",
       "not_enough_wrench_level": "%1$sYour wrench is not powerful enough to cast this item. Maybe specify a more powerful one? *Wrench level: %2$s, Required level: %3$s*. Example: `~>cast \"star pick\" \"comet wrench\"`",
       "too_many_amount": "%1$sYou can't cast that many of this item at once! Limit: %2$s, Attempt: %3$s. A sparkle wrench makes the limit double! Unless you're already using one.",
       "ls": {
-        "header": "Castable Voorwerp Lijst",
-        "cost": "Cast Kost: ",
-        "desc": "Dit is een lijst van de voorwerpen die je kan casten met `~>cast`. Je kan de volledige of korte naam gebruiken om te casten (bijvoorbeeld: `~>cast diamond pickaxe` of `~>cast diamond p` werkt)\n**Casten kost de helft van de prijs van het voorwerp. De castprijs wordt onderaan weergeven.**"
+        "header": "Gietbare Voorwerp Lijst",
+        "cost": "Giet Kost: ",
+        "desc": "Dit is een lijst van de voorwerpen die je kan gieten met `~>cast`. Je kan de volledige of korte naam gebruiken om te gieten (bijvoorbeeld: `~>cast diamond pickaxe` of `~>cast diamond p` werkt)\n**Gieten kost de helft van de prijs van het voorwerp. De gietprijs wordt onderaan weergeven.**."
       },
-      "dust": "%1$sJe kan niet casten met zo'n stoffige inventaris! *(Dust level: %2$s%%)*. Waarom kuis je het niet op met `~>useitem mop`?",
+      "dust": "%1$sJe kan niet gieten met zo'n stoffige inventaris! *(Dust level: %2$s%%)*. Waarom kuis je het niet op met `~>useitem mop`?",
       "wrench_multiple_use": "Tip: *You can't use the wrench you are trying to cast with as ingredient!*"
     },
     "market": {
@@ -711,32 +751,36 @@
       "buy": {
         "no_item_amount": "%1$sYou need to specify the amount of that item (if it's only one, you don't need to specify the amount) and the item that you want to buy.",
         "invalid": "%1$sNot a valid number of items to buy.",
-        "non_existent": "%1$sYou cannot buy an non-existent item. If you're lost, you can try typing the short name or wrapping the name in quotes.",
+        "non_existent": "%1$sYou cannot buy an non-existent item. If you're lost, you can try typing the short name or wrapping the name in quotes. Also, the item amount goes before the item name, example: `~>market buy 15 energy`",
         "no_buy_price": "%1$sYou cannot buy an item that cannot be bought.",
         "item_limit_reached": "%1$sYou cannot buy more of that object.",
         "success": "%1$sBought %2$,d %3$s for %4$,d credits successfully. You now have %5$,d credits.",
+        "success_breakable": "%1$sBought %2$,d %3$s for %4$,d credits successfully. You now have %5$,d credits. You can equip this using `~>equip <item name>`",
         "not_enough_money": "%1$sYou don't have enough money to buy this item."
       },
       "header": "Mantaro's Markt",
-      "reference": "\nYou can buy and sell items using `~>market buy <item>` and `~>market sell <item>`. Check `~>help market` for more info.",
-      "sell_price": "- **Sell Price:**",
-      "buy_price": "- **Buy Price:**"
+      "reference": "\nYou can buy and sell items using `~>market buy <item>` and `~>market sell <item>`. Check `~>help market` for more info, you can also see shorter market lists there, like `~>market tools`.",
+      "sell_price": "- **Verkoop Prijs:**",
+      "buy_price": "- **Koop Prijs:**"
     },
     "itemtransfer": {
       "transfer_yourself_note": "%1$sJe kunt geen voorwerpen aan jezelf geven.",
       "bot_notice": "%1$sJe kunt geen voorwerpen aan een bot geven.",
       "locked_notice": "%1$sJe kunt nu geen voorwerpen geven. (Speler is gelocked)",
       "hidden_item": "%1$sJe kunt dit voorwerp niet weggeven",
-      "overflow": "%1$sDeze persoon heeft de maximaal mogelijke hoeveelheid van dit voorwerp (5000).",
+      "overflow": "%1$sThis player has the maximum amount (5000) of this item.",
+      "overflow_after": "%1$sAfter transferring the item, the player would have more than the maximum amount (5000) of this item.",
       "success": "%1$s%2$s gaf **%3$s** **%4$s** aan %5$s",
       "multiple_items_error": "%1$sJe hebt geen van deze voorwerpen in je inventaris",
       "error": "%1$sJe hebt niet genoeg van dit voorwerp in je inventaris om dit te doen!",
       "no_item_mention": "%1$sJe moet de naam van het voorwerp, en de naam van de persoon opgeven naar wie je het item wilt verzenden ."
     },
     "transfer": {
+      "new_account_notice_yourself": "%1$sYour account must be at least 7 days old to transfer money.",
+      "new_account_notice_other": "%1$sThe account you're transferring to must be at least 7 days old.",
       "transfer_yourself_note": "%1$sJe kunt geen geld naar jezelf overmaken.",
       "bot_notice": "%1$sJe kunt geen geld overmaken naar een bot.",
-      "no_amount": "%1$sJe moet het bedrag opgeven.",
+      "no_amount": "%1$sYou need to specify the amount. Use the `transferitems` command instead if you meant to transfer an item.",
       "no_money_specified_notice": "%1$sJe kunt niet 'geen geld' overmaken :P",
       "over_transfer_limit": "%1$sJe kunt zoveel geld niet overmaken. (Limiet: %2$d credits)",
       "own_locked_notice": "%1$sJe kunt nu geen geld overmaken",
@@ -746,7 +790,7 @@
       "receipt_over_limit": "%1$sDeze persoon heeft al te veel geld...",
       "success": "%1$sEr is succesvol **%2$,d** *(%3$,d na 8%% belasting)* overgemaakt naar **%4$s**.",
       "item_transfer": "%1$sJe kunt geen voorwerpen weggeven met behulp 'transfer', gebruik hiervoor het 'itemtransfer' commando.",
-      "party": "Je kunt maar één keer per 4 minuten geld overmaken naar dezelfde persoon (%1$s)."
+      "party": "You can only transfer to the same person (%1$s) once every 10 minutes."
     },
     "useitem": {
       "ls": {
@@ -760,7 +804,7 @@
       "no_item": "%1$sJe hebt dit voorwerp niet in je inventaris...",
       "not_enough_items": "%1$sYou don't have enough of this item.",
       "too_little": "%1$sYou can't use less than 1 item.",
-      "invalid_amount": "%1$sThe amount needs to be a valid number between `1` and `9`!"
+      "invalid_amount": "%1$sThe amount needs to be a valid number between `1` and `15`!"
     },
     "opts": {
       "note": "%1$sHé, als je hulp nodig hebt bij het gebruiken van opts, bekijk <https://github.com/Mantaro/MantaroBot/wiki/Configuration> voor een gids hoe je opts kunt gebruiken.\nLet op: Alleen Administrators, personen met Server Beheer of personen met de Bot Commander rol kunnen dit commando gebruiken!",
@@ -778,7 +822,7 @@
       "list": {
         "name": "\nAutorol naam: ",
         "role": " | Geeft rol **",
-        "category": "Category: ",
+        "category": "Categorie: ",
         "header": "Autorol lijst",
         "no_autoroles": "Er zijn geen autorol-instellingen in deze server.",
         "description": "This are the current user-assignable auto roles on this server. You can use these by doing `~>iam <name of the role>`."
@@ -817,31 +861,13 @@
       "cancelled": "%1$sGeannuleerde poll",
       "incorrect_time_format": "%1$sIncorrect time format. Remember, the proper time format it's a number followed by `h, m or s` (hours, minutes or seconds). Example: `-time 40m`"
     },
-    "osustats": {
-      "user": {
-        "header": "osu! statistieken voor %1$s",
-        "rank": "Rank",
-        "acc": "Nauwkeurigheid",
-        "level": "Level",
-        "ranked": "Ranked Score",
-        "country_rank": "Land Rank"
-      },
-      "retrieving_info": "%1$sOphalen van informatie van osu! server...",
-      "timeout": "%1$sDe osu! api lijkt een dutje te doen. Misschien later nog een keer proberen?",
-      "best_format": "# %1$s [%2$s] -> %3$s (★%4$.2f*) \n | ####### | [%5$dpp] | Rank: %6$s -> Max Combo: %7$d",
-      "best": "**10 beste osu! scores voor: %1$s** (Mode: %2$d)\n```md\n%3$s```",
-      "error": "%1$sUh-oh... het lijkt alsof ik net scramblesoep heb ontvangen als reactie ... (Error tijdens het ophalen van resultaten)",
-      "recent_format": "# %1$s -> %2$s\n | (★%3$s) - %4$s | Datum: %5$s -> Max Combo: %6$d\n",
-      "recent": "**10 meest recente osu! scores voor: %1$s** (Mode: %2$d)\n```md\n%3$s```",
-      "error_detailed": "Uh-oh... het lijkt alsof ik net scramblesoep heb ontvangen als reactie... (%1$s)"
-    },
     "profile": {
       "timezone": {
-        "not_specified": "%1$sJe moet de tijdzone opgeven.",
+        "not_specified": "%1$sYou need to specify the timezone. A valid timezone would be, for example `GMT-3` or `America/Chicago` (ZoneId).",
         "reset": "%1$sReset tijdzone.",
-        "invalid": "%1$sOngeldige tijdzone.",
+        "invalid": "%1$sInvalid timezone. A valid timezone would be, for example `GMT-3` or `America/Chicago` (ZoneId). Usually you can get your timezone by looking \"what timezone am I in\"",
         "success": "%1$sTijdzone opgeslagen, je profiel tijdzone is nu: **%2$s**",
-        "reset_success": "%1$sSuccessfully reset your timezone."
+        "reset_success": "%1$sJe timezone is succesvol gereset."
       },
       "description": {
         "no_argument": "%1$sJe moet een argument opgeven! (instellen of verwijderen)\nbijvoorbeeld, ~>profile description set Hallo daar!",
@@ -851,7 +877,7 @@
         "clear_success": "%1$sBeschrijving succesvol verwijderd."
       },
       "displaybadge": {
-        "not_specified": "%1$sJe moet een badge opgeven!",
+        "not_specified": "%1$sYou need to specify your main badge! For example, `~>profile displaybadge claimer`",
         "reset_success": "%1$sEr verschijnt nu geen badge bovenaan je profiel!",
         "important_success": "%1$sJe display-badge is nu de belangrijkste.",
         "no_such_badge": "%1$sEr bestaat zo geen badge...\nJe beschikbare badges: %2$s",
@@ -864,20 +890,25 @@
         "success": "%1$sMantaro zal nu tegen je praten in `%2$s`",
         "invalid": "%1$sDie taal bestaat niet! Je kunt `reset` gebruiken om je taalinstellingen te resetten."
       },
+      "inventorysort": {
+        "not_valid": "%1$sThis sort type is not valid. Available types: `%2$s`",
+        "success": "%1$sSuccessfully changed your inventory sort type, now it is: **%2$s**"
+      },
       "stats": {
         "header": "Profile Statistics for %1$s",
         "wins": "Casino Wins",
         "market": "Market Used",
-        "potion": "Active Potion",
-        "potion_type": "Potion Type",
+        "potion": "Actieve Toverdrank",
+        "potion_type": "Toverdrank Type",
         "buff": "Buff",
         "buff_type": "Buff Type",
-        "experience": "Experience",
-        "mine_xp": "Mining Experience",
-        "fish_xp": "Fishing Experience",
-        "sharks_caught": "Sharks Caught",
-        "crates_open": "Crates Opened",
-        "times_mop": "Times Mopped",
+        "experience": "Ervaring",
+        "mine_xp": "Mijnbouw Ervaring",
+        "fish_xp": "Vis Ervaring",
+        "chop_xp": "Chopping Experience",
+        "sharks_caught": "Gevangen Haaien",
+        "crates_open": "Geopende Kisten",
+        "times_mop": "Aantal Keren Gedweild",
         "daily": "Daily Streak",
         "daily_at": "Last Daily",
         "waifu_claimed": "Times Waifu Claimed",
@@ -885,16 +916,16 @@
         "dust": "Dust Level",
         "lang": "Display Language",
         "reminders": "Times Reminded",
-        "times": "time(s)",
-        "days": "day(s)",
-        "times_used": "Times Used",
-        "equipment": "Equipment",
+        "times": "keer",
+        "days": "dag(en)",
+        "times_used": "Aantal keer gebruikt",
+        "equipment": "Uitrusting",
         "seasonal_equipment": "Season Equipment",
         "autoequip": "Auto Equip",
-        "never": "Never"
+        "never": "Nooit"
       },
       "hide_tag": {
-        "success": "%1%sTag hidden status is now: `%2$s`"
+        "success": "%1$sTag hidden status is now: `%2$s`"
       },
       "equip": {
         "no_content": "%1$sYou have to specify which item to equip!",
@@ -903,18 +934,21 @@
         "success": "%1$sYou successfully equipped %2$s *%3$s*, which will be remembered next time you use the proper currency command.",
         "not_suitable": "%1$sYou can't equip this.",
         "not_equipped": "%1$sYou don't have this equipped.",
-        "already_equipped": "%1$sYou already have an item of this type equipped! Try `~>unequip <type>` (Type can be rod or pick) if you wanna unequip it."
+        "already_equipped": "%1$sYou already have an item of this type equipped! Try `~>unequip <type>` (Type can be rod, axe or pick) if you wanna unequip it."
       },
       "unequip": {
-        "no_content": "%1$sYou need to specify a tool type to unequip, can be either `pick, rod`",
-        "invalid_type": "%1$sInvalid type. Valid types are `pick, rod`",
+        "not_equipped": "%1$sYou don't have anything equipped on this slot.",
+        "no_content": "%1$sYou need to specify a tool type to unequip, can be either `pick, axe, rod`",
+        "invalid_type": "%1$sInvalid type. Valid types are `pick, axe, rod`",
+        "confirm": "%1$sAre you sure you want to **unequip** your %2$s %3$s? Type `yes` to confirm, `no` to cancel.",
         "success": "%1$sSuccessfully unequipped your %2$s slot.",
         "equipment_recover": "\nSince you never used your equipment, you got your %1$s back!",
         "broken_equipment_recover": "\nYour equipment was used, but you got a %1$s back, you can repair it if you need it later!",
-        "broken_equipment_recover_none": "\nThis equipment type had no broken type to recover from, and was used, so it vanished into the void, but you got %1$s credits back."
+        "broken_equipment_recover_none": "\nThis equipment type had no broken type to recover from, and was used, so it vanished into the void, but you got %1$s credits back.",
+        "cancelled": "%1$sCancelled operation."
       },
       "display": {
-        "not_premium": "%1$sProfile widget personalization is only available to premium users.",
+        "not_premium": "%1$sProfile widget personalization is only available to premium users. For more perks, you can check <https://github.com/Mantaro/MantaroBot/wiki/Premium-Perks>",
         "not_enough": "%1$sNot enough valid widgets to put on your profile (minimum: 3). If you're lost, check `~>profile widgets ls`",
         "success": "%1$sSuccessfully set your new profile layout. New layout is `%2$s`",
         "ls": "%1$sList of profile components:\n%2$s **Widgets in Default Order:** `%3$s`\n%2$s **Your widgets:** `%4$s`\nYou can use `~>profile widgets reset` to reset your profile display references",
@@ -923,44 +957,46 @@
       },
       "claimlock": {
         "removed": "%1$sSuccesfully reset your claim lock status.",
-        "success": "%1$sYou can't be waifu claimed anymore. This used up a claim key.",
-        "no_key": "%1$sYou don't have a claim key to do this."
+        "success": "%1$sYou can't be waifu claimed anymore. This used up a claim key. Use `~>profile claimlock remove` to remove it later.",
+        "no_key": "%1$sYou don't have a claim key to do this. You can buy one from the market using `~>market buy \"claim key\"`",
+        "already_locked": "%1$sYou're already claim locked. Use `~>profile claimlock remove` to remove it."
       },
       "autoequip": {
         "disable": "%1$sSuccesfully disabled auto-equip.",
         "success": "%1$sEnabled auto-equip."
       },
-      "badge_header": "%1$sDisplay Badge",
+      "badge_header": "%1$s Display Badge",
       "bot_notice": "%1$sBots hebben geen profiel.",
       "header": "%1$s's Profiel",
       "no_desc": "Geen beschrijving ingesteld",
       "credits": "Credits",
+      "old_credits": "Legacy Credits",
       "level": "Level",
       "xp": "XP",
       "rep": "Reputatie",
       "birthday": "Verjaardag",
       "married": "Getrouwd met",
       "nobody": "Niemand",
-      "inventory": "Inventory",
-      "badges": "Top 5 Badges",
+      "inventory": "Item Collection (Top 10)",
+      "badges": "Badge Collection (Top 5)",
       "no_badges": "(nog!) geen badges",
       "no_timezone": "Geen tijdzone ingesteld",
       "timezone_user": "Gebruiker's tijdzone: %1$s",
       "not_specified": "Niet ingesteld.",
-      "potion": "Actieve Potion",
-      "no_potion": "Geen actieve Potions."
+      "potion": "Actieve Toverdrank",
+      "no_potion": "Geen actieve Toverdrankjes.",
+      "hidelegacy": "%1$sLegacy credits show status is now: `%2$s`"
     },
     "badges": {
       "info": {
-        "not_specified": "%1$sJe moet een badge opgeven om de info ervan te zien.",
+        "not_specified": "%1$sYou need to specify a badge to see the info of. For example, `~>badge info claimer`",
         "not_found": "%1$sEr is geen dergelijke badge...",
         "header": "Badge informatie voor %1$s",
         "achieved": "Behaald"
       },
       "brief_success": "**%1$s's badges:**\n%2$s",
       "profile_notice": "Als je denkt dat je een nieuwe badge hebt gekregen maar deze verschijnt niet, probeer dan eerst het commando `~>profile` te gebruiken en daarna dit commando\n",
-      "info_notice": "Gebruik `~>badges info <badge naam>` om meer informatie te krijgen over een badge.\n",
-      "upvote_notice": "**Je kunt een gratis badge ontvangen voor het [up-voten van Mantaro op discordbots.org](https://discordbots.org/bot/mantaro)!** (Het kan even duren voordat je de badge ontvangt)\n\n",
+      "info_notice": "Use `~>badges info <badge name>` to get more information about a badge. [You can also check the wiki](https://github.com/Mantaro/MantaroBot/wiki/Badge-reference-and-documentation)\n",
       "donate_notice": "**Je kunt een badge krijgen door het [supporten van de development van Mantaro!](https://patreon.com/mantaro)!** (Het kan even duren voordat je de badge ontvangt)\n\n",
       "no_badges": "(Nog!) geen badges om te laten zien",
       "header": "Badges behaald door %1$s",
@@ -981,26 +1017,26 @@
     },
     "birthday": {
       "reset": "%1$sVerjaardag succesvol gereset",
-      "no_global_birthdays": "%1$sHet ziet er hier een beetje leeg uit...",
-      "no_guild_month_birthdays": "%1$sEr zijn hier geen verjaardagen deze maand (%2$s) :(\n%3$sAls je de verjaardagsaankondiging net hebt ingesteld dan moet je even wachten om dit commando te gebruiken. (Cache vernieuwt elke 23 uur)",
+      "no_guild_birthdays": "%1$sThings seems a bit empty here.\nRemember that cache refreshes every 23h and that now people have to run `~>birthday allowserver` to allow this server to announce their birthdays.",
+      "no_guild_month_birthdays": "%1$sThere are no birthdays for this month (%2$s) here :(\n%3$sIf you just setup the birthday announcer, please wait a bit until running this again. (Cache refreshes every 23h)\nRemember that now people have to run `~>birthday allowserver` to allow this server to announce their birthdays.",
       "cache_not_running": "%1$sDe Verjaardag cacher lijkt niet te werken (internal error) :(",
       "error": "%1$sEr is iets misgegaan tijdens het opvragen van verjaardagen (internal error) :(",
-      "header": "**%1$s's verjaardag voor %2$s**\n",
-      "full_header": "**%1$s's Birthdays**\n%2$s",
-      "invalid_date": "%1$sGeen geldige datum of het is niet in het juiste formaat.\nVergeet niet dat dit het juiste datum formaat is: `dd/mm/jjjj`",
-      "error_date": "%1$s%2$s is ofwel geen geldige datum of ik kan het niet goed parseren. Probeer het met het juiste formaat. Vergeet niet het jaar in te voeren, hoewel je elk jaar kunt instellen zal dit niets beïnvloeden.\nVergeet niet dat dit het juiste datum formaat is: `dd/mm/jjjj`",
-      "added_birthdate": "%1$sDe geboortedatum is toegevoegd. Nieuwe verjaardag: %2$s *(Formaat: dd/mm/jjjj)",
+      "header": "**%1$s's Birthdays for %2$s**\nBirthday cache is updated every 23 hours, so if your birthday doesn't appear here, don't panic and wait it out.\n",
+      "full_header": "**%1$s's Birthdays**\n%2$s\nRemember that birthdays are cached every 23 hours and that they have to run `~>birthday allowserver`",
+      "invalid_date": "%1$sNot a valid date or it's not in the correct format.\nRemember that the date format is `dd-mm` (For example, use `~>birthday 16-11` for the 16th of November)",
+      "error_date": "%1$s%2$s is either not a valid date or I can't parse it properly. Please try with the correct formatting.\nRemember that the date format is `dd/mm` (For example, use `~>birthday 16-11` for the 16th of November)",
+      "added_birthdate": "%1$sSuccessfully added birth date. New birthday date: %2$s *(Format: dd-MM)* [day-month]. For this server to announce your birthday, you now have to run `~>birthday allowserver`",
       "invalid_month": "%1$sDat is geen geldige maand! (Geldige maanden zijn nummers van 01 tot 12)",
-      "no_content": "%1$sJe moet je geboortedatum opgeven. Gebruik `remove` om je verjaardag te resetten, of `month` om de lijst met verjaardagen van deze maand te controleren."
+      "no_content": "%1$sYou need to specify your birthday, `remove` to reset your birthday or `month` to check the birthday month list. Then, for this server to announce your birthday, you now have to run `~>birthday allowserver`",
+      "new_format": "%1$sThe new date format is just `dd-mm` (day-month, for example 20-10 as for 20th of October). No need to enter your year now, so you can omit that part.",
+      "allowed_server": "%1$sAllowed the current server to announce your birthday. To deny it in the future, just run `~>birthday denyserver` on this server.",
+      "denied": "%1$sDenied the current server from announcing your birthday. To allow it in the future, just run `~>birthday allowserver` on this server.",
+      "already_denied": "%1$sThis server already can't announce your birthday. If you want to allow it, run `~>birthday allowserver` instead. This is the default.",
+      "already_allowed": "%1$sYou already allowed this server to show your birthday."
     },
     "choose": {
-      "nothing_to": "%1$sJe moet me vertellen waar ik tussen moet kiezen. (bijvoorbeeld: `~>choose anime manga`)",
+      "nothing_to": "%1$sYou need to tell me what to choose between. (example: `~>choose anime manga \"sleeping out\"`)",
       "success": "%1$sI kies `%2$s`"
-    },
-    "dictionary": {
-      "no_word": "%1$sJe moet een woord opgeven.",
-      "header": "Definitie voor %1$s",
-      "description": "**Woordsoort:** `%1$s`\n**Trefwoord:** `%2$s`"
     },
     "remindme": {
       "nothing_specified": "%1$sHoe kan ik je herinneren als je me niet verteld waar ik je aan moet herinneren? Ow! Ik kan je er aan herinneren om een herinnering in te stellen!",
@@ -1010,7 +1046,7 @@
         "select": "Selecteer de herinnering die je wilt annuleren."
       },
       "no_time": "Je gaf me geen `-time` argument! (bijvoorbeeld: `-time 1h`)",
-      "too_little_time": "%1$sDat is te weinig tijd! (Minimaal: 10 seconden)",
+      "too_little_time": "%1$sThat's too little time (Minimum: 1 minute, Example: `-time 1m`)",
       "too_long": "Dat is te veel tijd... (Maximaal: 3 maanden)",
       "success": "%1$sIk zal je herinneren (%2$s#%3$s) aan `%4$s` over %5$s",
       "too_many_reminders": "%1$sYou have too many reminders! Try cancelling some?"
@@ -1018,7 +1054,8 @@
     "time": {
       "invalid_timezone": "%1$sDat is geen geldige tijdzone.",
       "success": "%1$sHet is %2$s in de %3$s tijdzone.",
-      "error": "%1$sIk heb een fout gevonden bij het zoeken naar de tijdzone in het grote boek ... of het kan ongeldig zijn."
+      "error": "%1$sIk heb een fout gevonden bij het zoeken naar de tijdzone in het grote boek ... of het kan ongeldig zijn.",
+      "user_no_timezone": "%1$sThe user you mentioned has no timezone set on their profile."
     },
     "urban": {
       "no_args": "%1$sJe moet me vertellen in welke term ik moet zoeken in Urban Dictionary.",
@@ -1026,18 +1063,8 @@
       "too_many_args": "%1$sTe veel argumenten! Het pagina formaat is `naam->pagina nummer`",
       "main_def": "Hoofddefinitie.",
       "footer": "Informatie komt uit Urban Dictionary",
-      "nsfw_notice": "%1$sDit commando kan alleen gebruikt worden in channels met de NSFW tag in verband met het soort resultaten."
-    },
-    "weather": {
-      "header": "%1$s Weersvoorspelling voor %2$s",
-      "clouds": "Wolken",
-      "temperature": "Temperatuur",
-      "humidity": "Luchtvochtigheid",
-      "wind_speed": "Windsnelheid",
-      "pressure": "Luchtdruk",
-      "footer": "Informatie komt van OpenWeatherMap (Procestijd: %1$dms)",
-      "error": "%1$sFout bij ophalen van resultaten.(Niet gevonden?)",
-      "no_content": "%1$sJe moet aangeven voor welke stad en welk land je die weersvoorspellingen wilt weten!"
+      "nsfw_notice": "%1$sDit commando kan alleen gebruikt worden in channels met de NSFW tag in verband met het soort resultaten.",
+      "error": "%1$sThere was an error processing the response from UD. Try again?"
     },
     "activatekey": {
       "check": {
@@ -1049,7 +1076,7 @@
       "guild_already_premium": "%1$sDeze server heeft al een premium-abonnement",
       "guild_successful": "%1$sDeze server is nu **Premium** :heart: (Voor: %2$d dag(en))",
       "user_already_premium": "%1$sJe bent al premium :heart:",
-      "user_successful": "%1$sJe bent nu **Premium** :heart: (Voor: %2$d dag(en))",
+      "user_successful": "%1$sYou're now **Premium** :heart:\nIf you're pledging in Patreon, this key is linked to your pledge.",
       "mp": "Mantaro Patreon uses no keys, instead, it's a given that it's premium by the fact that the bot itself works."
     },
     "claimkey": {
@@ -1064,7 +1091,7 @@
       "user": {
         "header": "Je Premium Status",
         "header_other": "%1$s's Premium Status",
-        "not_premium": "%1$sJe bent geen premium :c",
+        "not_premium": "%1$s%2$s is not premium :c",
         "premium": "**Premium gebruiker! <3**",
         "old_system": "**Premium user van het oude systeem! Maak je geen zorgen, je bent premium en je voordelen zullen nog steeds werken!**"
       },
@@ -1091,8 +1118,9 @@
       "info": "%1$sIf you need support, head to the support server over to <https://support.mantaro.site> and ask your question in the #support channel!"
     },
     "action": {
-      "no_mention": "%1$sJe moet een gebruiker vermelden",
-      "error_retrieving": "%1$sIk heb een fout gevonden bij het ophalen van de volgende gif voor deze actie... (external error)",
+      "no_mention": "%1$sYou need to mention a user.",
+      "error_retrieving": "%1$sI found an error while retrieving the next gif for this action... (external error, maybe WeebAPI is down?)",
+      "no_type": "%1$sThis action command has no type. (internal error)",
       "permission_or_unexpected_error": "%1$sS-Sorry! Ik heb de afbeeldingen laten vallen. (Waarschijnlijk heb ik geen toestemming om het te verzenden)",
       "lonely": {
         "pat": "Aww, Ik zie dat je eenzaam bent, hier is een schouderklopje <3",
@@ -1111,6 +1139,7 @@
         "holdhands": "*houd je hand vast*",
         "cuddle": "*knuffelt je*",
         "nuzzle": "*nuzzlelt je*",
+        "blush": "*blushes at you*",
         "bloodsuck": "M-maar hoe moet ik dit doen? Ok dan.. *zuigt je bloed*"
       },
       "self": {
@@ -1130,6 +1159,7 @@
         "holdhands": "o-oh... ;//;",
         "cuddle": "Dat is schattig!",
         "nuzzle": "Awwiee, schattig!",
+        "blush": ";////;",
         "bloodsuck": "Ben je nu een vampier?, oh!"
       },
       "pat": "%1$s je kreeg een schouderklopje van %2$s",
@@ -1149,15 +1179,16 @@
       "cuddle": "%1$s je kreeg een knuffel van %2$s",
       "nuzzle": "%1$s nuzzelt %2$s",
       "bloodsuck": "%1$s zuigt het bloed van %2$s!",
-      "nom": "Yummy.",
+      "blush": "%1$s is blushing at %2$s",
+      "nom": "Lekker.",
       "facedesk": "*facedesks*",
       "lewd": "J-Jij lewdie!",
-      "meow": "Meow."
+      "meow": "Miauw."
     },
     "game": {
       "won_games": "%1$s%2$s heeft **%3$s games gewonnen**",
       "nothing_specified": "%1$sJe hebt niet opgegeven wat je wilt spelen ...",
-      "not_enough_games": "%1$sJe moet ten minste twee games opgeven",
+      "not_enough_games": "%1$sYou need to specify two games at least (For example: `~>game lobby pokemon,trivia`)",
       "invalid_selection": "%1$sJe moet ten minste twee games opgeven (Geldige games: character, pokemon, number, trivia)!",
       "multiple": {
         "invalid": "%1$sJe moet aangeven welk spel je wilt spelen en hoevaak je dit spel wilt spelen",
@@ -1173,7 +1204,7 @@
         "category": "Categorie"
       },
       "number": {
-        "start": "%1$sRaad het nummer! **Je hebt 5 pogingen en 30 seconden. Het aantal ligt tussen 0 en 150**",
+        "start": "%1$sGuess the number! **You have 5 attempts and 1 minute. The number is between 0 and 150**",
         "nan": "%1$sDat is niet eens een nummer ...",
         "ended_game": "%1$sSpel beëindigd. Het nummer was: %2$d",
         "all_attempts_used": "%1$sAlle pogingen zijn verbruikt, het spel wordt beëindigd. Het nummer was: %2$d",
@@ -1201,6 +1232,7 @@
       "end_footer": "Je hebt 5 pogingen en 60 seconden. (Typ 'end' om het spel te beëindigen)",
       "trivia_end_footer": "Je hebt %1$s pogingen en 60 seconden. (Typ 'end' om het spel te beëindigen)",
       "error": "%1$sIk heb een fout gevonden tijdens het instellen van de game... (internal error)",
+      "error_missing_permissions": "%1$sI can't attach files. Please check permissions.",
       "character_load_error": "%1$sRapporteer dit alstublieft op de officiële server. Het instellen van de game is mislukt voor het vooraf opgeslagen personage: %2$s",
       "character_request_error": "%1$sError requesting this character from Kitsu's API.",
       "character_start": "Raad het personage",
@@ -1208,25 +1240,26 @@
       "disabled_multiple": "%1$sThis server has game multiple/lobby disabled."
     },
     "opencrate": {
-      "no_crate": "%1$sJe hebt geen loot-crate om te openen :( (Als je een andere kist wil openen dan de standaard kist, gebruik dan de naam van de kist bij het commando)",
+      "no_crate": "%1$sJe hebt geen buit kist van dit type (%2$s) om te openen:( (Als je een andere kist wil openen dan de standaard kist, gebruik dan de naam van de kist bij het commando)",
       "not_crate": "%1$sThat is not a valid loot crate."
     },
     "dailycrate": {
-      "key": "%1$sYou need a crate key to use this! Please buy one and try again!",
-      "not_premium": "%1$sYou're not premium!\nYou can open a daily premium crate with a high chance of getting good items with premium! Please check out more at <https://patreon.com/mantaro>.\nThis can be ran every 24 hours.",
-      "success": "%1$sYou just got a **%2$s**! Come back in 24 hours to get another one! You can open this using `~>opencrate <crate name>`. You need to buy a crate key to open it."
+      "check": "%1$sYou'll be able to claim your daily crate on: **%2$s.**",
+      "not_premium": "%1$sYou're not premium!\nYou can open a daily premium crate with a high chance of getting good items with premium! Please check out more at <https://patreon.com/mantaro>\nThis can be ran every 24 hours.",
+      "success": "%1$sYou just got a **%2$s**! Come back in 24 hours to get another one! You can open this using `~>opencrate <crate name>`. You need to buy a crate key using `~>market buy key` to open it."
     },
     "prune": {
       "no_messages_specified": "%1$sJe hebt geen berichten opgegeven om te verwijderen.",
       "no_permissions": "%1$sIk kan geen berichten verwijderen op deze server omdat ik niet over de machtiging 'Manage messages' beschik.",
+      "no_permissions_user": "%1$sI cannot prune on this server since you don't have the Manage Messages permission.",
       "bot_no_messages": "%1$sEr zijn hier geen berichten van bots of botoproepen.",
       "no_pins_no_messages": "%1$sEr zijn hier geen berichten die niet gepind zijn ...",
       "mention_no_messages": "%1$sEr zijn geen berichten van gebruikers die je hier hebt genoemd.",
-      "too_few_messages": "%1$sTe weinig berichten om te verwijderen. Het minimum is 5.",
+      "too_few_messages": "%1$sToo few messages to prune. The minimum is 5. This is computed after the message list has been filtered, so if you used a filter (say, mentioned someone), make sure you fetch 100 messages (or don't specify the amount).",
       "error_retrieving": "%1$sIk vond een onbekende fout tijdens het ophalen van de geschiedenis om de berichten te weg te halen (Internal: %2$s %3$s)",
       "invalid_number": "%1$sGeef een geldig nummer op.",
       "not_valid": "%1$sDat is geen geldig aantal te verwijderen berichten.",
-      "less_than_five": "%1$sJe moet minimaal 5 berichten opgeven.",
+      "less_than_five": "%1$sYou need to provide at least 5 messages. For example, use `~>prune 20` to delete 20 messages.",
       "messages_too_old": "%1$sEr zijn geen berichten nieuwer dan 2 weken oud, Discord laat me ze niet verwijderen.",
       "success": "%1$s %2$s berichten succesvol verwijderd van deze kanaal.",
       "lack_perms": "%1$sGebrek aan toestemming tijdens het verwijderen van berichten (Geen toestemming verstrekt: %2$s)",
@@ -1242,7 +1275,7 @@
       "too_many_tags": "%1$sYou specified too many tags for the current imageboard! Imageboard %2$s accepts a maximum of %3$d tags.",
       "invalid_rating": "%1$sJe hebt een ongeldige beoordeling opgegeven (beschikbare beoordelingen: questionable, explicit, safe)",
       "nsfw_no_nsfw": "%1$sIk kan geen NSFW-afbeelding verzenden in een niet-nsfw-kanaal :(",
-      "no_images": "%1$sEr zijn geen afbeeldingen gevonden die voldoen aan uw zoekcriteria ...",
+      "no_images": "%1$sThere are no images matching your search criteria. This could happen because the image service returned nothing, nothing useful, or you looked up prohibited tags.",
       "no_results": "%1$s**Er zijn geen afbeeldingen meer of geen resultaten gevonden**! Probeer het met een lager nummer of een andere zoekopdracht.",
       "error": "%1$sEr is een fout opgetreden tijdens het zoeken naar een afbeelding...",
       "wrong_argument": "%1$sVerkeerd argument type. Check ~>help %2$s",
@@ -1256,109 +1289,111 @@
       "description_image": "Beoordeling: **%1$s**, Afbeeldingbord: **%2$s**",
       "width": "Breedte",
       "height": "Hoogte",
-      "tags": "Tags",
+      "tags": "Labels",
       "load_notice": "Als de afbeelding niet wordt geladen, klik op de titel.",
-      "rule34_notice": "Als je de inhoud van deze opdracht niet bevalt, kun je dit commando gebruiken ~>yandere",
-      "yandere_nsfw_notice": "%1$sHet commando Yandere kan alleen in NSFW-kanalen worden gebruikt vanwege verschillende rapporten waarin expliciete afbeeldingen worden verzonden die als veilig zijn gemarkeerd.\nJe kan proberen om `~>konachan` te gebruiken!",
-      "e621_nsfw_notice": "%1$sThe e621 command can only be used on NSFW channels."
-    },
-    "about": {
-      "title": "Over Mantaro",
-      "description": {
-        "1": "Hallo, Ik ben **Mantaro**! Ik ben hier om je leven een beetje makkelijker te maken. Al je wilt starten, type `~>help`!",
-        "2": "Sommige van mijn functies omvatten:",
-        "3": "**Een mod zijn is nu erg gemakkelijk!** (`Massaal kicken/ban, commando's om berichten te verwijderen, logboeken en meer!`)",
-        "4": "**Grappige en nuttige commando's**, zoals `~>help remindme` of `~>help hug` bijvoorbeeld.",
-        "5": "**Beste kwaliteit muziek**, check `~>music`!.",
-        "support": "**[Support server](https://discordapp.com/invite/cMTmuPa)! | [Steun het ontwikkelen van Mantaro!](https://www.patreon.com/mantaro)**",
-        "credits": "%1$sCheck ~>about credits!"
-      },
-      "patreon": {
-        "header": "**Mantaro's Patreon Pledgers**"
-      },
-      "credits": {
-        "main_dev": "Hoofd developer",
-        "dev": "Developer",
-        "docs": "Documentatie",
-        "translators": "Vertalers",
-        "community_admin": "Community Admin",
-        "special_mentions": "Shout out naar bots.discord.pw, Carbonitex en discordbots.org met het helpen om de zichtbaarheid van de bot te vergroten.",
-        "thank_note": "Hartelijk dank aan iedereen hierboven voor het helpen verbeteren van Mantaro!"
-      },
-      "version": "MantaroBot Versie",
-      "uptime": "Tijd online",
-      "shards": "Shards",
-      "threads": "Threads",
-      "guilds": "Servers",
-      "users": "Gebruikers (Uniek)",
-      "tc": "Tekst kanalen",
-      "vc": "Spraak kanalen",
-      "invite": "Invite link: http://is.gd/mantaro (Commando voor deze sessie: %1$,d | Huidige shard: %2$d)"
+      "rule34_notice": "If you don't like the content on this command, you can use `~>yandere`. If animated gifs/webm content doesn't play, click the link in the embed title.",
+      "yandere_nsfw_notice": "%1$sHet commando Yande.re en Gelbooru kunnen alleen in NSFW-kanalen worden gebruikt vanwege verschillende rapporten waarin expliciete afbeeldingen worden verzonden die als veilig zijn gemarkeerd.\nJe kan proberen om `~>konachan` te gebruiken!",
+      "e621_nsfw_notice": "%1$sThe e621 command can only be used on NSFW channels.",
+      "e926_nsfw_notice": "%1$sThe e926 command can only be used on NSFW channels. The images should be mostly safe, but the rating is inconsistent."
     },
     "pet": {
-      "no_content": "%1$sYou need to specify the pet to look up the stats of (and the user you want to check the pet from, if it's not yours. Make sure to quote the name on this case!).",
-      "not_specified": "%1$sYou didn't specify the pet name.",
-      "not_found": "%1$sI didn't find a pet with the provided name.",
-      "character_not_allowed": "%1$sThis character isn't allowed in pet names. Try another name?",
-      "overview": "Pet Overview and Statistics",
-      "name": "Name",
-      "tier": "Tier",
-      "element": "Element",
-      "owner": "Owner",
-      "created": "Created At",
-      "affection": "Affection",
-      "stamina": "Current Stamina",
-      "hp": "Current HP",
-      "fly": "Fly",
-      "venom": "Venom",
-      "inventory": "Inventory",
-      "id": "Pet ID: %1$s",
-      "hunger": "Hunger",
-      "hydration": "Hydration"
-    },
-    "petactions": {
-      "general": "Pets are your companion on the usage of currency! **You can train them, pet them, feed them or have fights between your own pets or pets from other people!** To create a pet you need an incubator, which you can cast from milk, old beverage and diamonds, this will allow you to incubate a pet, which will require you to give it a name.\n\nPets can fight in PetBattle, which is a turn-based (ish) fight system based in a one-turn strategy, with an emergency turn on the half-turn if the HP difference between the pets is too different, which would allow you to change your strategy.\n\nFor competition, you need to use different skills, which will cater to different elements and types. You chose them at the start of your turn or half-turn.\nSkills are the main weapon you have! But, pets can also have a main weapon equipped, based on their type and affection. The weapon shop is available at `~>petaction shop` and you can equip it using `~>petaction weapon`, weapons *do not* have damage multiplier by themselves, but they can improve the effectiveness of some attacks and skills, as the result of this, there are no melee weapons, as all damage on PetBattle is done based on their will, not on their actual life.\n\nDo `~>help petaction` to get a list of the commands you can use with your pet.",
-      "incubate": {
-        "no_name": "%1$sYou need to specify a name to give to your pet.",
-        "only_letters": "%1$sThe name can only contain letters from a to z.",
-        "no_egg": "%1$sYou don't have an incubator egg on your inventory.",
-        "not_enough_slots": "%1$sYou don't have enough pet slots left. (Total: %2$s, Used: %3$s)",
-        "no_money": "%1$sYou don't have enough money to incubate this egg. (Required: **%2$s** credits)",
-        "success": "%1$sSuccessfully incubated your pet egg! Your new pet %2$s `(ID: %3$s)` is now ready. Check `~>pet <name>` to check pet stats."
+      "explanation": "Pets are a useful companion in currency!\nThey help you gain more money, loot more, find random stuff on mine, chop trees, and even catch fish. The higher the level, the higher the rewards!\nGetting the right pet for your activities is important, so make sure to check the type and abilities of the pet you want to choose!\nRemember that you need to feed your pet and give it water, aswell as let it rest and charge up in energy every once in a while, just like a real pet! You can even pat it :)\nFor more help, use `~>help pet` and `~>pet list` for a list of pets.",
+      "no_marriage": "%1$sYou need to be married to have a pet. For now. Check `~>help marry` and `~>pet`.",
+      "no_marriage_other": "%1$s%2$s needs to be married to have a pet. For now. Check `~>help marry` and `~>pet`.",
+      "status": {
+        "no_pet": "%1$sYou don't have any pets to check the status of. Check `~>pet` for an explanation.",
+        "header": "Status for %1$s",
+        "description": "Remember to take care and love your pet :heart:\nSee `~>pet` and `~>help pet` for an explanation.",
+        "cost": "Prijs",
+        "type": "Type",
+        "abilities": "Vaardigheden",
+        "level": "Level",
+        "health": "Gezondheid",
+        "thirst": "Dorst",
+        "hunger": "Honger",
+        "stamina": "Uithoudingsvermogen",
+        "pet": "Aaien",
+        "footer": "Thanks you for using Mantaro! <3"
       },
-      "rename": {
-        "not_enough_args": "%1$sYou need to specify the current name and the new name.",
-        "new_name_exists": "%1$sYou already have a pet with this name.",
-        "not_enough_money": "%1$sYou don't have enough money for this. **(Required: %2$s)**",
-        "confirmation": "%1$sDo you really want to rename **%2$s** to **%3$s**? Type *yes* to confirm and *no* to cancel.",
-        "success": "%1$sSuccessfully renamed **%2$s** to **%3$s** (ID: %4$s). Cost: %5$s"
+      "list": {
+        "summary": "%1$s **Name:** %2$s, **Abilities:** `%3$s`, **Value:** %4$,d credits",
+        "abilities": "*Fish*: Useful for `~>fish`\n*Catch*: Useful for `~>mine`\n*Chop*: Useful for `~>chop`\n*Cheer*: Gives you a nice morale boost.",
+        "header": "%1$s**Current available Pets**\n\n%2$s\n\n%3$s**Ability explanation:**\n%4$s"
       },
-      "ls": {
-        "experience": "XP",
-        "age": "Age",
-        "no_pets": "%1$sYou have no pets.",
-        "header": "This is a list of the pets you currently own.\nPets are your companion on the usage of currency! **You can train them, pet them, feed them or have fights between your own pets or pets from other people!** To create a pet you need an incubator, which you can cast from milk, old beverage and diamonds, this will allow you to incubate a pet, which will require you to give it a name.",
-        "pages": "**Total pages:** %1$s \nUse the message reaction to move between pages.\n\n"
+      "pat": {
+        "no_pet": "%1$sYou don't have any pets to pat. Check `~>pet` for an explanation.",
+        "no_pet_other": "%1$s%2$s doesn't have any pets to pat. Check `~>pet` for an explanation.",
+        "too_many": "How did you even get this many pats?"
       },
-      "train": {
-        "success": "%1$sSuccessfully trained skill **%2$s**. Experience gained: %3$s. Current skill experience: %4$s. (Cost: %5$s)"
+      "pet_reactions": {
+        "cute": "%1$s**%2$s** happily wags their tail as you caress their head. **Pat counter: %3$s**.%4$s",
+        "cute_not_animal": "%1$s**%2$s** happily smiles as you caress their head. **Pat counter: %3$s**.%4$s",
+        "nothing": "%1$s**%2$s** just sits there, doing nothing. **Pat counter: %3$s**.%4$s",
+        "cheer": "%1$s**%2$s**'s reaction was so cute it managed to cheer you up. **Pat counter: %3$s**.%4$s",
+        "scare": "%1$sThe pet got scared when you patted them. Maybe it was too sudden? **Pat counter: %3$s**.%4$s",
+        "counter_100": "%1$sIt seems like their head will get shiny with so many pats."
       },
-      "pet": {
-        "no_pet": "%1$sI can't find a pet with the name you specified.",
-        "pet": "%1$sAww! T-Thanks. (Affection: %2$s, Total pets: %3$s)"
+      "buy": {
+        "not_enough_arguments": "%1$sYou need to specify the name of the pet and the type of pet you want to buy. (For example, `~>pet buy hello dog`)",
+        "no_requirements": "%1$sYou need both a car and a house to go buy a pet! House: %2$s, Car: %3$s\nTo buy a house and a car use `~>marry buyhouse` and `~>marry buycar` :heart:",
+        "no_house": "%1$sYou need to have a pet house on your inventory to do this. You can buy it on the market.",
+        "already_has_pet": "%1$sYou already have a pet.",
+        "nothing_found": "%1$sCan't find the type of pet you specified. You specified: `%2$s`, Valid types: `%3$s`",
+        "not_enough_money": "%1$sYou don't have enough money to buy this pet. Value: %2$,d credits, Wallet: %3$,d credits",
+        "confirm": "%1$sAre you sure you want to buy this pet? Name: %2$s, Type: %3$s, Cost: %4$,d credits. Type `yes` to continue, `no` otherwise.",
+        "success": "%1$sCongratulations! You're both now the proud owner of a `%2$s%3$s` and they were named `%4$s`. The cost to buy this pet was %5$,d credits.",
+        "cancel_success": "%1$sCancelled operation.",
+        "too_long": "%1$sThis name is too long. It needs to be shorter than 150 characters."
       },
       "feed": {
-        "fire_type": "%1$sYou can't really feed a fire type pet... unless you wanna make charcoal.",
-        "no_item": "%1$sI can't find that item.",
-        "not_food": "%1$sThe specified item is not food.",
-        "full": "%1$sYour pet is currently full and can't eat more.",
-        "success": "%1$sSuccessfully fed your pet %2$s. (Current hunger level: %3$s. Saturation: %4$s)"
+        "no_pet": "%1$sYou don't have any pets to feed. Check `~>pet` for an explanation.",
+        "no_content": "%1$sYou need to specify what you want to feed your pet with (for example, `~>pet feed steak`)",
+        "no_item": "%1$sI didn't find the item you specified.",
+        "not_food": "%1$sWoah there! This isn't food!",
+        "no_need": "%1$sYour pet isn't hungry, so they don't want to eat right now.",
+        "not_inventory": "%1$sYou don't have the item you want to feed your pet. Make sure it's in your inventory and you have the right amount (%2$s).",
+        "not_applicable": "%1$sYou can't feed this food to your pet type.",
+        "success": "%1$sYay! Succesfully fed your pet with `%2$s` x%3$s and it recovered %4$s%% of their hunger. Their hunger is now %5$s%% satisfied.",
+        "too_much": "%1$sMaybe give it a little less food? You'd be wasting food otherwise! (Increase is over needed to reach 100%%)"
       },
-      "hydrate": {
-        "fire_type": "%1$sYou can't really hydrate a fire type pet... unless you wanna put them off.",
-        "not_water": "%1$sThis pet isn't a water type pet.",
-        "no_water": "%1$sYou don't have a water bottle in your inventory",
-        "success": "%1$sSuccessfully hydrated your pet. (Current hydration level: %2$s)"
+      "water": {
+        "no_pet": "%1$sYou don't have any pets to water. Check `~>pet` for an explanation.",
+        "no_need": "%1$sYour pet isn't thirsty, so they don't want to drink right now.",
+        "not_inventory": "%1$sYou don't have a Water Bottle. Make sure it's in your inventory.",
+        "not_enough_inventory": "%1$sYou don't have enough water bottles in your inventory! You need %2$s.",
+        "too_much": "%1$sMaybe give it a little less water? You'd be wasting water otherwise! (Increase is over needed to reach 100%%)",
+        "success": "%1$sYay! Succesfully gave your pet %2$d water and it recovered %3$s%% of their thirst. Their thirst is now %4$s%% quenched."
+      },
+      "activity": {
+        "low_stamina": "%1$s**%2$s** has a really low stamina. Give it food/water to replenish.",
+        "low_health": "%1$s**%2$s** has really low health. Give it food/water and let it rest for a while to replenish.",
+        "low_hunger": "%1$s**%2$s** is too hungry to do anything right now. *Fooood~*",
+        "low_thirst": "%1$s**%2$s** is too thirsty to do anything right now.",
+        "success_fish": "%1$s**%2$s** successfully helped you catch fish! You got a buff and extra credits **(%3$,d extra credits, %4$,d extra items)** thanks to the extra work your pet was able to do for you! *included on what you got*",
+        "success_chop": "%1$s**%2$s** successfully helped you chop a tree! You got a buff and extra credits **(%3$,d extra credits, %4$,d extra items)** thanks to the extra work your pet was able to do for you! *included on what you got*",
+        "success_mine": "%1$s**%2$s** successfully helped you mine! You got a buff and extra credits **(%3$,d extra credits, and a extra item drop chance)** thanks to the extra work your pet was able to do for you! *included on what you got*"
+      },
+      "rename": {
+        "no_pet": "%1$sYou don't have a pet to rename.",
+        "same_name": "%1$sThe name you gave me is the same as the current name of your pet.",
+        "no_content": "%1$sYou need to give me the new name of your pet.",
+        "not_enough_money": "%1$sYou don't have enough money to do this. Cost: %2%s, Current: %3$s.",
+        "success": "%1$sSuccessfully renamed your pet from `%2$s` to `%3$s`. %4$s has been deducted from your wallet. Enjoy!"
+      },
+      "remove": {
+        "no_pet": "%1$sYou don't have a pet to remove",
+        "confirm": "%1$sAre you sure you wanna remove this pet? The person you're married to will receive %2$s credits, and you will receive %2$s credits aswell.\nType `yes` to confirm or `no` otherwise. Keep in mind your refund won't scale with levels or anything, so take this as buying a new tomagotchi or something similar.",
+        "success": "%1$sSuccessfully removed pet. Every person in this marriage received %2$s credits as a refund."
+      },
+      "info": {
+        "not_found": "%1$sI can't find the pet type you're looking for. Use `~>pet list` for a list of pet types.",
+        "author": "Pet information for type %1$s%2$s",
+        "name": "Pet Name",
+        "cost": "Pet Cost",
+        "abilities": "Vaardigheden",
+        "food": "Edibles",
+        "coin_buildup": "Coin Buildup (Lvl. 1 / 100)",
+        "item_buildup": "Item Buildup (Lvl. 1 / 100)"
       }
     },
     "invite": {
@@ -1372,6 +1407,27 @@
         "4": "Bedankt voor het gebruiken van de bot! **<3 van de developers en het Mantaro-team**"
       },
       "footer": "We hopen dat je veel plezier zult hebben met de bot."
+    },
+    "salvage": {
+      "not_broken": "%1$sYou can only salvage broken tools.",
+      "no_item": "%1$sYou need to specify the item you want to salvage.",
+      "no_item_found": "%1$sI can't find the item you specified.",
+      "cant_salvage": "%1$sYou can't salvage this item.",
+      "not_wrench": "%1$sYou need a wrench to salvage an item. You might need to specify it manually after the item.",
+      "not_enough_level": "%1$sYou need at least a level 2 wrench to salvage this item.",
+      "no_main_item": "%1$sYou don't appear to have the item you're trying to salvage.",
+      "no_tool": "%1$sYou don't have this wrench. Try specifying it, or specifying another wrench.",
+      "no_tool_default": "%1$sYou need at least a Comet Wrench in your inventory to do this, but you can also specify a higher one if you want to.",
+      "dust": "%1$sYour inventory is too dusty to attempt a item salvage, try cleaning it with a mop.",
+      "no_returnables": "%1$sThis item has no returnable salvage elements.",
+      "item_broke": "%1$sYour wrench broke while trying to salvage this item :(",
+      "success": "%1$sSuccessfully salvaged %2$s and got %3$s in return. The cost was %4$s credits.\n%5$s",
+      "ls": {
+        "header": "Salvageable Item List",
+        "cost": "Salvage Cost: ",
+        "return": "Could Return: ",
+        "desc": "This is a list of the items you can salvage using `~>salvage`.\nYou can use full name or the short name (example: `~>salvage \"diamond pickaxe\"`, or `~>salvage \"diamond p\"`, works)\n**Salvaging has a cost of 1/3rd the price of the item. The salvage price will be shown down below.**.\nYou will only get one item of the listed here, choosen randomly.\nWrench tier 2 and 3 are comet and sparkle, respectively."
+      }
     },
     "stats": {
       "header": "Mantaro Statistieken",
@@ -1401,14 +1457,15 @@
       "note": "**Als je Mantaro leuk vindt, geef dan een upvote op** <https://discordbots.org/bot/mantaro> **en/of overweeg te doneren op Patreon of Paypal! Super bedankt!~**"
     },
     "avatar": {
-      "result": "%1$sAvatar voor: **%2$s**\n%3$s"
+      "result": "Avatar for %1$s",
+      "footer": "Hopefully a very pretty one."
     },
     "serverinfo": {
       "header": "Server Informatie",
       "description": "Server informatie voor %1$s",
-      "users": "Gebruikers (Online/Uniek)",
+      "users": "Gebruikers",
       "created": "Aanmaakdatum",
-      "channels": "Spraak/Tekst kanalen",
+      "channels": "Spraak/Tekst Kanalen",
       "owner": "Eigenaar",
       "region": "Regio",
       "roles": "Rollen (%1$d)",
@@ -1418,11 +1475,11 @@
       "header": "Gebruikersinformatie voor %1$s#%2$s",
       "roles": "Rollen: [%1$d]",
       "id": "Gebruiker ID",
-      "join_date": "Lid geworden",
-      "created": "Account aangemaakt",
-      "account_age": "Account leeftijd",
+      "join_date": "Lid Geworden",
+      "created": "Account Aangemaakt",
+      "account_age": "Account Leeftijd",
       "mutual_guilds": "Wederzijdse Servers",
-      "vc": "Spraakkanaal",
+      "vc": "Spraak-kanaal",
       "color": "Kleur",
       "status": "Status",
       "nothing": "Niets",
@@ -1447,12 +1504,12 @@
     "help": {
       "title": "Mantaro Help",
       "base_category": "Command list for category %1$s. For a detailed guide, please check the [wiki](https://github.com/Mantaro/MantaroBot/wiki). [Currency Guide](https://github.com/Mantaro/MantaroBot/wiki/Currency-101)\n",
-      "base": "**Full command list**. For a detailed guide, please check the [wiki](https://github.com/Mantaro/MantaroBot/wiki).\nGuides: [Currency](https://github.com/Mantaro/MantaroBot/wiki/Currency-101), [Custom Commands](https://github.com/Mantaro/MantaroBot/wiki/Custom-Command-%22v3%22), [Welcome Messages](https://github.com/Mantaro/MantaroBot/wiki/Welcome-and-Leave-Messages-tutorial)\n",
-      "support": "[For help, you can join the support server](https://support.mantaro.site). [You can follow me on Twitter for updates.](https://twitter.com/mantarodiscord)\n",
-      "patreon": "[We hebben je hulp nodig om Mantaro online te houden! Klik hier voor meer info](https://www.patreon.com/mantaro)",
+      "base": "**Full command list**. For a detailed guide, please check our [wiki](https://github.com/Mantaro/MantaroBot/wiki).\nRemember you can get more information on a command using `~>help <name of command>`\n",
+      "support": "If you're still lost you can join the [support server](https://support.mantaro.site). You can also follow me on [Twitter](https://twitter.com/mantarodiscord) for updates.\n",
+      "patreon": "**[We need your help to keep Mantaro online! Click here for more info.](https://www.patreon.com/mantaro)**",
       "disabled_commands": "Alleen niet-geblokkeerde commandos weergeven. Totaal uitgeschakelde commandos: %1$s",
       "channel_specific_disabled_commands": "\nAlleen niet-geblokkeerde commandos weergeven. Totaal aantal kanaal-specifieke uitgeschakelde commandos: %1$s",
-      "footer": "Als je het gebruik van de commandos wilt controleren, typ je %1$shelp <commando> // -> Commandos: %2$s",
+      "footer": "Thanks for using Mantaro %1$s (Total Commands: %2$s)",
       "commands": "Commandos",
       "extended": {
         "no_help": "%1$sEr is geen uitgebreide hulp ingesteld voor deze opdracht.",
@@ -1467,7 +1524,7 @@
       "no_tool": "%1$sYou need a Tier 2 (at least Comet Wrench) or above wrench to repair this item. Make sure you have it and that you specified the correct wrench in case you specified it. Remember to use quotes if the name has spaces.",
       "dust": "%1$sYour inventory it's too dusty to perform a repair. Dust level: %2$s",
       "not_wrench": "%1$sYou can't use this as a wrench. Remember to use quotes if the name has spaces.",
-      "not_enough_level": "%1$sYou need a higher tier wrench to perform this repair.",
+      "not_enough_level": "%1$sYou need a higher tier wrench to perform this repair. Try specfying it manually if you have it on your inventory.",
       "not_enough_money": "%1$sYou don't have enough money to repair this item.",
       "no_item_recipe": "%1$sYou don't have the necessary *%2$s* to perform this repair.",
       "not_enough_items": "%1$sYou don't have enough of *%2$s* to perform this repair. **(Needed: %3$s, Current: %4$s)**",
@@ -1476,7 +1533,7 @@
       "ls": {
         "header": "Repair-able Items List",
         "cost": "Repair Cost: ",
-        "desc": "This is a list of the items you can repair using `~>repair`.\nYou can use full name or the short name, or the emoji.\nRepairing has a minimum cost of 1/3rd of the item cost. The price will be shown below, alongside the needed materials."
+        "desc": "This is a list of the items you can repair using `~>repair`.\nYou can use full name or the short name, or the emoji.\nRepairing has a minimum cost of 1/3rd of the item cost. You need at least a Comet Wrench to repair something.\nThe price will be shown below, alongside the needed materials.\nThe full syntax of repair is `~>repair <item> <wrench>`"
       }
     },
     "anime": {
@@ -1487,18 +1544,18 @@
       "malformed_result": "%1$sIk heb een verkeerd API-resultaat voor deze specifieke zoekopdracht ontvangen. Misschien kun je het proberen met een andere zoekterm?",
       "error": "%1$s**Ik weet zeker dat ik je favoriete anime niet heb laten vallen!**\nIk ontving een ``%2$s`` tijdens het verwerken van de opdracht. (internal error)",
       "information_header": "Anime-informatie voor %1$s",
-      "information_notice": "Informatie verstrekt door AniList.",
+      "information_notice": "Informatie verstrekt door Kitsu.io.",
       "airing": "Wordt momenteel uitgezonden",
       "release_date": "Datum van publicatie",
       "favorite_count": "Favorite Count",
       "end_date": "Einddatum",
-      "average_score": "Gemiddelde score",
+      "average_score": "Gemiddelde Score",
       "type": "Type",
       "episodes": "Afleveringen",
       "episode_duration": "Afleveringsduur",
       "genres": "Soort",
       "minutes": "minuten",
-      "description": "Description"
+      "description": "Beschrijving"
     },
     "character": {
       "no_args": "%1$sJe moet me vertellen welk karakter je wilt opzoeken.",
@@ -1513,7 +1570,8 @@
     "balance": {
       "bot_notice": "%1$sBots kunnen geen geld hebben.",
       "external_balance": "%1$s's balans is **$%2$.d credits.**",
-      "own_balance": "Jouw balans is **$%1$,d credits.**"
+      "own_balance": "Your balance is **$%1$,d credits.**%2$s",
+      "reset_notice": "\nIf you wanna know what happened to your money, read <https://github.com/Mantaro/MantaroBot/wiki/Money-Reset-FAQ-and-General-Statements>\nYou didn't lose your old money completely, it's still visible on `~>profile` :heart:\nYour inventory was kept, maybe sell some stuff to get some money?\nThis will only be shown once. Read the page linked for more details."
     },
     "daily": {
       "check": "%1$sJe kunt je daily weer ontvangen op: **%2$s.**",
@@ -1539,9 +1597,9 @@
         "watch_used": "Your `Magical Watches` saved your streak! You used `%1$d` of them to extend your streaks survival time to %2$dx, you have `%3$d` of them remaining!"
       },
       "given_credits": "%1$sI gave your **$%2$,d** daily credits to %3$s",
-      "credits": "%1$sJe ontving **$%2$s** daily credits.",
+      "credits": "%1$sJe ontving **$%2$,d** dagelijkse credits.",
       "sellout": {
-        "get_premium": "We need your help to keep Mantaro alive! Check <https://patreon.com/mantaro> for more info.",
+        "get_premium": "We need your help to keep Mantaro alive! Check <https://patreon.com/mantaro> for more info. **You can get up to twice as many credits with Premium!** Memberships start at only $2/month, the price of cheap snack!",
         "already_premium": "Thank you for supporting Mantaro. Without help from people like you we couldn't keep Mantaro alive :heart:"
       },
       "crate": "You won a loot crate because your daily streak is a multiple of 20! Enjoy.",
@@ -1560,7 +1618,7 @@
       "lose": "%1$sHelaas, je hebt %2$s credits verloren. %3$s",
       "lose_all": "al je",
       "credits": "credits",
-      "too_much": "%1$sJe kunt maximaal 275 miljoen tegelijk gokken. Je wilt toch niet in één keer blut zijn? *(Gok limiet per keer: %2$,d credits)*",
+      "too_much": "%1$sYou can only gamble up so much at once. You don't want to go full broke do you? *(Gamble single limit: %2$,d credits)*",
       "too_little": "%1$sJe kunt niet zo weinig geld gokken (Minimaal: 100 credits)"
     },
     "loot": {
@@ -1572,21 +1630,21 @@
         "found_only_item_but_overflow": "%1$sTerwijl je door berichten aan het zoeken was, vond je %2$s. %3$s"
       },
       "without_item": {
-        "found": "%1$sTerwijl je door berichten aan het zoeken was, vond je **$%2$s credits!**",
+        "found": "%1$sDigging through messages, you found **$%2$s credits!**%3$s",
         "found_but_overflow_no_item": "%1$sTerwijl je door berichten aan het zoeken was, vond je **$%2$d credits.** Maar je had al te veel credits, dus heb ik wat je te veel had gedoneerd."
       },
       "dust": "Tijdens het doorzoeken van berichten, vond je niets anders dan stof (Dust level %1$s%%)",
       "easter": "\nHet lijkt erop dat je hier zoveel stof hebt ... Misschien wil je dit opruimen voordat het te rommelig wordt!"
     },
     "mine": {
-      "not_equipped": "%1$sYou don't have any equipped pick. Use `~>equip <pick name>` to equip a pick and start your adventure!",
+      "not_equipped": "%1$sYou don't have any equipped pick. Use `~>equip <pick name>` to equip a pick and start your adventure! If you don't have any pick, first run `~>market buy pick`",
       "no_pick": "%1$sJe hebt geen pikhouweel om te mijnen. Als je een anders houweel wil gebruiken typ `~>mine <pick name>`",
       "not_suitable": "%1$sDit is geen pikhouweel die je kunt gebruiken om te minen!",
       "not_in_inventory": "%1$sJe hebt deze pikhouweel niet in je inventaris. Je wordt omgeschakeld naar de standaard pikhouweel.",
       "success": "%1$sJe hebt mineralen gemijnd met een waarde van **$%2$s credits!**",
       "reminder": "\n*You can cast better picks using the gems you get while mining. Check `~>cast ls` for a list of things you can cast*",
       "diamond": {
-        "overflow": "\nHuh, je hebt tijdens het mijnen %1$s diamant gevonden, maar je had al te veel, dus heb ik het voor je verkocht.",
+        "overflow": "Huh, je hebt tijdens het mijnen een diamant gevonden, maar je had al te veel, dus heb ik het voor je verkocht.",
         "success": "\nHuh! Je hebt geluk gehad en een diamant gevonden tijdens het mijnen, controleer je inventaris!"
       },
       "gem": {
@@ -1599,16 +1657,26 @@
       },
       "crate": {
         "overflow": "You found a **%1$s** while mining, but you had too many and left it behind...",
-        "success": "You found a %1$s **%2$s** while mining and pick it up. Go and open it with `~>opencrate <crate name>`. You need a crate key!"
+        "success": "You found a %1$s **%2$s** while mining and pick it up. Go and open it with `~>opencrate <crate name>`. You need a crate key, which you can buy using `~>market buy key`!"
       },
       "autoequip": {
         "success": "%1$sAutomatically equipped a **%2$s** on your pick slot."
       },
       "item_broke": "%1$sYour %2$s broke while using it :( %3$s",
       "item_broke_autoequip": "*Hint: You can use `~>profile autoequip` and it'll automatically equip the item for you when it breaks, assuming you have one in your inventory.*",
-      "waifu_help": "Je waifu kwam en sloot je aan bij je mijnavontuur en jullie krijgen nu allebei een grotere opbrengst!",
+      "waifu_help": "Je waifu kwam en sloot je aan bij je mijn avontuur en jullie krijgen nu allebei een grotere opbrengst!",
       "missing_equipped": "%1$sYou had an equipped %2$s pick, but you no longer have any of its kind on your inventory! Equipped pick has been reset.",
       "broken_drop": "%1$sYour tool broke, but you can repair it. Got broken item: %2$s *%3$s*"
+    },
+    "chop": {
+      "not_equipped": "%1$sYou don't have any equipped axe. Use `~>equip <axe name>` to equip a axe and start your adventure! If you don't have any, first run `~>market buy axe`",
+      "dust": "%1$sThe tree was too brittle and you only got sawdust out of it (Dust level: %2$d%%)",
+      "autoequip": {
+        "success": "%1$sAutomatically equipped a **%2$s** on your axe slot."
+      },
+      "success_only_item": "%1$sWhile chopping trees, you found %2$s proceed to save them into your inventory.",
+      "success": "%1$sWhile chopping trees, you found %2$s and **$%3$d credits** and proceed to save them into your inventory.",
+      "success_money_noitem": "%1$sWhile chopping trees, you found **$%2$d credits** and proceed to save them into your pocket."
     },
     "slots": {
       "errors": {
@@ -1619,7 +1687,8 @@
         "below_minimum": "%1$sHet minimumbedrag is 25 credits",
         "no_tickets": "%1$sJe wilde tickets gebruiken, maar je hebt geen tickets :<",
         "no_amount": "%1$sJe hebt het aantal niet opgegeven!",
-        "no_valid_amount": "%1$sThat's not a valid amount of money! (Example of valid amounts: 1000, 1k, 14000, 2M)"
+        "no_valid_amount": "%1$sThat's not a valid amount of money! (Example of valid amounts: 1000, 1k, 14000)",
+        "too_many_tickets": "%1$sYou're trying to use too many slot tickets. Maximum allowed is %2$d"
       },
       "roll": "%1$s**Je gebruikte %2$s en gaf een slinger aan de slot machine**\n",
       "win": "En je won **%1$d** credits en je behoudt wat je hebt ingezet (%2$d credits)! Lucky!",
@@ -1628,6 +1697,7 @@
       "credits": "credits"
     },
     "leaderboard": {
+      "main_page_redirect": "You can see `~>help leaderboard` for a list of available leaderboards.\nIf you're looking for the money leaderboard, run `~>leaderboard money`",
       "header": "Mantaro's Scorebord",
       "header_seasonal": "Mantaro's %1$s season Leaderboard",
       "money": "Geld Scorebord",
@@ -1643,7 +1713,8 @@
         "experience": "Ervaring",
         "game": "%1sDeze pagina toont de top 10 mensen die de meeste spellen hebben gewonnen.\n\nCheck `~>help game` of `~>help trivia` voor informatie over hoe de spellen werken!",
         "claim": "%1sDeze pagina toont de top 10 mensen die het meest geclaimd zijn als Waifu.\n\nCheck `~>help waifu` voor de details over het waifu systeem.",
-        "money": "%1$sDeze pagina toont de top 10 rijkste mensen op Mantaro.\nDit leaderboard is al een tijdje muf, maar geef nooit op!",
+        "money_old": "%1$sThis page shows the top 10 richest people on Mantaro (before the reset).\n",
+        "money": "%1$sThis page shows the top 10 richest people on Mantaro. Grinding is hard!",
         "seasonal_money": "%1$sThis page shows the top 10 richest people on Mantaro for this season.",
         "rep": "%1sDeze pagina toont de top 10 van mensen met de hoogste reputatie.",
         "streak": "%1sDeze pagina toont de top 10 van mensen met de meeste daily streaks.\n\nCheck `~>help daily` voor meer informatie",
@@ -1807,28 +1878,6 @@
       "no_mentions": "%1$s**Je moet de gebruikers specificeren die je lokaal op van de blacklist voor de mod-logs wilt afhalen..**",
       "success": "%1$sHeeft de volgende gebruikers succesvol van de blacklist voor de mod-logs afgehaald: **%2$s**"
     },
-    "linkprotection_toggle": {
-      "success": "%1$sHeeft de linkbescherming ingesteld als `%2$s`"
-    },
-    "linkprotection_channel_allow": {
-      "no_channel": "%1$sJe moet opgeven welk kanaal je wilt uitsluiten van de uitnodigingscontrole.",
-      "success": "%1$s%2$s kan nu worden gebruikt om Discord uitnodigingen te verzenden."
-    },
-    "linkprotection_channel_disallow": {
-      "no_channel": "%1$sJe moet opgeven welk kanaal je wilt toevoegen van de uitnodigingscontrole. (Alle kanalen worden standaard toegevoegd)",
-      "success": "%1$s%2$s kan niet langer worden gebruikt om Discord uitnodigingen te verzenden."
-    },
-    "linkprotection_user_allow": {
-      "no_channel": "%1$sJe moet opgeven welk personen je wilt uitsluiten van de uitnodigingscontrole.",
-      "no_mentions": "%1$sJe moet de naam van de gebruiker noemen die je van de blacklist wilt afhalen voor het inviten van mensen!",
-      "success": "%1$sHeeft de volgende gebruikers succesvol van de blacklist voor het inviten van mensen gehaald: %2$s#%3$s "
-    },
-    "linkprotection_user_disallow": {
-      "no_channel": "%1$sJe moet opgeven welk personen je wilt toevoegen aan de uitnodigingscontrole (Iedereen behalve beheerders wordt standaard toegevoegd)",
-      "no_mentions": "%1$sJe moet de gebruiker vermelden die je op de blacklist voor het plaatsen van uitnodigingen wilt toevoegen!",
-      "not_whitelisted": "%1$sDeze gebruiker staat niet op de invite posting whitelist!",
-      "success": "%1$sHeeft de volgende gebruikers succesvol op de blacklist voor het posten van discord gezet: %2$s#%3$s "
-    },
     "imageboard_tags_blacklist_add": {
       "no_tag": "%1$sJe moet ten minste een tag opgeven om op de blacklist te zetten!",
       "success": "%1$sHeeft %2$s succesvol op de blacklist voor het zoeken van afbeeldingen gezet."
@@ -1843,7 +1892,7 @@
       "autorole": "%1$sYou cannot set the autorole role as a birthday role! Vergeet niet dat de verjaardagsrol een rol is die wordt toegewezen aan de persoon wanneer de verjaardag is en wordt verwijderd wanneer de dag voorbij is..",
       "warning": "%1$sVergeet niet dat de verjaardagsrol een rol is die wordt toegewezen aan de persoon wanneer de verjaardag is en wordt verwijderd wanneer de dag voorbij is. Als je twijfels hebt over hoe je het kunt configureren, kun je altijd lid worden van onze support Discord en  daar je vraag stellen. Je kunt ook `~>opts help birthday enable` checken om een voorbeeld te zien.",
       "warning_1": "Dit komt door de manier waarop de verjaardagstoewijzer werkt: Het kent een tijdelijke rol toe aan de persoon die jarig is, en maakt de toewijzing ongedaan wanneer de verjaardag is verstreken. **Dit betekent dat iedereen met de verjaardagsrol de rol weer verwijderd krijgt op de dag dat de verjaardag is afgelopen**. Wees voorzichtig bij het kiezen van de te gebruiken rol, want een verkeerde configuratie kan slechte dingen veroorzaken (echt waar)!",
-      "warning_2": "De rol *moet een nieuw gecreëerde rol zijn of een rol die je niet voor iemand anders gebruikt*. Het MOET GEEN rol zijn die al gebruikt wordt voor je gebruikers.",
+      "warning_2": "The role *has to be a newly created role or a role you don't use for anyone else*. It MUST NOT be a role you already have on your users. Users will need to allow this server to announce their birthday by using `~>birthday allowserver` else their birthday won't appear! Read <https://github.com/Mantaro/MantaroBot/wiki/Changes-to-the-birthday-announcement-system> for more info.",
       "warning_3": "Alsook de verjaardags cache (Wat we gebruiken om ze op te slaan) past maar om de 23 uur aan. Dit wil zeggen als je je verjaardag van vandaag naar morgen zet om de berichtgever te testen, deze **niet** zal werken.",
       "warning_4": "Typ **yes** als je ermee instemt om de rol %2$s in te stellen als verjaardagsrol, en **no** om te annuleren. Deze actie verloopt over 45 seconden.",
       "success": "%1$sVerjaardagsregistratie ingeschakeld op deze server met parameters -> Kanaal: `%2$s (%3$s)` en rol: `%4$s (%5$s)`",
@@ -1904,6 +1953,12 @@
       "no_message": "%1$sJe moet opgeven welk bericht je wilt dat ik zeg wanneer er iemand de server verlaat!",
       "success": "%1$sHet bericht dat gebruikers te zien krijgen als ze de server verlaten is nu ingesteld op: %2$s"
     },
+    "usermessage_joinmessage_reset": {
+      "success": "%1$sReset server join message."
+    },
+    "usermessage_leavemessage_reset": {
+      "success": "%1$sReset server leave message."
+    },
     "autoroles_add": {
       "no_args": "%1$sJe moet de naam van de iam en de naam van de rol opgeven.",
       "no_role_found": "%1$sIk kon geen rol vinden met die naam!",
@@ -1934,8 +1989,8 @@
     },
     "admincustom": {
       "no_args": "%1$sJe moet aangeven of u wilt dat het true of false is (true om CC-creatie alleen aan Admins / Bot Commander te geven)",
-      "admin_only": "Het maken van aangepaste commandos is nu alleen voor Admins beschikbaar.",
-      "everyone": "Het maken van aangepaste commandos is nu voor iedereen beschikbaar.",
+      "admin_only": "Het maken van eigen commando`s is nu alleen voor Admins beschikbaar.",
+      "everyone": "Het maken van eigen commando`s is nu voor iedereen beschikbaar.",
       "not_bool": "%1$sGekkie, dat is geen boolean waarde (true of false)!"
     },
     "timedisplay_set": {
@@ -1959,16 +2014,6 @@
     },
     "server_ignorebots_joinleave_toggle": {
       "success": "%1$sDe join/leave ignore van de bot staat nu op: **%2$s**"
-    },
-    "levelupmessages_toggle": {
-      "success": "%1$sStel level-up berichten in op: **%2$s**"
-    },
-    "levelupmessages_message_set": {
-      "no_message": "%1$sJe moet het bericht opgeven dat je wilt weergeven als een gebruiker level up gaat. *Tip: De gebruikersnaam van de persoon wordt weergegeven met behulp van het $(user) argument in het bericht*",
-      "success": "%1$sServer level-up bericht ingesteld op: %2$s"
-    },
-    "levelupmessages_message_clear": {
-      "success": "%1$sHet level-up bericht is gewist!"
     },
     "levelupmessages_channel_set": {
       "no_channel": "%1$sJe moet een kanaal opgeven om level-up berichten te plaatsen!",
@@ -2004,9 +2049,9 @@
     "birthday_test": {
       "no_user": "%1$sJe moet een gebruiker opgeven om deze assigner mee te testen.",
       "no_bd_channel": "%1$sJe hebt geen verjaardagskanaal ingesteld!",
-      "no_bd_role": "%1$sJe hebt geen rol ingesteld voor de verjaardagssetter!",
-      "no_talk_permission": "%1$sDe bot kan geen berichten sturen in het verjaardagskanaal.",
-      "cannot_interact": "%1$sDe bot kan geen interactie hebben met de verjaardagsrol.",
+      "no_bd_role": "%1$sJe hebt geen rol ingesteld voor de verjaardagssetter! check of je hiervoor een nieuwe rol hebt aangemaakt.",
+      "no_talk_permission": "%1$sDe bot kan geen berichten sturen in het verjaardagskanaal. check je kanaal \ntoestemmingen.",
+      "cannot_interact": "%1$sDe bot kan geen interactie hebben met de verjaardagsrol. (dit betekent dat de verjaardags rol hoger staat dan de hoogste rol van Mantaro in de rol hiërarchie, zet deze verder omlaag en probeer het opnieuw)",
       "success": "%1$sGelukt! Het bericht was gestuurd in kanaal %1$s voor de gebruiker **%2$s**. Ze hebben de rol %3$s toegewezen gekregen",
       "error": "%1$sOw... Er is een fout opgetreden tijdens het verzenden van het bericht in het kanaal %2$s voor gebruiker **%3$s** en rol %4$s"
     },
@@ -2053,19 +2098,31 @@
     },
     "logs_editmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone edits a message!",
-      "success": "%1$sMessage edit message set to: `%2$s`"
+      "success": "%1$sMessage edit message set to: `%2$s`",
+      "reset_success": "%1$sReset logs edit message."
     },
     "logs_deletemessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone deletes a message!",
-      "success": "%1$sMessage delete message set to: `%2$s`"
+      "success": "%1$sMessage delete message set to: `%2$s`",
+      "reset_success": "%1$sReset logs delete message."
     },
     "logs_banmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone gets banned!",
-      "success": "%1$sBan message set to: `%2$s`"
+      "success": "%1$sBan message set to: `%2$s`",
+      "reset_success": "%1$sReset logs ban message."
     },
     "logs_unbanmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone gets unbanned!",
-      "success": "%1$sUnban message set to: `%2$s`"
+      "success": "%1$sUnban message set to: `%2$s`",
+      "reset_success": "%1$sReset logs unban message."
+    },
+    "djrole_set": {
+      "no_role": "%1$sYou need to give me a role to use as the DJ role.",
+      "success": "%1$sDe dj-rol is succesvol ingesteld op %2$s."
+    },
+    "djrole_reset": {
+      "not_set": "%1$sJe hebt geen aangepaste DJ rol ingesteld.",
+      "success": "%1$sDe DJ rol succesvol gereset."
     },
     "showdisablewarning": {
       "success": "%1$sDisplay warning on disabled command is set to: %2$s"
@@ -2085,7 +2142,7 @@
       },
       "enable": {
         "already_enabled": "%1$sGame lobby/multiple isn't disabled on this server.",
-        "success": "%1$sSuccessfully enabled game lobby/multiple. (If it was previously disabled)"
+        "success": "%1$sSpellobby/multiple met succes ingeschakeld. (Als het eerder was uitgeschakeld)"
       }
     },
     "invalid_category": "%1$sJe hebt een ongeldige categorie ingevoerd. Een lijst met geldige categorieën om uit te schakelen (hoofdletterongevoelig) wordt hieronder weergegeven```md\n%2$s```",
@@ -2094,22 +2151,22 @@
     "invalid_role": "%1$sDat is geen geldige rol!"
   },
   "discord_permissions": {
-    "create_instant_invite": "Maak direct een uitnodiging",
+    "create_instant_invite": "Maak Direct Een Uitnodiging",
     "kick_members": "Kick Gebruikers",
     "ban_members": "Ban Gebruikers",
-    "administrator": "Administrator",
+    "administrator": "Beheerder",
     "manage_channel": "Beheer Kanalen",
     "manage_server": "Beheer Server",
-    "message_add_reaction": "Reacties toevoegen",
+    "message_add_reaction": "Reacties Toevoegen",
     "view_audit_logs": "Bekijk Audit Logs",
-    "view_channel": "Lees tekstkanalen & zie spraakkanalen",
+    "view_channel": "Lees Tekstkanalen & Zie Spraakkanalen",
     "message_read": "Lees Berichten",
     "message_write": "Verstuur Berichten",
     "message_tts": "Verstuur TTS Berichten",
     "message_manage": "Beheer Berichten",
-    "message_embed_links": "Embed Links",
-    "message_attach_files": "Voeg bestanden toe",
-    "message_history": "Lees geschiedenis",
+    "message_embed_links": "Ingesloten Links",
+    "message_attach_files": "Voeg Bestanden Toe",
+    "message_history": "Lees Geschiedenis",
     "message_mention_everyone": "Noem Iedereen",
     "message_ext_emoji": "Gebruik Externe Emojis",
     "voice_connect": "Verbinden",
@@ -2124,27 +2181,27 @@
     "manage_permissions": "Beheer Machtigingen",
     "manage_webhooks": "Beheer Webhooks",
     "manage_emotes": "Beheer Emojis",
-    "priority_speaker": "Priority Speaker"
+    "priority_speaker": "Voornaamste Spreker"
   },
   "items": {
     "headphones": "Koptelefoon",
     "ban_hammer": "Ban Hamer",
-    "die": "Gevulde dobbelsteen",
-    "kick_boot": "Kick Boot",
+    "die": "Gevulde Dobbelsteen",
+    "kick_boot": "Kick Laars",
     "floppy": "Floppy Disk",
-    "maths": "Mijn berekeningen",
-    "racket": "Ping Racket",
-    "loaded_die": "Gevulde dobbelsteen",
+    "maths": "Mijn Berekeningen",
+    "racket": "Ping Raket",
+    "loaded_die": "Gevulde Dobbelsteen",
     "forgotten": "Vergeten Muziek",
     "pencil": "Potlood",
     "moneybag": "Geld zak",
     "pick": "Brom's Pikhouweel",
     "milk": "Melk",
     "beverage": "Drank",
-    "lewd": "Lewd Magazine",
+    "lewd": "Obsceen Tijdschrift",
     "ring": "Trouwring",
     "letter": "Liefdesbrief",
-    "key": "Krat sleutel",
+    "key": "Kist sleutel",
     "clothes": "Kleren",
     "diamond": "Diamand",
     "dress": "Trouwjurk",
@@ -2154,14 +2211,14 @@
     "rose": "Roos",
     "chocolate": "Chocolade",
     "cookie": "Koekje",
-    "die_2": "Special gelade dobbelsteen",
-    "booster": "Booster",
+    "die_2": "Special Gelade Dobbelsteen",
+    "booster": "Versneller",
     "berserk": "Gek",
     "Companion": "Metgezel",
-    "special_ring": "Speciale ring",
-    "enchancer": "Enchancer",
+    "special_ring": "Speciale Ring",
+    "enchancer": "Versterker",
     "prize": "Prijs",
-    "crate": "Plunder krat",
+    "crate": "Buit Kist",
     "prize_2": "Prijs 2",
     "slot_ticket": "Slot Kaartje",
     "house": "Huis",
@@ -2169,56 +2226,88 @@
     "bell": "Kerstbel",
     "tree": "Kerstboom",
     "pants": "Broek",
-    "haste": "Haast drankje",
-    "milky": "Melk drankje",
+    "haste": "Haast Toverdrank",
+    "milky": "Melk Toverdrank",
     "energy": "Energiedrank",
     "rod": "Vishengel",
     "fish": "Vis",
-    "tropical_fish": "Tropische vis",
+    "tropical_fish": "Tropische Vis",
     "blowfish": "Kogelvis",
-    "comet_gem": "Komeet edelsteen",
-    "star_gem": "Ster edelsteen",
+    "comet_gem": "Komeet Edelsteen",
+    "star_gem": "Ster Edelsteen",
     "cobweb": "Spinneweb",
-    "fragment": "Edelsteen fragment",
+    "fragment": "Edelsteen Fragment",
     "mop": "Dweil",
-    "claim_key": "Vordering sleutel",
+    "claim_key": "Claim Sleutel",
     "coffee": "Koffie",
     "waifu_pill": "Waifu pil",
-    "bait": "Visaas",
+    "bait": "Vis Aas",
     "diamond_pick": "Diamant Pikhouweel",
     "tv": "Televisie",
     "wrench": "Moersleutel",
-    "star_wrench": "Star Wrench",
-    "sparkle_wrench": "Sparkle Wrench",
+    "star_wrench": "Ster Moersleutel",
+    "sparkle_wrench": "Fonkelende Moersleutel",
     "motorcycle": "Motorfiets",
-    "comet_pick": "Komeet edelsteen pikhouweel",
-    "star_pick": "Ster edelseen pikhouweel",
-    "sparkle": "Sparkle Matter",
-    "sparkle_pick": "Sparkle Pickaxe",
+    "comet_pick": "Komeet Pikhouweel",
+    "star_pick": "Ster Pikhouweel",
+    "sparkle": "Fonkelende Materie",
+    "sparkle_pick": "Fonkelende Pickhouweel",
     "pizza": "Pizza",
-    "mine_crate": "Gem Crate",
-    "fish_crate": "Fish Treasure",
-    "mine_premium_crate": "Gem Premium Crate",
-    "fish_premium_crate": "Fish Premium Treasure",
-    "comet_rod": "Comet Gem Rod",
-    "star_rod": "Star Gem Rod",
-    "sparkle_rod": "Sparkle Rod",
-    "shell": "Shell",
-    "shark": "Shark",
-    "crab": "Crab",
-    "squid": "Squid",
-    "shrimp": "Shrimp",
-    "moon": "Moon Rune",
-    "flake": "Snowflake",
-    "broken_comet_pick": "Broken Comet Pick",
-    "broken_sparkle_pick": "Broken Sparkle Pick",
-    "broken_star_pick": "Broken Star Pick",
-    "broken_comet_rod": "Broken Comet Rod",
-    "broken_sparkle_rod": "Broken Sparkle Rod",
-    "broken_star_rod": "Broken Star Rod",
-    "incubator_egg": "Incubator Egg",
-    "water_bottle": "Water Bottle",
-    "magic_watch": "Magical Watch",
+    "mine_crate": "Edelsteen Kist",
+    "fish_crate": "Vis schat",
+    "mine_premium_crate": "Edelsteen Premium Kist",
+    "fish_premium_crate": "Vis Premium Kist",
+    "comet_rod": "Komeet Edelsteen Hengel",
+    "star_rod": "Ster Edelsteen Hengel",
+    "sparkle_rod": "Fonkelende Hengel",
+    "shell": "Schelp",
+    "shark": "Haai",
+    "crab": "Krab",
+    "squid": "Inktvis",
+    "shrimp": "Garnaal",
+    "moon": "Maan Rune",
+    "flake": "Sneeuwvlok",
+    "broken_comet_pick": "Gebroken Komeet Hengel",
+    "broken_sparkle_pick": "Gebroken Fonkelende pickhouweel",
+    "broken_star_pick": "Gebroken Fonkelende Pickhouweel",
+    "broken_comet_rod": "Gebroken Komeet Hengel",
+    "broken_sparkle_rod": "Gebroken Fonkelende hengel",
+    "broken_star_rod": "Gebroken Ster Hengel",
+    "incubator_egg": "Broedmachine Ei",
+    "water_bottle": "Waterfles",
+    "magic_watch": "Magisch Horloge",
+    "pet_house": "Huisdieren Hok",
+    "steak": "Biefstuk",
+    "chicken": "Kip",
+    "milk_3": "Melkfles",
+    "dog_food": "Hondenvoer",
+    "cat_food": "Kattenvoer",
+    "hamster_food": "Hamstervoer",
+    "wood": "Hout",
+    "moon_pick": "Maan Pikhouweel",
+    "hellfire_pick": "Hellevuur Pikhouweel",
+    "axe": "Bijl",
+    "comet_axe": "Komeet Bijl",
+    "star_axe": "Ster Bijl",
+    "sparkle_axe": "Fonkelende bijl",
+    "moon_axe": "Maan Bijl",
+    "hellfire_axe": "Hellevuur Bijl",
+    "moon_rod": "Maan Hengel",
+    "hellfire_rod": "Hellevuur Hengel",
+    "leaves": "Bladeren",
+    "apple": "Appel",
+    "pear": "Peer",
+    "cherry_blossom": "Kersenbloesem",
+    "rock": "Steen",
+    "broken_moon_pick": "Gebroken Maan Pickhouweel",
+    "broken_moon_axe": "Gebroken Maan Bijl",
+    "broken_moon_rod": "Gebroken Maan Hengel",
+    "broken_star_axe": "Gebroken Ster Bijl",
+    "broken_comet_axe": "Gebroken Komeet Bijl",
+    "broken_sparkle_axe": "Gebroken Fonkelende Bijl",
+    "broken_hellfire_pick": "Gebroken Hellevuur Pikhouweel",
+    "broken_hellfire_axe": "Gebroken Hellevuur Bijl",
+    "broken_hellfire_rod": "Gebroken Hellevuur Hengel",
     "description": {
       "headphones": "Dat gebeurd er wanneer je naar teveel muziek luistert. Het zou wat waard moeten zijn eigenlijks.",
       "ban_hammer": "Achtergelaten door een Beheerder",
@@ -2230,13 +2319,13 @@
       "forgotten": "Nooit gedownload. Is waarschijnlijk auteursrechtelijk beschermd.",
       "pencil": "We hebben er hier heel veel van!",
       "moneybag": "Wat anders?",
-      "pick": "Die persoon hield te veel van Minecraft! (`~>mine' tool)",
+      "pick": "Een basis pickhouweek voor je standaard geplande mijnbouw (40 duurzaamheid).",
       "milk": "Misschien is het handig om er een aantal te hebben.",
       "beverage": "Is echt raar spul in grote hoeveelheden. Hoewel, het hangt af van wat voor soort ;)",
       "lewd": "Te veel lewd commando's. Veel te veel. Had je plezier?",
       "ring": "Kortom, wat je huwelijk officieel maakt.",
       "letter": "Een brief van je geliefde.",
-      "key": "Gebruikt om plunder kratten te openen met `~>opencrate` of `~>useitem loot crate`.",
+      "key": "Gebruikt om buit kist te openen met `~>opencrate <crate name>` of `~>useitem loot crate <crate name>`.",
       "clothes": "In principe wat je draagt. Hopelijk...",
       "diamond": "Kortom een betere manier om geld op te sparen. Het is ook glanzend. En je kunt er glanzende spullen van gieten. Wat leuk.",
       "dress": "Is dit niet schattig?",
@@ -2244,16 +2333,16 @@
       "tuxedo": "Wat je draagt als je gaat trouwen met een meisje, als je naar een leuke plek gaat, of misschien wel overal, wie weet?",
       "shoes": "Want blootsvoets lopen is gewoon smerig. Of pijnlijk.",
       "rose": "De belichaming van je liefde. Ook is het een leuke decoratie.",
-      "chocolate": "Yummy.",
-      "cookie": "Heerlijk",
+      "chocolate": "Lekker.",
+      "cookie": "Heerlijk.",
       "die_2": "Nog meer geladen. `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.\"",
       "booster": "Werd gebruikt om je een soort van boost te geven, maar nu is het kapot. `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.\"",
       "berserk": "Valuta Berserker? Iemand? `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.'",
       "companion": "Ach, zo'n schattige hond. `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.'",
       "special_ring": "Het is zo speciaal, het is niet eens een ring. `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.'",
-      "enchancer": "Een kapotte tovenaar, ik vraag me af of het kan worden opgelost? `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.\"",
+      "enchancer": "Een kapotte versterker, ik vraag me af of het kan worden opgelost? `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.\"",
       "prize": "Vrijwel dit, hè? `Overgebleven van Valuta versie 1. Niet meer verkrijgbaar.`",
-      "crate": "U kunt dit samen met een buit-sleutel gebruiken om een buitkrat te openen! `~>opencrate`",
+      "crate": "Je kunt dit samen met een buit kist sleutel om een buit kist te openen! Kan geopend worden met `~>opencrate`.",
       "prize_2": "In de eerste plaats, hoe heb je zoveel geld gekregen?",
       "slot_ticket": "Geeft je extra kans bij de slotmachine, werkt ook als bulkopslag.",
       "house": "Gezellige plek om in te wonen.",
@@ -2263,43 +2352,43 @@
       "pants": "In principe wat je om je benen draagt ... hopelijk.",
       "haste": "Hiermee kun je meer spullen verzamelen via commando's om buit te maken. Werkt voor 2 sessies.",
       "milky": "Wist alle tovereffecten.",
-      "energy": "Makes a pick or rod lose less durability per swing. Lasts only 3 mining/fishing sessions.",
-      "rod": "Hiermee kun je vissen.",
+      "energy": "Maakt dat een stuk gereedschap minder duurzaamheid verliest per zwaai. Gaat 3 sessies mee.",
+      "rod": "Een basishengel voor je vis activiteiten (40 duurzaamheid).",
       "fish": "Vis. Wordt gevangen tijdens het vissen.",
       "tropical_fish": "Een zeer tropische vis. Wordt gevangen tijdens het vissen.",
       "blowfish": "Ik vraag me af.....is dit goed? Wordt gevangen tijdens het vissen.",
-      "comet_gem": "Fragmenten van een komeet die je tijdens het mijnen vond. Handig voor het gieten van spullen.",
+      "comet_gem": "Fragmenten van een komeet die je tijdens het mijnen vond. Handig voor het gieten.",
       "star_gem": "Fragmenten van een gevallen ster die je tijdens het mijnen vond.",
       "cobweb": "Iets wat een spin heeft achtergelaten in de mijn. Ik vraag me af of het iets waard is.",
-      "fragment": "Fragment van een oud edelsteen. Handig voor het gieten.",
+      "fragment": "Fragment van een oude edelsteen. Handig voor het gieten.",
       "mop": "Een heerlijke manier om al het stof weg te halen. Ik weet zeker dat er veel van is.",
       "claim_key": "This item makes you un-claimeable (as a waifu) when you run `~>profile claimlock`.",
       "coffee": "Een heerlijke manier om je dag mee te beginnen.",
-      "waifu_pill": "Geeft je een aanzienlijk voordeel bij het mijnen en vissen als één van je waifus wordt gewaardeerd op meer dan 10 miljoen. Werkt voor 5 sessies.",
+      "waifu_pill": "Gives you a significant advantage on mine and fish if one of your waifus is valued at over 20,000. Lasts 3 sessions.",
       "bait": "Geeft je een hogere kans om vis te vangen",
-      "diamond_pick": "Een veel sterkere pikhouweel (Diamant). (`~>mine` tool).",
+      "diamond_pick": "Een soort van sterkere pikhouweel (150 duurzaamheid).",
       "tv": "Moet....tv.....kijken....",
       "wrench": "Gietgereedschap. Handig om spullen bij elkaar te voegen.",
       "star_wrench": "Casting tool. Useful to put stuff together. Less chance of breaking, needed to cast multiple items at once. Tier 2.",
       "sparkle_wrench": "Casting tool. Useful to put stuff together. Less chance of breaking. Less cost per cast. Tier 3.",
       "motorcycle": "Een rondje rijden, op de coole manier.",
-      "comet_pick": "Een veel sterkere pikhouweel (Komeet). (`~>mine` tool). ",
-      "star_pick": "Een veel sterkere pikhouweel (Ster). (`~>mine` tool). ",
-      "sparkle": "One of the rarest gems around. Make sure to keep it. (Used to cast sparkle pickaxe & sparkle rods)",
-      "sparkle_pick": "The strongest pick out there (450 durability). (`~>mine` tool)",
-      "pizza": "Yummy.",
-      "mine_crate": "A gem, you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem crate`",
-      "fish_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate treasure`",
-      "mine_premium_crate": "A gem you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem premium crate`",
-      "fish_premium_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate premium treasure`",
-      "comet_rod": "A slightly stronger rod. (90 durability)",
-      "star_rod": "A stronger rod. (130 durability)",
-      "sparkle_rod": "A way stronger rod. (250 durability)",
-      "shell": "Found at the bottom of the ocean. What could it be worth for?",
-      "shark": "Woah. How did you catch *this*?",
-      "crab": "A crab. It dances, maybe.",
-      "squid": "Not to confuse with Squidward.",
-      "shrimp": "Pinkish stuff. I think.",
+      "comet_pick": "Een sterkere pikhouweel (180 duurzaamheid).",
+      "star_pick": "Een veel meer pikhouweel (220 duurzaamheid).",
+      "sparkle": "One of the rarest gems around. Make sure to keep it. It is used to cast sparkle pickaxe & sparkle rods.",
+      "sparkle_pick": "Een van de sterkste pikhouwelen die er zijn (450 duurzaamheid).",
+      "pizza": "Lekker.",
+      "mine_crate": "A gem, you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem crate`.",
+      "fish_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate treasure`.",
+      "mine_premium_crate": "A gem you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem premium crate`.",
+      "fish_premium_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate premium treasure`.",
+      "comet_rod": "Een beetje sterkere hengel (90 duurzaamheid).",
+      "star_rod": "Een sterkere hengel (170 duurzaamheid).",
+      "sparkle_rod": "Een veel sterkere hengel (300 duurzaamheid).",
+      "shell": "Op de bodem van de oceaan gevonden. Wat zou het waard kunnen zijn?",
+      "shark": "Woah. How did you catch this?",
+      "crab": "Een crab, Het danst, misschien.",
+      "squid": "Niet te verwarren met Octo.",
+      "shrimp": "Roze-achtig spul. Denk ik.",
       "moon": "Moon Rune. Needed to cast some stuff.",
       "flake": "Snowflake. Usually used as a cast ingredient.",
       "broken_comet_pick": "A comet pick that broke while mining. Still salvageable.",
@@ -2308,9 +2397,41 @@
       "broken_comet_rod": "A comet rod that broke while fishing. Still salvageable.",
       "broken_sparkle_rod": "A sparkle rod that broke while fishing. Still salvageable.",
       "broken_star_rod": "A star rod that broke while fishing. Still salvageable.",
-      "incubator_egg": "TBD",
-      "water_bottle": "TBD",
-      "magic_watch": "A magic watch that slows time when you need it. This will automatically be consumed to save your daily streak!"
+      "incubator_egg": "Does still not have an use. It's an egg, though. Maybe.",
+      "water_bottle": "An item that magically heals your pet's thirst.",
+      "magic_watch": "Een magische wand dat de tijd trager maakt wanneer je het nodig hebt. Dit zal automatisch gebruikt worden om je opeenvolgende dagen te redden!",
+      "pet_house": "A house where your pet lives. Maybe. Sometimes they just like to flop outside.",
+      "steak": "Very yummy if you're not vegetarian.",
+      "chicken": "Very yummy if you're not vegetarian, but it comes from a chicken instead.",
+      "milk_3": "Very good food for cats, I've heard.",
+      "dog_food": "Food your dog might like a lot. Or they might like bread more, like mines.",
+      "cat_food": "Food your cat might like a lot.",
+      "hamster_food": "Food your hamster might enjoy.",
+      "wood": "Common drop from trees. Useful for casting.",
+      "moon_pick": "Een veel meer sterkere pikhouweel (320 duurzaamheid).",
+      "hellfire_pick": "Veel te OP-pikhouweel (te veel duurzaamheid, kom erachter;)).",
+      "axe": "Een normale, midden van de weg, bijl (35 duurzaamheid).",
+      "comet_axe": "Een sterkere bijl (170 duurzaamheid).",
+      "star_axe": "Een veel sterkere bijl (220 duurzaamheid).",
+      "moon_axe": "Een veel meer sterkere bijl (350 duurzaamheid).",
+      "sparkle_axe": "Een veel sterkere bijl (500 duurzaamheid).",
+      "hellfire_axe": "Veel te OP-bijl (te veel duurzaamheid, kom erachter;)).",
+      "moon_rod": "Een sterkere hengel (170 duurzaamheid).",
+      "hellfire_rod": "Veel te OP-hengel (te veel duurzaamheid, kom erachter;)).",
+      "leaves": "Een langzame val van een boom die je probeerde te hakken.",
+      "apple": "Je hakte toevallig een appelboom en de appel viel op je hoofd. Au.",
+      "pear": "Je hakte toevallig een appelboom en de peer viel op je hoofd. Au.",
+      "cherry_blossom": "Een zeer langzame val van een kersenboom. Heerlijk, hè?",
+      "rock": "Een steen. Yup. Erg hard, niet?",
+      "broken_moon_pick": "Een maan pikhouweel die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_moon_axe": "Een maan bijl die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_moon_rod": "Een maan hengel die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_star_axe": "Een ster bijl die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_comet_axe": "Een komeet bijl die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_sparkle_axe": "Een fonkelende bijl die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_hellfire_pick": "Een hellevuur pikhouweel die brak tijdens het hakken. Nog steeds te redden.",
+      "broken_hellfire_axe": "Een hellevuur bijl die brak tijdens het mijnen. Nog steeds te redden.",
+      "broken_hellfire_rod": "Een hellevuur hengel die brak tijdens het hakken. Nog steeds te redden."
     }
   },
   "test": {

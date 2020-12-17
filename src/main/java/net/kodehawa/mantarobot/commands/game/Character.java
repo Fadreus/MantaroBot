@@ -16,31 +16,29 @@
 
 package net.kodehawa.mantarobot.commands.game;
 
-import com.google.gson.JsonSyntaxException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.kodehawa.mantarobot.commands.game.core.AnimeGameData;
 import net.kodehawa.mantarobot.commands.game.core.GameLobby;
 import net.kodehawa.mantarobot.commands.game.core.ImageGame;
-import net.kodehawa.mantarobot.commands.info.stats.manager.GameStatsManager;
 import net.kodehawa.mantarobot.core.listeners.operations.InteractiveOperations;
 import net.kodehawa.mantarobot.core.listeners.operations.core.InteractiveOperation;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.utils.APIUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.data.GsonDataManager;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class Character extends ImageGame {
     private static final Logger log = LoggerFactory.getLogger("Game [Character]");
-    private final int maxAttempts = 5;
+    private static final int maxAttempts = 5;
     private String characterName;
     private List<String> characterNameL;
-    private Random random = new Random();
 
     public Character() {
         super(10);
@@ -59,7 +57,11 @@ public class Character extends ImageGame {
                 if (lobby.getChannel() == null)
                     return;
 
-                lobby.getChannel().sendMessageFormat(lobby.getLanguageContext().get("commands.game.lobby_timed_out"), EmoteReference.ERROR, String.join(" ,", characterNameL)).queue();
+                lobby.getChannel().sendMessageFormat(
+                        lobby.getLanguageContext().get("commands.game.lobby_timed_out"),
+                        EmoteReference.ERROR, String.join(" ,", characterNameL)
+                ).queue();
+
                 GameLobby.LOBBYS.remove(lobby.getChannel().getIdLong());
             }
 
@@ -74,13 +76,10 @@ public class Character extends ImageGame {
     public boolean onStart(GameLobby lobby) {
         final I18nContext languageContext = lobby.getLanguageContext();
         try {
-            GameStatsManager.log(name());
-            AnimeGameData data = GsonDataManager.GSON_PRETTY.fromJson(APIUtils.getFrom("/mantaroapi/bot/character"), AnimeGameData.class);
-
-            GameStatsManager.log(name());
+            var data = JsonDataManager.fromJson(APIUtils.getFrom("/mantaroapi/bot/character"), AnimeGameData.class);
             characterNameL = new ArrayList<>();
             characterName = data.getName();
-            String imageUrl = data.getImage();
+            var imageUrl = data.getImage();
 
             //Allow for replying with only the first name of the character.
             if (characterName.contains(" ")) {
@@ -93,8 +92,15 @@ public class Character extends ImageGame {
                     .setFooter(languageContext.get("commands.game.end_footer"), null)
             ).queue(success -> lobby.setGameLoaded(true));
             return true;
-        } catch (JsonSyntaxException ex) {
-            lobby.getChannel().sendMessageFormat(languageContext.get("commands.game.character_load_error"), EmoteReference.WARNING, characterName).queue();
+        } catch (JsonProcessingException ex) {
+            ex.printStackTrace();
+            lobby.getChannel().sendMessageFormat(
+                    languageContext.get("commands.game.character_load_error"), EmoteReference.WARNING, characterName
+            ).queue();
+
+            return false;
+        } catch (InsufficientPermissionException ex) {
+            lobby.getChannel().sendMessageFormat(languageContext.get("commands.game.error_missing_permissions"), EmoteReference.ERROR).queue();
             return false;
         } catch (Exception e) {
             lobby.getChannel().sendMessageFormat(languageContext.get("commands.game.error"), EmoteReference.ERROR).queue();
@@ -109,6 +115,6 @@ public class Character extends ImageGame {
     }
 
     public int getMaxAttempts() {
-        return this.maxAttempts;
+        return maxAttempts;
     }
 }

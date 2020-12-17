@@ -30,19 +30,18 @@ import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandPermission;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.utils.DiscordUtils;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.awt.*;
+import java.awt.Color;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,17 +53,10 @@ import java.util.stream.Collectors;
 public class InvestigateCmd {
     public static void investigate(GuildMessageReceivedEvent event, Type type, String id, boolean file) {
         switch (type) {
-            case GUILD:
-                investigateGuild(event, MantaroBot.getInstance().getShardManager().getGuildById(id), file);
-                return;
-            case USER:
-                investigateUser(event, MantaroBot.getInstance().getShardManager().getUserById(id), file);
-                return;
-            case CHANNEL:
-                investigateChannel(event, MantaroBot.getInstance().getShardManager().getTextChannelById(id), file);
-                return;
-            default:
-                throw new AssertionError();
+            case GUILD -> investigateGuild(event, MantaroBot.getInstance().getShardManager().getGuildById(id), file);
+            case USER -> investigateUser(event, MantaroBot.getInstance().getShardManager().getUserById(id), file);
+            case CHANNEL -> investigateChannel(event, MantaroBot.getInstance().getShardManager().getTextChannelById(id), file);
+            default -> throw new AssertionError();
         }
     }
 
@@ -73,11 +65,12 @@ public class InvestigateCmd {
             event.getChannel().sendMessage("Unknown guild").queue();
             return;
         }
-        Investigation investigation = new Investigation(file);
+
+        var investigation = new Investigation(file);
         CompletableFuture.allOf(guild.getTextChannels().stream().filter(tc ->
                 guild.getSelfMember().hasPermission(tc, Permission.MESSAGE_HISTORY)
         ).map(tc -> {
-            CompletableFuture<?> f = new CompletableFuture<>();
+            var f = new CompletableFuture<>();
             tc.getIterableHistory().takeAsync(200)
                     .thenAccept(messages -> {
                         List<InvestigatedMessage> res = investigation.get(tc);
@@ -103,9 +96,11 @@ public class InvestigateCmd {
             event.getChannel().sendMessage("Unknown user").queue();
             return;
         }
-        EmbedBuilder eb = new EmbedBuilder()
+
+        var eb = new EmbedBuilder()
                 .setTitle("Please pick a guild")
                 .setColor(Color.PINK);
+
         DiscordUtils.selectList(event, user.getMutualGuilds(), Guild::toString, s -> eb.setDescription(s).build(), g -> investigateGuild(event, g, file));
     }
 
@@ -114,7 +109,8 @@ public class InvestigateCmd {
             event.getChannel().sendMessage("Unknown channel").queue();
             return;
         }
-        Investigation investigation = new Investigation(file);
+
+        var investigation = new Investigation(file);
         channel.getIterableHistory().takeAsync(200)
                 .thenAccept(messages -> {
                     List<InvestigatedMessage> res = investigation.get(channel);
@@ -130,7 +126,7 @@ public class InvestigateCmd {
 
     @Subscribe
     public void investigate(CommandRegistry cr) {
-        cr.register("investigate", new SimpleCommand(Category.OWNER, CommandPermission.OWNER) {
+        cr.register("investigate", new SimpleCommand(CommandCategory.OWNER, CommandPermission.OWNER) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (args.length == 0) {
@@ -146,8 +142,10 @@ public class InvestigateCmd {
                     ctx.send("That's not a valid id!");
                     return;
                 }
+
                 Type type;
                 boolean file;
+
                 if (args.length > 1) {
                     String s = args[1];
                     if (s.equalsIgnoreCase("file")) {
@@ -200,13 +198,15 @@ public class InvestigateCmd {
 
         public void result(Guild target, GuildMessageReceivedEvent event) {
             if (file) {
-                JSONObject channels = new JSONObject();
+                var channels = new JSONObject();
                 parts.forEach((channelId, channel) -> channels.put(channelId, channel.toJson()));
-                JSONObject object = new JSONObject()
+
+                var object = new JSONObject()
                         .put("name", target.getName())
                         .put("id", target.getId())
                         .put("channels", channels);
-                byte[] bytes = object.toString().getBytes(StandardCharsets.UTF_8);
+
+                var bytes = object.toString().getBytes(StandardCharsets.UTF_8);
                 if (bytes.length > 7_800_000) {
                     event.getChannel().sendMessage("Result too big!").queue();
                 } else {
@@ -241,19 +241,22 @@ public class InvestigateCmd {
         }
 
         public JSONObject toJson() {
-            JSONArray array = new JSONArray();
+            var array = new JSONArray();
             messages.forEach(m -> array.put(m.toJson()));
-            JSONObject stats = new JSONObject();
-            JSONObject delays = new JSONObject();
+
+            var stats = new JSONObject();
+            var delays = new JSONObject();
+
             messages.stream().collect(Collectors.groupingBy(InvestigatedMessage::getAuthorId))
                     .forEach((author, m) -> {
-                        JSONArray d = new JSONArray();
-                        Iterator<InvestigatedMessage> it = m.iterator();
-                        long time = it.next().timestamp().toInstant().toEpochMilli();
+                        var d = new JSONArray();
+                        var it = m.iterator();
+                        var time = it.next().timestamp().toInstant().toEpochMilli();
+
                         while (it.hasNext()) {
-                            InvestigatedMessage msg = it.next();
-                            long creation = msg.timestamp().toInstant().toEpochMilli();
-                            long delta = creation - time;
+                            var msg = it.next();
+                            var creation = msg.timestamp().toInstant().toEpochMilli();
+                            var delta = creation - time;
                             time = creation;
                             d.put(delta);
                         }
@@ -297,7 +300,7 @@ public class InvestigateCmd {
         }
 
         String format() {
-            return String.format("%s - %s - %-37s (%-20s bot = %5s): %s",
+            return "%s - %s - %-37s (%-20s bot = %5s): %s".formatted(
                     timestamp(),
                     id,
                     authorName + "#" + authorDiscriminator,

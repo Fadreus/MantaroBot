@@ -18,10 +18,7 @@ package net.kodehawa.mantarobot.commands.utils.reminders;
 
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.ManagedDatabase;
-import net.kodehawa.mantarobot.db.entities.DBUser;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import org.json.JSONObject;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.util.UUID;
@@ -49,31 +46,31 @@ public class Reminder {
         this.reminder = reminder;
         this.time = time;
         this.scheduledAtMillis = scheduledAt;
-
-        DBUser user = db.getUser(userId);
-        UserData data = user.getData();
-        data.setRemindedTimes(user.getData().getRemindedTimes() + 1);
-        user.saveAsync();
     }
 
     //This is more useful now
     //Id here contains the full id aka UUID:userId, unlike in the other methods
-    public static void cancel(String userId, String fullId) {
-        try (Jedis redis = pool.getResource()) {
-            String data = redis.hget(table, fullId);
+    public static void cancel(String userId, String fullId, CancelReason reason) {
+        try (var redis = pool.getResource()) {
+            var data = redis.hget(table, fullId);
 
             redis.zrem(ztable, data);
             redis.hdel(table, fullId);
         }
 
-        DBUser user = db.getUser(userId);
-        UserData data = user.getData();
+        var user = db.getUser(userId);
+        var data = user.getData();
         data.getReminders().remove(fullId);
-        user.saveAsync();
+
+        if (reason == CancelReason.REMINDED) {
+            data.incrementReminders();
+        }
+
+        user.save();
     }
 
     public void schedule() {
-        JSONObject r = new JSONObject()
+        var r = new JSONObject()
                 .put("id", id)
                 .put("user", userId)
                 .put("guild", guildId)
@@ -81,16 +78,17 @@ public class Reminder {
                 .put("reminder", reminder)
                 .put("at", time);
 
-        try (Jedis redis = pool.getResource()) {
+        try (var redis = pool.getResource()) {
             redis.zadd(ztable, time, r.toString());
             //Needed for removal.
             redis.hset(table, id + ":" + userId, r.toString());
         }
 
-        DBUser user = db.getUser(userId);
-        UserData data = user.getData();
+        var user = db.getUser(userId);
+        var data = user.getData();
+
         data.getReminders().add(id + ":" + userId);
-        user.saveAsync();
+        user.save();
     }
 
     public static class Builder {
@@ -125,7 +123,6 @@ public class Reminder {
             return this;
         }
 
-
         public Reminder build() {
             if (userId == null)
                 throw new IllegalArgumentException("User ID cannot be null");
@@ -140,5 +137,9 @@ public class Reminder {
 
             return new Reminder(UUID.randomUUID().toString(), userId, guildId, reminder, current, time);
         }
+    }
+
+    public enum CancelReason {
+        CANCEL, REMINDED, ERROR_DELIVERING
     }
 }

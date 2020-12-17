@@ -29,9 +29,12 @@ import net.kodehawa.mantarobot.db.entities.helpers.PremiumKeyData;
 import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.APIUtils;
 import net.kodehawa.mantarobot.utils.Pair;
+import net.kodehawa.mantarobot.utils.Utils;
 
 import javax.annotation.Nonnull;
 import java.beans.ConstructorProperties;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +47,7 @@ public class DBUser implements ManagedObject {
     private long premiumUntil;
 
     @JsonIgnore
-    private Config config = MantaroData.config().get();
+    private final Config config = MantaroData.config().get();
 
     @JsonCreator
     @ConstructorProperties({"id", "premiumUntil", "data"})
@@ -60,12 +63,12 @@ public class DBUser implements ManagedObject {
 
     @JsonIgnore
     public User getUser(JDA jda) {
-        return jda.getUserById(getId());
+        return jda.retrieveUserById(getId()).complete();
     }
 
     @JsonIgnore
     public User getUser() {
-        return MantaroBot.getInstance().getShardManager().getUserById(getId());
+        return MantaroBot.getInstance().getShardManager().retrieveUserById(getId()).complete();
     }
 
     @JsonIgnore
@@ -95,7 +98,7 @@ public class DBUser implements ManagedObject {
         if (key != null) {
             //Check for this because there's no need to check if this key is active.
             boolean isKeyActive = currentTimeMillis() < key.getExpiration();
-            if (!isKeyActive) {
+            if (!isKeyActive && LocalDate.now(ZoneId.of("America/Chicago")).getDayOfMonth() > 5) {
                 DBUser owner = MantaroData.db().getUser(key.getOwner());
                 UserData ownerData = owner.getData();
 
@@ -106,10 +109,29 @@ public class DBUser implements ManagedObject {
                 }
 
                 //Handle this so we don't go over this check again. Remove premium key from user object.
-                key.delete();
-                removePremiumKey();
+                removePremiumKey(key.getId());
 
-                //User is not premium.
+                // Send a message if the user was premium but the key expired.
+                // This has a 5-day leeway. This means it won't kill your key if the day of the month is before or the 5th of X month.
+                // This is because Patreon can take up to the 5th to process pledges.
+                if (key.getOwner().equals(getId())) {
+                    MantaroBot.getInstance().getShardManager()
+                            .retrieveUserById(key.getOwner())
+                            .flatMap(User::openPrivateChannel)
+                            .flatMap(privateChannel ->
+                                    privateChannel.sendMessage("""
+                                            Hello! Your key(s) seems to have expired, this usually only happens when your Patreon subscription is over (aka you cancelled it). If you didn't cancel your Patreon subscription, please check Patreon to see if your pledge went through.
+                                            If you bought this key via PayPal, you can ignore this message.
+                                            Thanks you for supporting Mantaro and I hope you have a good day! :heart:."""
+                                    )
+                            ).queue();
+
+                }
+
+                // Delete key.
+                key.delete();
+
+                // User is not premium.
                 return false;
             }
 
@@ -136,10 +158,10 @@ public class DBUser implements ManagedObject {
             isActive = key.getData().getLinkedTo() == null || (pledgeInfo != null ? pledgeInfo.getLeft() : true); //default to true if no link
         }
 
-        if (!isActive && key != null) {
+        if (!isActive && key != null && LocalDate.now(ZoneId.of("America/Chicago")).getDayOfMonth() > 5) {
             //Handle this so we don't go over this check again. Remove premium key from user object.
+            removePremiumKey(key.getId());
             key.delete();
-            removePremiumKey();
         }
 
         return key != null && currentTimeMillis() < key.getExpiration() && key.getParsedType().equals(PremiumKey.Type.USER) && isActive;
@@ -156,8 +178,9 @@ public class DBUser implements ManagedObject {
     }
 
     @JsonIgnore
-    public void removePremiumKey() {
+    public void removePremiumKey(String originalKey) {
         data.setPremiumKey(null);
+        data.getKeysClaimed().remove(Utils.getKeyByValue(data.getKeysClaimed(), originalKey));
         data.setHasReceivedFirstKey(false);
         save();
     }
@@ -166,6 +189,7 @@ public class DBUser implements ManagedObject {
         return this.data;
     }
 
+    @Nonnull
     public String getId() {
         return this.id;
     }

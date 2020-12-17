@@ -20,42 +20,30 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import io.prometheus.client.Counter;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.music.GuildMusicManager;
-import net.kodehawa.mantarobot.commands.music.MantaroAudioManager;
-import net.kodehawa.mantarobot.commands.music.utils.AudioUtils;
+import net.kodehawa.mantarobot.commands.music.utils.AudioCmdUtils;
 import net.kodehawa.mantarobot.data.I18n;
 import net.kodehawa.mantarobot.data.MantaroData;
+import net.kodehawa.mantarobot.db.ManagedDatabase;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.db.entities.DBUser;
-import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
 import net.kodehawa.mantarobot.utils.APIUtils;
-import net.kodehawa.mantarobot.utils.DiscordUtils;
-import net.kodehawa.mantarobot.utils.SentryHelper;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import org.slf4j.Logger;
+import net.kodehawa.mantarobot.utils.exporters.Metrics;
 
-import java.awt.*;
-import java.util.List;
-import java.util.Optional;
+import java.awt.Color;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
 public class AudioLoader implements AudioLoadResultHandler {
-    private static final Counter trackEvents = Counter.build()
-            .name("track_event").help("Music Track Events (failed/loaded/searched)")
-            .labelNames("type")
-            .register();
 
     private static final int MAX_QUEUE_LENGTH = 350;
-    private static final long MAX_SONG_LENGTH = 1920000; //32 minutes
+    private static final long MAX_SONG_LENGTH = TimeUnit.HOURS.toMillis(2);
+    private static final ManagedDatabase db = MantaroData.db();
     private final GuildMessageReceivedEvent event;
     private final boolean insertFirst;
     private final GuildMusicManager musicManager;
@@ -72,7 +60,7 @@ public class AudioLoader implements AudioLoadResultHandler {
 
     @Override
     public void trackLoaded(AudioTrack track) {
-        loadSingle(track, false);
+        loadSingle(track, false, db.getGuild(event.getGuild()), db.getUser(event.getMember()));
     }
 
     @Override
@@ -81,43 +69,56 @@ public class AudioLoader implements AudioLoadResultHandler {
             if (!skipSelection) {
                 onSearch(playlist);
             } else {
-                loadSingle(playlist.getTracks().get(0), false);
+                loadSingle(playlist.getTracks().get(0), false,
+                        db.getGuild(event.getGuild()), db.getUser(event.getMember())
+                );
             }
 
             return;
         }
 
         try {
-            int i = 0;
-            for (AudioTrack track : playlist.getTracks()) {
-                DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
-                DBUser user = MantaroData.db().getUser(event.getMember());
-                GuildData guildData = dbGuild.getData();
+            var count = 0;
+            var dbGuild = db.getGuild(event.getGuild());
+            var user = db.getUser(event.getMember());
+            var guildData = dbGuild.getData();
 
+            for (var track : playlist.getTracks()) {
                 if (guildData.getMusicQueueSizeLimit() != null) {
-                    if (i < guildData.getMusicQueueSizeLimit()) {
-                        loadSingle(track, true);
+                    if (count <= guildData.getMusicQueueSizeLimit()) {
+                        loadSingle(track, true, dbGuild, user);
                     } else {
-                        event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.over_limit"), EmoteReference.WARNING, guildData.getMusicQueueSizeLimit()).queue();
+                        event.getChannel().sendMessageFormat(
+                                language.get("commands.music_general.loader.over_limit"),
+                                EmoteReference.WARNING, guildData.getMusicQueueSizeLimit()
+                        ).queue();
                         break;
                     }
                 } else {
-                    if (i > MAX_QUEUE_LENGTH && (!dbGuild.isPremium() && !user.isPremium())) {
-                        event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.over_limit"), EmoteReference.WARNING, MAX_QUEUE_LENGTH).queue();
+                    if (count >= MAX_QUEUE_LENGTH && (!dbGuild.isPremium() && !user.isPremium())) {
+                        event.getChannel().sendMessageFormat(
+                                language.get("commands.music_general.loader.over_limit"),
+                                EmoteReference.WARNING, MAX_QUEUE_LENGTH
+                        ).queue();
                         break; //stop adding songs
                     } else {
-                        loadSingle(track, true);
+                        loadSingle(track, true, dbGuild, user);
                     }
                 }
 
-                i++;
+                count++;
             }
 
             event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.loaded_playlist"),
-                    EmoteReference.CORRECT, i, playlist.getName(), Utils.getDurationMinutes(playlist.getTracks().stream().mapToLong(temp -> temp.getInfo().length).sum())
+                    EmoteReference.CORRECT, count, playlist.getName(),
+                    Utils.formatDuration(
+                            playlist.getTracks()
+                                    .stream()
+                                    .mapToLong(temp -> temp.getInfo().length).sum()
+                    )
             ).queue();
         } catch (Exception e) {
-            SentryHelper.captureExceptionContext("Cannot load playlist. I guess something broke pretty hard. Please check", e, this.getClass(), "Music Loader");
+            e.printStackTrace();
         }
     }
 
@@ -130,79 +131,109 @@ public class AudioLoader implements AudioLoadResultHandler {
     @Override
     public void loadFailed(FriendlyException exception) {
         if (!exception.severity.equals(FriendlyException.Severity.FAULT)) {
-            event.getChannel().sendMessage(String.format(language.get("commands.music_general.loader.error_fetching"), EmoteReference.ERROR, exception.getMessage())).queue();
+            event.getChannel().sendMessage(
+                    String.format(language.get("commands.music_general.loader.error_fetching"),
+                            EmoteReference.ERROR, exception.getMessage()
+                    )
+            ).queue();
         } else {
-            trackEvents.labels("tracks_failed").inc();
+            Metrics.TRACK_EVENTS.labels("tracks_failed").inc();
         }
     }
 
-    private void loadSingle(AudioTrack audioTrack, boolean silent) {
-        AudioTrackInfo trackInfo = audioTrack.getInfo();
+    private void loadSingle(AudioTrack audioTrack, boolean silent, DBGuild dbGuild, DBUser dbUser) {
+        final var trackInfo = audioTrack.getInfo();
+        final var trackScheduler = musicManager.getTrackScheduler();
+        final var guildData = dbGuild.getData();
+
         audioTrack.setUserData(event.getAuthor().getId());
-        DBGuild dbGuild = MantaroData.db().getGuild(event.getGuild());
-        DBUser dbUser = MantaroData.db().getUser(event.getMember());
-        GuildData guildData = dbGuild.getData();
 
-        String title = trackInfo.title;
-        long length = trackInfo.length;
+        final var title = trackInfo.title;
+        final var length = trackInfo.length;
 
-        long queueLimit = !Optional.ofNullable(dbGuild.getData().getMusicQueueSizeLimit()).isPresent() ? MAX_QUEUE_LENGTH :
-                dbGuild.getData().getMusicQueueSizeLimit();
-        int fqSize = guildData.getMaxFairQueue();
+        var queueLimit = guildData.getMusicQueueSizeLimit() == null || guildData.getMusicQueueSizeLimit() < 1 ?
+                MAX_QUEUE_LENGTH : guildData.getMusicQueueSizeLimit();
 
-        if (musicManager.getTrackScheduler().getQueue().size() > queueLimit && !dbUser.isPremium() && !dbGuild.isPremium()) {
-            if (!silent)
-                event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.over_queue_limit"),
+        var fqSize = guildData.getMaxFairQueue();
+        ConcurrentLinkedDeque<AudioTrack> queue = trackScheduler.getQueue();
+
+        if (queue.size() > queueLimit && !dbUser.isPremium() && !dbGuild.isPremium()) {
+            if (!silent) {
+                event.getChannel().sendMessageFormat(
+                        language.get("commands.music_general.loader.over_queue_limit"),
                         EmoteReference.WARNING, title, queueLimit
                 ).queue(message -> message.delete().queueAfter(30, TimeUnit.SECONDS));
+            }
             return;
         }
 
-        if (audioTrack.getInfo().length > MAX_SONG_LENGTH && (!dbUser.isPremium() && !dbGuild.isPremium())) {
+        if (trackInfo.length > MAX_SONG_LENGTH && (!dbUser.isPremium() && !dbGuild.isPremium())) {
             event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.over_32_minutes"),
-                    EmoteReference.WARNING, title, AudioUtils.getLength(length)
+                    EmoteReference.WARNING, title,
+                    Utils.formatDuration(MAX_SONG_LENGTH),
+                    Utils.formatDuration(length)
             ).queue();
             return;
         }
 
-        //Comparing if the URLs are the same to be 100% sure they're just not spamming the same url over and over again.
-        if (musicManager.getTrackScheduler().getQueue().stream().filter(track -> track.getInfo().uri.equals(audioTrack.getInfo().uri)).count() > fqSize && !silent) {
-            event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.fair_queue_limit_reached"), EmoteReference.ERROR, fqSize + 1).queue();
+        // Comparing if the URLs are the same to be 100% sure they're just not spamming the same url over and over again.
+        if (queue.stream().filter(track -> trackInfo.uri.equals(track.getInfo().uri)).count() > fqSize && !silent) {
+            event.getChannel().sendMessageFormat(
+                    language.get("commands.music_general.loader.fair_queue_limit_reached"),
+                    EmoteReference.ERROR, fqSize + 1
+            ).queue();
+
             return;
         }
 
-        musicManager.getTrackScheduler().queue(audioTrack, insertFirst);
-        musicManager.getTrackScheduler().setRequestedChannel(event.getChannel().getIdLong());
+        trackScheduler.queue(audioTrack, insertFirst);
+        trackScheduler.setRequestedChannel(event.getChannel().getIdLong());
 
         if (!silent) {
-            //Hush from here babe, hehe.
-            Player player = MantaroData.db().getPlayer(event.getAuthor());
-            Badge badge = APIUtils.getHushBadge(audioTrack.getIdentifier(), Utils.HushType.MUSIC);
+            var player = db.getPlayer(event.getAuthor());
+            var badge = APIUtils.getHushBadge(audioTrack.getIdentifier(), Utils.HushType.MUSIC);
             if (badge != null) {
                 player.getData().addBadgeIfAbsent(badge);
-                player.save();
+                player.saveUpdating();
             }
 
-            new MessageBuilder().append(
-                    String.format(language.get("commands.music_general.loader.loaded_song"), EmoteReference.CORRECT, title, AudioUtils.getLength(length)))
-                    .stripMentions(event.getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE)
-                    .sendTo(event.getChannel()).queue();
+            var duration = Utils.formatDuration(length);
+            if (length == Long.MAX_VALUE) {
+                duration = "stream";
+            }
+
+            event.getChannel().sendMessageFormat(
+                    language.get("commands.music_general.loader.loaded_song"), EmoteReference.CORRECT, title, duration
+            ).queue();
         }
 
-        trackEvents.labels("tracks_load").inc();
+        Metrics.TRACK_EVENTS.labels("tracks_load").inc();
     }
 
     private void onSearch(AudioPlaylist playlist) {
-        List<AudioTrack> list = playlist.getTracks();
+        var list = playlist.getTracks();
         DiscordUtils.selectList(event, list.subList(0, Math.min(5, list.size())),
-                track -> String.format("**[%s](%s)** (%s)", track.getInfo().title, track.getInfo().uri, Utils.getDurationMinutes(track.getInfo().length)),
-                s -> new EmbedBuilder().setColor(Color.CYAN).setAuthor(language.get("commands.music_general.loader.selection_text"), "https://i.imgur.com/sFDpUZy.png")
-                        .setThumbnail("http://www.clipartbest.com/cliparts/jix/6zx/jix6zx4dT.png")
+                track -> String.format(
+                        "%s**[%s](%s)** (%s)",
+                        EmoteReference.BLUE_SMALL_MARKER,
+                        track.getInfo().title,
+                        track.getInfo().uri,
+                        AudioCmdUtils.getDurationMinutes(track.getInfo().length)
+                ), s -> new EmbedBuilder()
+                        .setColor(Color.CYAN)
+                        .setAuthor(language.get("commands.music_general.loader.selection_text"),
+                                "https://i.imgur.com/sFDpUZy.png",
+                                event.getAuthor().getEffectiveAvatarUrl()
+                        )
+                        .setThumbnail("https://i.imgur.com/FWKIR7N.png")
                         .setDescription(s)
-                        .setFooter(language.get("commands.music_general.loader.timeout_text"), null).build(),
-                selected -> loadSingle(selected, false)
+                        .setFooter(language.get("commands.music_general.loader.timeout_text"),
+                                event.getAuthor().getEffectiveAvatarUrl()
+                        )
+                        .build(),
+                selected -> loadSingle(selected, false, db.getGuild(event.getGuild()), db.getUser(event.getMember()))
         );
 
-        trackEvents.labels("tracks_search").inc();
+        Metrics.TRACK_EVENTS.labels("tracks_search").inc();
     }
 }

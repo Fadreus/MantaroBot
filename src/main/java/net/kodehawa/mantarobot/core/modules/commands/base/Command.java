@@ -26,18 +26,18 @@ import java.util.List;
  */
 public interface Command {
     /**
-     * The Command's {@link Category}
+     * The Command's {@link CommandCategory}
      *
-     * @return a Nullable {@link Category}. Null means that the command should be hidden from Help.
+     * @return a Nullable {@link CommandCategory}. Null means that the command should be hidden from Help.
      */
-    Category category();
+    CommandCategory category();
 
     CommandPermission permission();
 
     /**
      * Invokes the command to be executed.
      *
-     * @param event       the event that triggered the command
+     * @param context     the context of the event that triggered the command
      * @param commandName the command name that was used
      * @param content     the arguments of the command
      */
@@ -48,4 +48,8 @@ public interface Command {
     Command addOption(String call, Option option);
 
     List<String> getAliases();
+
+    default boolean isOwnerCommand() {
+        return permission() == CommandPermission.OWNER;
+    }
 }

@@ -19,8 +19,8 @@ package net.kodehawa.mantarobot.data;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.rethinkdb.net.Connection;
 import net.kodehawa.mantarobot.db.ManagedDatabase;
-import net.kodehawa.mantarobot.utils.Prometheus;
-import net.kodehawa.mantarobot.utils.data.GsonDataManager;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
+import net.kodehawa.mantarobot.utils.exporters.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
@@ -32,41 +32,51 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.rethinkdb.RethinkDB.r;
 
 public class MantaroData {
-    private static final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("MantaroData-Executor Thread-%d").build());
     private static final Logger log = LoggerFactory.getLogger(MantaroData.class);
-    private static GsonDataManager<Config> config;
-    private static Connection conn;
+    private static final ScheduledExecutorService exec = Executors.newScheduledThreadPool(
+            1, new ThreadFactoryBuilder().setNameFormat("MantaroData-Executor Thread-%d").build()
+    );
+
+    private static JsonDataManager<Config> config;
+    private static Connection connection;
     private static ManagedDatabase db;
 
     private static final JedisPool defaultJedisPool = new JedisPool(config().get().jedisPoolAddress, config().get().jedisPoolPort);
-    //private static final org.redisson.config.Config redissonConfig = new org.redisson.config.Config();
-    //private static RedissonClient redisson;
 
     static {
-        Prometheus.THREAD_POOL_COLLECTOR.add("mantaro-data", exec);
-        //redissonConfig.useSingleServer().setAddress("redis://127.0.0.1:" + config().get().jedisPoolPort);
-        //redisson = Redisson.create(redissonConfig);
+        Metrics.THREAD_POOL_COLLECTOR.add("mantaro-data", exec);
     }
 
-    public static GsonDataManager<Config> config() {
-        if (config == null)
-            config = new GsonDataManager<>(Config.class, "config.json", Config::new);
+    public static JsonDataManager<Config> config() {
+        if (config == null) {
+            config = new JsonDataManager<>(Config.class, "config.json", Config::new);
+        }
 
         return config;
     }
 
     public static Connection conn() {
-        Config c = config().get();
-        if (conn == null) {
+        var config = config().get();
+        if (connection == null) {
             synchronized (MantaroData.class) {
-                if (conn != null)
-                    return conn;
+                if (connection != null) {
+                    return connection;
+                }
 
-                conn = r.connection().hostname(c.dbHost).port(c.dbPort).db(c.dbDb).user(c.dbUser, c.dbPassword).connect();
-                log.info("Established first database connection to {}:{} ({})", c.dbHost, c.dbPort, c.dbUser);
+                connection = r.connection()
+                        .hostname(config.getDbHost())
+                        .port(config.getDbPort())
+                        .db(config.getDbDb())
+                        .user(config.getDbUser(), config.getDbPassword())
+                        .connect();
+
+                log.info("Established first database connection to {}:{} ({})",
+                        config.getDbHost(), config.getDbPort(), config.getDbUser()
+                );
             }
         }
-        return conn;
+
+        return connection;
     }
 
 
@@ -74,12 +84,9 @@ public class MantaroData {
         if (db == null) {
             db = new ManagedDatabase(conn());
         }
+
         return db;
     }
-
-    // public static RedissonClient redisson() {
-    //     return redisson;
-    // }
 
     public static ScheduledExecutorService getExecutor() {
         return exec;

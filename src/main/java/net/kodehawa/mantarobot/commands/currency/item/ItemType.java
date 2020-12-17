@@ -17,48 +17,63 @@
 package net.kodehawa.mantarobot.commands.currency.item;
 
 public enum ItemType {
-    //An item without buy value, that can only be obtained through commands.
+    // Commons
     COLLECTABLE(false),
-    //An item that's common, obtainable through buy/sell.
     COMMON(false),
-    //An item that's maybe a collectible, but that's harder to get than the rest.
     RARE(false),
-    //An item used in fishing mechanisms.
-    FISHING(false),
-    //An item used in mining.
-    MINE(false),
-    //An item that has an action attached to it.
     INTERACTIVE(false),
-    //Guess.
+
+    // Not really used.
     PREMIUM(false),
-    //Cast-able item.
-    CAST(true),
-    //Cast-able item, but you can also use it to mine
+
+    // Cast-able items.
     CAST_MINE(true),
-    //Cast-able item, but you can also obtain it without casting.
     CAST_OBTAINABLE(true),
-    //Rare fishes.
+
+    // Drops.
+    MINE(false),
+    FISHING(false),
     FISHING_RARE(false),
     MINE_RARE(true),
-    MINE_RARE_PICK(true),
-    MINE_PICK(true),
     CRATE(false),
-    CAST_FISH(true),
+    CHOP_DROP(false),
+
+    // Buffs
     POTION(false),
     BUFF(false),
+
+    // Wrenches
     WRENCH(true),
+
+    // Waifu stuff, only has one little type tho.
+    WAIFU(false),
+
+    // Picks
+    MINE_PICK(true),
+    MINE_RARE_PICK(true),
+    MINE_RARE_PICK_NODROP(true),
+
+    // Rods
+    FISHROD(true),
+    FISHROD_RARE(true),
+    FISHROD_RARE_NODROP(true),
+
+    // Axes
+    CHOP_AXE(true),
+    CHOP_RARE_AXE(true),
+    CHOP_RARE_AXE_NODROP(true),
+
+    // Broken items
     BROKEN(false),
-    BROKEN_COMMON(false),
-    BROKEN_FISHING(false),
-    BROKEN_MINE_COMMON(false), //This is to drop broken picks on the fish crate.
-    BROKEN_FISHING_COMMON(false), //This is to drop broken rods on the fish crate.
-    WAIFU(false), //So it doesn't drop on a loot crate, lol
 
     //Pet items don't appear in the normal market.
     PET(true),
-    PET_FOOD(false);
+    PET_FOOD(false),
 
-    private boolean cast;
+    // Not used anymore
+    DEPRECATED(false);
+
+    private final boolean cast;
 
     ItemType(boolean cast) {
         this.cast = cast;

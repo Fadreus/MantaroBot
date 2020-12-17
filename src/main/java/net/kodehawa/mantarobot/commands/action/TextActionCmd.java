@@ -17,27 +17,22 @@
 package net.kodehawa.mantarobot.commands.action;
 
 import net.kodehawa.mantarobot.core.modules.commands.NoArgsCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Random;
 
 public class TextActionCmd extends NoArgsCommand {
-    private final Color color;
     private final String desc;
     private final String format;
-    private final String name;
     private final List<String> strings;
     private final Random rand = new Random();
 
-    public TextActionCmd(String name, String desc, Color color, String format, List<String> strings) {
-        super(Category.ACTION);
-        this.name = name;
+    public TextActionCmd(String desc, String format, List<String> strings) {
+        super(CommandCategory.ACTION);
         this.desc = desc;
-        this.color = color;
         this.format = format;
         this.strings = strings;
     }

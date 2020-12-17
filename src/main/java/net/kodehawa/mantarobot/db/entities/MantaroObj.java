@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MantaroObj implements ManagedObject {
     public static final String DB_TABLE = "mantaro";
-    public final String id = "mantaro";
+    public static final String id = "mantaro";
     public List<String> blackListedGuilds;
     public List<String> blackListedUsers;
     public List<String> patreonUsers;
@@ -50,15 +50,15 @@ public class MantaroObj implements ManagedObject {
         this.mutes = mutes;
     }
 
-    public MantaroObj() {
-    }
+    public MantaroObj() { }
 
     public static MantaroObj create() {
         return new MantaroObj(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new ConcurrentHashMap<>());
     }
 
+    @Nonnull
     public String getId() {
-        return this.id;
+        return id;
     }
 
     @JsonIgnore

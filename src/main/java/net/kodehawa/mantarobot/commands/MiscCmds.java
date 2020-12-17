@@ -22,40 +22,33 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.kodehawa.mantarobot.commands.interaction.polls.Poll;
-import net.kodehawa.mantarobot.commands.interaction.polls.PollBuilder;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
 import net.kodehawa.mantarobot.core.modules.commands.SubCommand;
 import net.kodehawa.mantarobot.core.modules.commands.TreeCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
 import net.kodehawa.mantarobot.core.modules.commands.base.Command;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
-import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
-import net.kodehawa.mantarobot.utils.DiscordUtils;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.data.DataManager;
 import net.kodehawa.mantarobot.utils.data.SimpleFileDataManager;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Module
-@SuppressWarnings("unused")
 public class MiscCmds {
-    private static final Logger log = LoggerFactory.getLogger(MiscCmds.class);
-    private final String[] HEX_LETTERS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"};
     private final DataManager<List<String>> facts = new SimpleFileDataManager("assets/mantaro/texts/facts.txt");
     private final Random rand = new Random();
     private final Pattern pollOptionSeparator = Pattern.compile(",\\s*");
@@ -65,11 +58,11 @@ public class MiscCmds {
     }
 
     public static void iamFunction(String autoroleName, Context ctx, String message) {
-        DBGuild dbGuild = ctx.getDBGuild();
-        Map<String, String> autoroles = dbGuild.getData().getAutoroles();
+        var dbGuild = ctx.getDBGuild();
+        var autoroles = dbGuild.getData().getAutoroles();
 
         if (autoroles.containsKey(autoroleName)) {
-            Role role = ctx.getGuild().getRoleById(autoroles.get(autoroleName));
+            var role = ctx.getGuild().getRoleById(autoroles.get(autoroleName));
             if (role == null) {
                 ctx.sendLocalized("commands.iam.deleted_role", EmoteReference.ERROR);
 
@@ -106,8 +99,8 @@ public class MiscCmds {
     }
 
     public static void iamnotFunction(String autoroleName, Context ctx, String message) {
-        DBGuild dbGuild = ctx.getDBGuild();
-        Map<String, String> autoroles = dbGuild.getData().getAutoroles();
+        var dbGuild = ctx.getDBGuild();
+        var autoroles = dbGuild.getData().getAutoroles();
 
         if (autoroles.containsKey(autoroleName)) {
             Role role = ctx.getGuild().getRoleById(autoroles.get(autoroleName));
@@ -142,7 +135,7 @@ public class MiscCmds {
 
     @Subscribe
     public void eightBall(CommandRegistry cr) {
-        cr.register("8ball", new SimpleCommand(Category.MISC) {
+        cr.register("8ball", new SimpleCommand(CommandCategory.FUN) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (content.isEmpty()) {
@@ -150,10 +143,10 @@ public class MiscCmds {
                     return;
                 }
 
-                String textEncoded = URLEncoder.encode(content.replace("/", "|"), StandardCharsets.UTF_8);
-                String json = Utils.wget(String.format("https://8ball.delegator.com/magic/JSON/%1s", textEncoded));
+                var textEncoded = URLEncoder.encode(content.replace("/", "|"), StandardCharsets.UTF_8);
+                var json = Utils.httpRequest("https://8ball.delegator.com/magic/JSON/%1s".formatted(textEncoded));
 
-                if(json == null) {
+                if (json == null) {
                     ctx.sendLocalized("commands.8ball.error", EmoteReference.ERROR);
                     return;
                 }
@@ -177,12 +170,12 @@ public class MiscCmds {
 
     @Subscribe
     public void iam(CommandRegistry cr) {
-        TreeCommand iamCommand = (TreeCommand) cr.register("iam", new TreeCommand(Category.MISC) {
+        TreeCommand iamCommand = cr.register("iam", new TreeCommand(CommandCategory.UTILS) {
             @Override
             public Command defaultTrigger(Context ctx, String mainCommand, String commandName) {
                 return new SubCommand() {
                     @Override
-                    protected void call(Context ctx, String content) {
+                    protected void call(Context ctx, I18nContext languageContext, String content) {
                         if (content.trim().isEmpty()) {
                             ctx.sendLocalized("commands.iam.no_iam", EmoteReference.ERROR);
                             return;
@@ -211,34 +204,29 @@ public class MiscCmds {
             }
 
             @Override
-            protected void call(Context ctx, String content) {
+            protected void call(Context ctx, I18nContext languageContext, String content) {
                 EmbedBuilder embed;
-                DBGuild dbGuild = ctx.getDBGuild();
-                GuildData guildData = dbGuild.getData();
-
-                Map<String, String> autoroles = guildData.getAutoroles();
-                Map<String, List<String>> autorolesCategories = guildData.getAutoroleCategories();
                 List<MessageEmbed.Field> fields = new LinkedList<>();
-                StringBuilder stringBuilder = new StringBuilder();
-                I18nContext languageContext = ctx.getLanguageContext();
 
-                if (!ctx.hasReactionPerms())
-                    stringBuilder.append(languageContext.get("general.text_menu")).append("\n");
+                var dbGuild = ctx.getDBGuild();
+                var guildData = dbGuild.getData();
 
+                var autoroles = guildData.getAutoroles();
+                var autorolesCategories = guildData.getAutoroleCategories();
                 embed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
-                        .setDescription(languageContext.get("commands.iam.list.description") + stringBuilder.toString())
+                        .setDescription(languageContext.get("commands.iam.list.description") + "")
                         .setThumbnail(ctx.getGuild().getIconUrl());
 
                 if (autoroles.size() > 0) {
-                    List<String> categorizedRoles = new ArrayList<>();
+                    var categorizedRoles = new ArrayList<>();
                     autorolesCategories.forEach((cat, roles) -> {
-                        StringBuilder roleString = new StringBuilder();
+                        var roleString = new StringBuilder();
 
-                        for (String iam : roles) {
-                            String roleId = autoroles.get(iam);
+                        for (var iam : roles) {
+                            var roleId = autoroles.get(iam);
                             if (roleId != null) {
                                 Role role = ctx.getGuild().getRoleById(roleId);
-                                if(role == null)
+                                if (role == null)
                                     continue;
 
                                 roleString.append("`").append(iam).append("`. Gives role: ").append(role.getName()).append(", ");
@@ -246,25 +234,28 @@ public class MiscCmds {
                             }
                         }
 
-                        if (roleString.length() > 0)
-                            fields.add(new MessageEmbed.Field(cat, languageContext.get("commands.iam.list.role") + " `" + roleString + "`", false));
+                        if (roleString.length() > 0) {
+                            fields.add(new MessageEmbed.Field(
+                                    cat,
+                                    languageContext.get("commands.iam.list.role") + " `" + roleString + "`",
+                                    false)
+                            );
+                        }
                     });
 
                     autoroles.forEach((name, roleId) -> {
                         if (!categorizedRoles.contains(roleId)) {
-                            Role role = ctx.getGuild().getRoleById(roleId);
+                            var role = ctx.getGuild().getRoleById(roleId);
                             if (role != null) {
-                                fields.add(new MessageEmbed.Field(name, languageContext.get("commands.iam.list.role") + " `" + role.getName() + "`", false));
+                                fields.add(new MessageEmbed.Field(name,
+                                        languageContext.get("commands.iam.list.role") + " `" + role.getName() + "`",
+                                        false)
+                                );
                             }
                         }
                     });
 
-                    List<List<MessageEmbed.Field>> parts = DiscordUtils.divideFields(6, fields);
-                    if (ctx.hasReactionPerms()) {
-                        DiscordUtils.list(ctx.getEvent(), 100, false, embed, parts);
-                    } else {
-                        DiscordUtils.listText(ctx.getEvent(), 100, false, embed, parts);
-                    }
+                    DiscordUtils.sendPaginatedEmbed(ctx, embed, DiscordUtils.divideFields(6, fields));
                 } else {
                     embed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
                             .setThumbnail(ctx.getGuild().getIconUrl())
@@ -282,7 +273,7 @@ public class MiscCmds {
 
     @Subscribe
     public void iamnot(CommandRegistry cr) {
-        cr.register("iamnot", new SimpleCommand(Category.MISC) {
+        cr.register("iamnot", new SimpleCommand(CommandCategory.UTILS) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (content.isEmpty()) {
@@ -306,7 +297,7 @@ public class MiscCmds {
 
     @Subscribe
     public void randomFact(CommandRegistry cr) {
-        cr.register("randomfact", new SimpleCommand(Category.MISC) {
+        cr.register("randomfact", new SimpleCommand(CommandCategory.UTILS) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 ctx.send(EmoteReference.TALKING + facts.get().get(rand.nextInt(facts.get().size() - 1)));
@@ -325,18 +316,19 @@ public class MiscCmds {
 
     @Subscribe
     public void createPoll(CommandRegistry registry) {
-        registry.register("createpoll", new SimpleCommand(Category.MISC) {
+        registry.register("createpoll", new SimpleCommand(CommandCategory.UTILS) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                Map<String, String> opts = ctx.getOptionalArguments();
-                PollBuilder builder = Poll.builder();
-                boolean failure = (!opts.containsKey("time") || opts.get("time") == null) ||
+                var opts = ctx.getOptionalArguments();
+                var builder = Poll.builder();
+                var failure = (!opts.containsKey("time") || opts.get("time") == null) ||
                         (!opts.containsKey("options") || opts.get("options") == null) ||
                         (!opts.containsKey("name") || opts.get("name") == null);
 
                 if (failure) {
                     ctx.sendLocalized("commands.poll.missing", EmoteReference.ERROR,
-                            "`-time`", "Example: `~>poll -options \"hi there\",\"wew\",\"owo what's this\" -time 10m20s -name \"test poll\""
+                            "`-time`",
+                            "Example: `~>poll -options \"hi there\",\"wew\",\"owo what's this\" -time 10m20s -name \"test poll\""
                     );
                     return;
                 }
@@ -350,7 +342,7 @@ public class MiscCmds {
                 }
 
 
-                String[] options = pollOptionSeparator.split(opts.get("options").replaceAll(String.valueOf('"'), ""));
+                var options = pollOptionSeparator.split(opts.get("options").replaceAll(String.valueOf('"'), ""));
                 long timeout;
 
                 try {
@@ -365,18 +357,22 @@ public class MiscCmds {
                         .setOptions(options)
                         .setLanguage(ctx.getLanguageContext())
                         .build()
-                        .startPoll();
+                        .startPoll(ctx);
             }
 
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
                         .setDescription("Creates a poll.")
-                        .setUsage("`~>poll [-options <options>] [-time <time>] [-name <name>] [-image <image>]`\n" +
-                                "To cancel the running poll type &cancelpoll. Only the person who started it or an Admin can cancel it.\n" +
-                                "Example: `~>poll -options \"hi there\",\"wew\",\"owo what's this\" -time 10m20s -name \"test poll\"`")
-                        .addParameter("-options", "The options to add. Minimum is 2 and maximum is 9. For instance: `Pizza,Spaghetti,Pasta,\"Spiral Nudels\"` (Enclose options with multiple words in double quotes, there has to be no spaces between the commas)")
-                        .addParameter("time", "The time the operation is gonna take. The format is as follows `1m29s` for 1 minute and 21 seconds. Maximum poll runtime is 45 minutes.")
+                        .setUsage("""
+                                `~>poll [-options <options>] [-time <time>] [-name <name>] [-image <image>]`
+                                To cancel the running poll type &cancelpoll. Only the person who started it or an Admin can cancel it.
+                                Example: `~>poll -options "hi there","wew","owo what's this" -time 10m20s -name "test poll"`""")
+                        .addParameter("-options", "The options to add. Minimum is 2 and maximum is 9. " +
+                                "For instance: `Pizza,Spaghetti,Pasta,\"Spiral Nudels\"` " +
+                                "(Enclose options with multiple words in double quotes, there has to be no spaces between the commas)")
+                        .addParameter("time", "The time the operation is gonna take. " +
+                                "The format is as follows `1m29s` for 1 minute and 21 seconds. Maximum poll runtime is 45 minutes.")
                         .addParameter("-name", "The name of the poll.")
                         .addParameter("-image", "The image to embed to the poll.")
                         .build();
@@ -384,12 +380,5 @@ public class MiscCmds {
         });
 
         registry.registerAlias("createpoll", "poll");
-    }
-
-    /**
-     * @return a random hex color.
-     */
-    private String randomColor() {
-        return IntStream.range(0, 6).mapToObj(i -> HEX_LETTERS[rand.nextInt(HEX_LETTERS.length)]).collect(Collectors.joining());
     }
 }

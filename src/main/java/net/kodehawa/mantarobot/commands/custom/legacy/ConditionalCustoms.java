@@ -16,7 +16,8 @@
 
 package net.kodehawa.mantarobot.commands.custom.legacy;
 
-import com.google.gson.JsonPrimitive;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import net.kodehawa.mantarobot.utils.StringUtils;
 import net.kodehawa.mantarobot.utils.URLEncoding;
 
 import java.util.HashMap;
@@ -108,7 +109,7 @@ public class ConditionalCustoms {
 
         //@jsonescape
         functions.put("jsonescape", args -> {
-            String s = new JsonPrimitive(String.join(";", args)).toString();
+            String s = JsonStringEncoder.getInstance().quoteAsString(String.join(";", args)).toString();
             return s.substring(1, s.length() - 1);
         });
     }
@@ -120,7 +121,6 @@ public class ConditionalCustoms {
             return string;
 
         return GETTER_MODIFIER.matcher(string).replaceAll(r -> {
-            //TODO: this might NOT be group.
             String s = r.group();
 
             s = s.substring(1, s.length() - 1);
@@ -141,7 +141,7 @@ public class ConditionalCustoms {
             Function<String[], String> f = functions.get(name);
 
             if (parts.length == 1) {
-                return f.apply(new String[0]);
+                return f.apply(StringUtils.EMPTY_ARRAY);
             }
 
             return f.apply(SPLITTER.split(parts[1], -1));

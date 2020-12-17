@@ -18,16 +18,17 @@ package net.kodehawa.mantarobot.db.entities.helpers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.kodehawa.mantarobot.commands.moderation.WarnAction;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.utils.annotations.ConfigName;
-import net.kodehawa.mantarobot.utils.annotations.UnusedConfig;
+import net.kodehawa.mantarobot.utils.annotations.HiddenConfig;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-//UnusedConfig annotation is used to not interfere with serialization of old configs: backwards compatibility. The annotation only takes effect on check data.
+// The HiddenConfig annotation is used to not interfere with serialization of old configs: backwards compatibility.
+// It just hides the config value from opts check data.
 public class GuildData {
-    @UnusedConfig //nobody used it, ended up getting removed in early 4.x
+    @HiddenConfig //nobody used it, ended up getting removed in early 4.x
     private boolean antiSpam = false;
 
     @ConfigName("Autoroles")
@@ -39,15 +40,15 @@ public class GuildData {
     @ConfigName("Mod action counter")
     private long cases = 0L;
     @ConfigName("Categories disabled in channels")
-    private HashMap<String, List<Category>> channelSpecificDisabledCategories = new HashMap<>();
+    private HashMap<String, List<CommandCategory>> channelSpecificDisabledCategories = new HashMap<>();
     @ConfigName("Commands disabled in channels")
     private HashMap<String, List<String>> channelSpecificDisabledCommands = new HashMap<>();
 
-    @UnusedConfig //new lock = CCS are locked by default since 5.0
+    @HiddenConfig //new lock = CCS are locked by default since 5.0
     private boolean customAdminLock = false;
 
     @ConfigName("Disabled Categories")
-    private Set<Category> disabledCategories = new HashSet<>();
+    private Set<CommandCategory> disabledCategories = new HashSet<>();
     @ConfigName("Disabled Channels")
     private Set<String> disabledChannels = new HashSet<>();
     @ConfigName("Disabled Commands")
@@ -63,7 +64,7 @@ public class GuildData {
     @ConfigName("Server modlog channel")
     private String guildLogChannel = null;
 
-    @UnusedConfig //see: discord added nsfw channels
+    @HiddenConfig //see: discord added nsfw channels
     private Set<String> guildUnsafeChannels = new HashSet<>();
 
     @ConfigName("Server join message")
@@ -81,7 +82,7 @@ public class GuildData {
     @ConfigName("Fair Queue Limit")
     private int maxFairQueue = 4;
 
-    @UnusedConfig // not implemented
+    @HiddenConfig // not implemented
     private int maxResultsSearch = 5;
 
     @ConfigName("Modlog: Ignored people")
@@ -91,9 +92,9 @@ public class GuildData {
     @ConfigName("Channel (id): lock to specific music channel")
     private String musicChannel = null;
 
-    @UnusedConfig //I don't think we handle this anymore.
+    @HiddenConfig //I don't think we handle this anymore.
     private Long musicQueueSizeLimit = null;
-    @UnusedConfig //I don't think we handle this anymore.
+    @HiddenConfig //I don't think we handle this anymore.
     private Long musicSongDurationLimit = null;
 
     @ConfigName("Role for the mute command")
@@ -105,39 +106,39 @@ public class GuildData {
     @ConfigName("Server Premium Key")
     private String premiumKey;
 
-    @UnusedConfig //quotes got removed in early 4.x
+    @HiddenConfig //quotes got removed in early 4.x
     private long quoteLastId = 0L;
 
     @ConfigName("Amount of polls ran")
     private long ranPolls = 0L;
 
-    @UnusedConfig //I don't think we handle this anymore.
+    @HiddenConfig //I don't think we handle this anymore.
     private boolean reactionMenus = true;
 
     @ConfigName("Roles that can't use commands")
     private ArrayList<String> rolesBlockedFromCommands = new ArrayList<>();
 
-    @UnusedConfig //removed on first version of 3.x
+    @HiddenConfig //removed on first version of 3.x
     private boolean rpgDevaluation = true;
-    @UnusedConfig //removed on first version of 3.x
+    @HiddenConfig //removed on first version of 3.x
     private boolean rpgLocalMode = false;
 
     @ConfigName("Mute default timeout")
     private long setModTimeout = 0L;
 
-    @UnusedConfig //nobody used it, ended up getting removed in early 4.x
+    @HiddenConfig //nobody used it, ended up getting removed in early 4.x
     private boolean slowMode = false;
-    @UnusedConfig //nobody used it, ended up getting removed in early 4.x
+    @HiddenConfig //nobody used it, ended up getting removed in early 4.x
     private Set<String> slowModeChannels = new HashSet<>();
-    @UnusedConfig //nobody used it, ended up getting removed in early 4.x
+    @HiddenConfig //nobody used it, ended up getting removed in early 4.x
     private Set<String> spamModeChannels = new HashSet<>();
 
     @ConfigName("How will Mantaro display time")
     private int timeDisplay = 0; //0 = 24h, 1 = 12h
 
-    @UnusedConfig
+    @HiddenConfig
     private Map<Long, WarnAction> warnActions = new HashMap<>();
-    @UnusedConfig // not implemented, see above
+    @HiddenConfig // not implemented, see above
     private Map<String, Long> warnCount = new HashMap<>();
 
     @ConfigName("Expected game timeout (epoch)")
@@ -159,13 +160,13 @@ public class GuildData {
     @ConfigName("Channel (id): Leave message channel")
     private String logLeaveChannel = null;
 
-    @UnusedConfig //experiment, didn't work
+    @HiddenConfig //experiment, didn't work
     private List<LocalExperienceData> localPlayerExperience = new ArrayList<>();
 
     @ConfigName("Link Protection ignore (users)")
     private Set<String> linkProtectionAllowedUsers = new HashSet<>();
     @ConfigName("Disabled Categories for Role (id)")
-    private HashMap<String, List<Category>> roleSpecificDisabledCategories = new HashMap<>();
+    private HashMap<String, List<CommandCategory>> roleSpecificDisabledCategories = new HashMap<>();
     @ConfigName("Disabled Commands for Role (id)")
     private HashMap<String, List<String>> roleSpecificDisabledCommands = new HashMap<>();
     @ConfigName("Server language")
@@ -177,7 +178,7 @@ public class GuildData {
     @ConfigName("Extra leave messages")
     private List<String> extraLeaveMessages = new ArrayList<>();
 
-    @UnusedConfig //we don't set this anywhere?
+    @HiddenConfig //we don't set this anywhere?
     private String whitelistedRole = null;
 
     @ConfigName("Birthday message")
@@ -216,6 +217,16 @@ public class GuildData {
     @ConfigName("Disabled game lobby/multiple")
     @JsonProperty("gameMultipleDisabled")
     private boolean gameMultipleDisabled = false;
+
+    @SuppressWarnings("CanBeFinal")
+    @HiddenConfig // It's not unused, but this hides it from opts check data lol
+    private List<String> allowedBirthdays = new ArrayList<>();
+
+    @HiddenConfig // It's not unused, but this hides it from opts check data lol
+    private boolean notifiedFromBirthdayChange = false;
+
+    @ConfigName("The custom DJ role.")
+    private String djRoleId;
 
     public GuildData() { }
 
@@ -271,11 +282,11 @@ public class GuildData {
         this.hasReceivedGreet = hasReceivedGreet;
     }
 
-    public HashMap<String, List<Category>> getChannelSpecificDisabledCategories() {
+    public HashMap<String, List<CommandCategory>> getChannelSpecificDisabledCategories() {
         return this.channelSpecificDisabledCategories;
     }
 
-    public void setChannelSpecificDisabledCategories(HashMap<String, List<Category>> channelSpecificDisabledCategories) {
+    public void setChannelSpecificDisabledCategories(HashMap<String, List<CommandCategory>> channelSpecificDisabledCategories) {
         this.channelSpecificDisabledCategories = channelSpecificDisabledCategories;
     }
 
@@ -295,11 +306,11 @@ public class GuildData {
         this.customAdminLock = customAdminLock;
     }
 
-    public Set<Category> getDisabledCategories() {
+    public Set<CommandCategory> getDisabledCategories() {
         return this.disabledCategories;
     }
 
-    public void setDisabledCategories(Set<Category> disabledCategories) {
+    public void setDisabledCategories(Set<CommandCategory> disabledCategories) {
         this.disabledCategories = disabledCategories;
     }
 
@@ -695,11 +706,11 @@ public class GuildData {
         this.linkProtectionAllowedUsers = linkProtectionAllowedUsers;
     }
 
-    public HashMap<String, List<Category>> getRoleSpecificDisabledCategories() {
+    public HashMap<String, List<CommandCategory>> getRoleSpecificDisabledCategories() {
         return this.roleSpecificDisabledCategories;
     }
 
-    public void setRoleSpecificDisabledCategories(HashMap<String, List<Category>> roleSpecificDisabledCategories) {
+    public void setRoleSpecificDisabledCategories(HashMap<String, List<CommandCategory>> roleSpecificDisabledCategories) {
         this.roleSpecificDisabledCategories = roleSpecificDisabledCategories;
     }
 
@@ -853,5 +864,25 @@ public class GuildData {
 
     public void setGameMultipleDisabled(boolean gameMultipleDisabled) {
         this.gameMultipleDisabled = gameMultipleDisabled;
+    }
+
+    public boolean isNotifiedFromBirthdayChange() {
+        return notifiedFromBirthdayChange;
+    }
+
+    public void setNotifiedFromBirthdayChange(boolean notifiedFromBirthdayChange) {
+        this.notifiedFromBirthdayChange = notifiedFromBirthdayChange;
+    }
+
+    public List<String> getAllowedBirthdays() {
+        return allowedBirthdays;
+    }
+
+    public String getDjRoleId() {
+        return djRoleId;
+    }
+
+    public void setDjRoleId(String djRoleId) {
+        this.djRoleId = djRoleId;
     }
 }

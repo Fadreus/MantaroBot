@@ -16,7 +16,6 @@
 
 package net.kodehawa.mantarobot.utils.data;
 
-import net.kodehawa.mantarobot.utils.SentryHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +36,7 @@ public class SimpleFileDataManager implements DataManager<List<String>> {
 
     public SimpleFileDataManager(String file) {
         this.path = Paths.get(file);
+
         if (!this.path.toFile().exists()) {
             log.info("Could not find config file at " + this.path.toFile().getAbsolutePath() + ", creating a new one...");
             try {
@@ -45,7 +45,7 @@ public class SimpleFileDataManager implements DataManager<List<String>> {
                     FileIOUtils.write(this.path, "");
                     log.info("Please, fill the file with valid properties.");
                 } else {
-                    SentryHelper.captureMessage("Could not create config file at " + file, this.getClass());
+                    log.error("Could not create config file at {}", file);
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -57,7 +57,7 @@ public class SimpleFileDataManager implements DataManager<List<String>> {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        data.removeIf(s -> s.startsWith("//"));
+        data.removeIf (s -> s.startsWith("//"));
     }
 
     @Override

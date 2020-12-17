@@ -19,26 +19,21 @@ package net.kodehawa.mantarobot.commands.action;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
 import net.kodehawa.mantarobot.core.modules.commands.NoArgsCommand;
-import net.kodehawa.mantarobot.core.modules.commands.base.Category;
+import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.commands.IncreasingRateLimiter;
-import org.apache.commons.lang3.tuple.Pair;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static net.kodehawa.mantarobot.utils.Utils.handleIncreasingRatelimit;
 
 public class ImageActionCmd extends NoArgsCommand {
     private final String desc;
@@ -54,8 +49,9 @@ public class ImageActionCmd extends NoArgsCommand {
     private final EmoteReference emoji;
     private final String botLine;
 
-    public ImageActionCmd(String name, String desc, EmoteReference emoji, String format, List<String> images, String lonelyLine, String botLine, boolean swap) {
-        super(Category.ACTION);
+    public ImageActionCmd(String name, String desc, EmoteReference emoji,
+                          String format, List<String> images, String lonelyLine, String botLine, boolean swap) {
+        super(CommandCategory.ACTION);
         this.name = name;
         this.desc = desc;
         this.format = format;
@@ -67,26 +63,28 @@ public class ImageActionCmd extends NoArgsCommand {
         this.rateLimiter = buildRatelimiter(name);
     }
 
-    public ImageActionCmd(String name, String desc, EmoteReference emoji, String format, String type, String lonelyLine, String botLine) {
-        super(Category.ACTION);
+    public ImageActionCmd(String name, String desc, EmoteReference emoji,
+                          String format, String type, String lonelyLine, String botLine) {
+        super(CommandCategory.ACTION);
         this.name = name;
         this.desc = desc;
         this.format = format;
         this.emoji = emoji;
-        this.images = Collections.singletonList(weebapi.getRandomImageByType(type, false, "gif").getKey());
+        this.images = Collections.emptyList();
         this.lonelyLine = lonelyLine;
         this.type = type;
         this.botLine = botLine;
         this.rateLimiter = buildRatelimiter(name);
     }
 
-    public ImageActionCmd(String name, String desc, EmoteReference emoji, String format, String type, String lonelyLine, String botLine, boolean swap) {
-        super(Category.ACTION);
+    public ImageActionCmd(String name, String desc, EmoteReference emoji,
+                          String format, String type, String lonelyLine, String botLine, boolean swap) {
+        super(CommandCategory.ACTION);
         this.name = name;
         this.desc = desc;
         this.format = format;
         this.emoji = emoji;
-        this.images = Collections.singletonList(weebapi.getRandomImageByType(type, false, "gif").getKey());
+        this.images = Collections.emptyList();
         this.lonelyLine = lonelyLine;
         this.swapNames = swap;
         this.type = type;
@@ -108,15 +106,16 @@ public class ImageActionCmd extends NoArgsCommand {
 
     @Override
     protected void call(Context ctx, String content) {
-        if (!Utils.handleIncreasingRatelimit(rateLimiter, ctx.getAuthor(), ctx.getEvent(), null))
+        if (!RatelimitUtils.ratelimit(rateLimiter, ctx, null)) {
             return;
+        }
 
-        I18nContext languageContext = ctx.getGuildLanguageContext();
-        String random = "";
-        if (images.size() == 1) {
+        var languageContext = ctx.getGuildLanguageContext();
+        var random = "";
+        try {
             if (type != null) {
-                Pair<String, String> result = weebapi.getRandomImageByType(type, false, "gif");
-                String image = result.getKey();
+                var result = weebapi.getRandomImageByType(type, false, "gif");
+                var image = result.getKey();
 
                 if (image == null) {
                     ctx.sendLocalized("commands.action.error_retrieving", EmoteReference.SAD);
@@ -125,9 +124,17 @@ public class ImageActionCmd extends NoArgsCommand {
 
                 images = Collections.singletonList(image);
                 random = images.get(0); //Guaranteed random selection :^).
+            } else {
+                if (images.isEmpty()) {
+                    ctx.sendLocalized("commands.action.no_type", EmoteReference.ERROR);
+                    return;
+                }
+
+                random = images.get(rand.nextInt(images.size()));
             }
-        } else {
-            random = images.get(rand.nextInt(images.size()));
+        } catch (Exception e) {
+            ctx.sendLocalized("commands.action.error_retrieving", EmoteReference.ERROR);
+            return;
         }
 
         try {
@@ -136,29 +143,47 @@ public class ImageActionCmd extends NoArgsCommand {
                 return;
             }
 
-            MessageBuilder toSend = new MessageBuilder()
-                    .append(String.format(emoji + languageContext.get(format), "**" + noMentions(ctx)
-                            + "**", "**" + ctx.getMember().getEffectiveName() + "**")
-                    ).stripMentions(ctx.getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE);
+            var toSend = new MessageBuilder()
+                    .append(emoji)
+                    .append(String.format(languageContext.get(format),
+                            "**%s**".formatted(noMentions(ctx)),
+                            "**%s**".formatted(ctx.getMember().getEffectiveName()))
+                    );
 
 
             if (swapNames) {
                 toSend = new MessageBuilder()
-                        .append(String.format(emoji + languageContext.get(format), "**" + ctx.getMember().getEffectiveName()
-                                + "**", "**" + noMentions(ctx) + "**")
-                        ).stripMentions(ctx.getGuild(), Message.MentionType.EVERYONE, Message.MentionType.HERE);
+                        .append(emoji)
+                        .append(String.format(
+                                languageContext.get(format),
+                                "**%s**".formatted(ctx.getMember().getEffectiveName()),
+                                "**%s**".formatted(noMentions(ctx))
+                        ));
             }
 
             if (isLonely(ctx)) {
-                toSend = new MessageBuilder().append("**").append(languageContext.get(lonelyLine)).append("**");
+                toSend = new MessageBuilder()
+                        .append("**")
+                        .append(languageContext.get(lonelyLine))
+                        .append("**");
             }
 
             if (isMentioningBot(ctx)) {
-                toSend = new MessageBuilder().append("**").append(languageContext.get(botLine)).append("**");
+                toSend = new MessageBuilder()
+                        .append("**")
+                        .append(languageContext.get(botLine))
+                        .append("**");
             }
 
-            toSend.setEmbed(new EmbedBuilder().setColor(Color.DARK_GRAY).setImage(random).build());
-            toSend.sendTo(ctx.getChannel()).queue();
+            var member = ctx.getMember();
+            toSend.setEmbed(new EmbedBuilder()
+                    .setColor(member.getColor() == null ? Color.PINK : member.getColor())
+                    .setImage(random)
+                    .build()
+            );
+
+            ctx.getChannel().sendMessage(toSend.build()).queue();
+
         } catch (Exception e) {
             e.printStackTrace();
             ctx.sendLocalized("commands.action.permission_or_unexpected_error", EmoteReference.ERROR);

@@ -31,8 +31,8 @@ import net.kodehawa.mantarobot.options.annotations.Option;
 import net.kodehawa.mantarobot.options.core.OptionHandler;
 import net.kodehawa.mantarobot.options.core.OptionType;
 import net.kodehawa.mantarobot.options.event.OptionRegistryEvent;
-import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
+import net.kodehawa.mantarobot.utils.commands.FinderUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -46,10 +46,10 @@ public class ModerationOptions extends OptionHandler {
 
     @Subscribe
     public void onRegistry(OptionRegistryEvent e) {
-        registerOption("localblacklist:add", "Local Blacklist add",
-                "Adds someone to the local blacklist.\n" +
-                        "You need to mention the user. You can mention multiple users.\n" +
-                        "**Example:** `~>opts localblacklist add @user1 @user2`",
+        registerOption("localblacklist:add", "Local Blacklist add", """
+                        Adds someone to the local blacklist.
+                        You need to mention the user. You can mention multiple users.
+                        **Example:** `~>opts localblacklist add @user1 @user2`""",
                 "Adds someone to the local blacklist.", (event, args, lang) -> {
 
                     List<User> mentioned = event.getMessage().getMentionedUsers();
@@ -82,10 +82,10 @@ public class ModerationOptions extends OptionHandler {
                     event.getChannel().sendMessageFormat(lang.get("options.localblacklist_add.success"), EmoteReference.CORRECT, blacklisted).queue();
                 });
 
-        registerOption("localblacklist:remove", "Local Blacklist remove",
-                "Removes someone from the local blacklist.\n" +
-                        "You need to mention the user. You can mention multiple users.\n" +
-                        "**Example:** `~>opts localblacklist remove @user1 @user2`",
+        registerOption("localblacklist:remove", "Local Blacklist remove", """
+                        Removes someone from the local blacklist.
+                        You need to mention the user. You can mention multiple users.
+                        **Example:** `~>opts localblacklist remove @user1 @user2`""",
                 "Removes someone from the local blacklist.", (event, args, lang) -> {
                     List<User> mentioned = event.getMessage().getMentionedUsers();
 
@@ -127,7 +127,7 @@ public class ModerationOptions extends OptionHandler {
                         ).queue();
                     };
 
-                    TextChannel channel = Utils.findChannelSelect(event, logChannel, consumer);
+                    TextChannel channel = FinderUtils.findChannelSelect(event, logChannel, consumer);
 
                     if (channel != null) {
                         consumer.accept(channel);
@@ -168,7 +168,7 @@ public class ModerationOptions extends OptionHandler {
                             ).queue();
                         };
 
-                        TextChannel ch = Utils.findChannelSelect(event, channel, consumer);
+                        TextChannel ch = FinderUtils.findChannelSelect(event, channel, consumer);
 
                         if (ch != null) {
                             consumer.accept(ch);
@@ -183,7 +183,7 @@ public class ModerationOptions extends OptionHandler {
                         event.getChannel().sendMessageFormat(lang.get("options.logs_exclude.success"), EmoteReference.OK, textChannel.getAsMention()).queue();
                     };
 
-                    TextChannel ch = Utils.findChannelSelect(event, channel, consumer);
+                    TextChannel ch = FinderUtils.findChannelSelect(event, channel, consumer);
 
                     if (ch != null) {
                         consumer.accept(ch);

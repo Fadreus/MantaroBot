@@ -25,6 +25,8 @@
     "options": "الخيارات",
     "find_members_failure": "%1$sلم يتم العثور على أي عضو بمعايير البحث الخاصة بك :(",
     "too_many_members": "\"%1$sتم العثور على العديد من الأعضاء, ربما يمكنك حصر بحثك؟ (مثال. استخدم name#discriminator)\\n**Members found:** %2$s\",",
+    "too_many_mentions": "%1$sيُرجى القيام بمنشن شخص واحد فقط.",
+    "query_too_small": "%1$sااستعلام البحث الخاص بك صغير جدًا. تأكد من أنك تبحث عن 4 احرف على الاقل. اذا كان اسم المستخدم قصير جداً, من الأفضل لك استخدام username#discriminator او ايدي المستخدم.",
     "dust": "هناك غبار فقط هنا.",
     "invalid_syntax": "بناء جملة غير صالح.",
     "item_lookup": {
@@ -35,6 +37,7 @@
     },
     "misc_item_usage": {
       "mop": "%1$s(ربما) قمت بتنظيف كل الغبار الذي تراكمت خلال كل جلسات الحفر.",
+      "mop_not_enough": "%1$sمستوى الغبار الخاص بك أقل من 5%%, لذلك المسح لن يكون مفيداً جداً.",
       "milk": "%1$sتم ازالة تأثير الجرع.",
       "stamina": "%1$sالقدرة على التحمل المنشط لمدة 3 جلسات حفر.",
       "stamina_used": "%1$sلديك بالفعل تأثير قوي على التحمل!",
@@ -45,8 +48,8 @@
       "pill": "%1$sلقد شربت حبة الـ\"وايفو\"! (مفعل ل5 مواسم)",
       "pill_used": "%1$sلديك بالفعل حبة وايفو مفعله!",
       "crate": {
-        "no_key": "%1$sتحتاج الى مفتاح للصندوق لفتحه. انه مغلق!",
-        "no_crate": "%1$sتحتاج الى مفتاح صندوق! وإلا بماذا ستسخدم المفتاح؟ هه",
+        "no_key": "%1$sYou need a loot crate key to open a crate. It's locked! You can buy one using `~>market buy key`",
+        "no_crate": "%1$sYou need a loot crate! You usually get crates from currency commands.",
         "success": "%1$sلقد فتحت صندوق وربحت %2$s%3$s. مبروك!",
         "overflow": "ولكن بالفعل لديك الكثير لذلك قررت رميه بعيدا"
       },
@@ -54,16 +57,25 @@
       "potion_not_found": "%1$sلا يمكنني إيجاد الجرعه او نوع المعدات!",
       "potion_applied": "%1$sتم بنجاح تطبيق تأثير **%2$s** من *%3$s* (%4$dx). يمكنك الإطلاع على التاأثير الجديد عن طريق `~>profile stats`",
       "potion_applied_multiple": "%1$sتم بالفعل تطبيق **%2$s** من نوع *%3$s*. لديك بالفعل هذا التأثير مطبق, لذا تم تخزينه. الحجم المكدس حاليا: %4$s",
-      "max_stack_size": "%1$sلقد كدست بالفعل الحد الأقصى من %2$s المسموح به.",
-      "max_stack_size_2": "%1$sلايمكنك تكديس هذه الكميه %2$s.",
+      "max_stack_size": "%1$sYou already stacked the max amount of %2$s you possibly can. (Maximum: 15, After stack: %3$s)",
+      "max_stack_size_2": "%1$sYou can't stack that many %2$s. (Maximum: 15, Attempted: %3$s)",
       "not_same_potion": "%1$sلديك بالفعل جرعة من نوع %2$s مخزنه ومفعله, لذا لايمكنك تكديس جرعة من نوع %3$s به."
+    },
+    "campaigns": {
+      "premium": {
+        "generic_sellout": "We need your help to keep Mantaro alive and improve Mantaro's servers!\nYou can get amazing perks and **up to double the credits with Mantaro Premium**! Memberships start at $2 per month, the price of a snack! Check out more at <https://patreon.com/mantaro>. Helping the word spread helps aswell :heart:",
+        "daily_sellout": "We need your help to keep Mantaro alive!\nYou can get amazing perks and **double the daily credits** and access to `~>dailycrate`! Memberships start at only $2 per month, check out more at <https://patreon.com/mantaro>.",
+        "thanks_message": "Thank you for supporting Mantaro. Without help from people like you we couldn't keep Mantaro alive :heart:",
+        "thanks_message_daily": "Thank you for supporting Mantaro. Without help from people like you we couldn't keep Mantaro alive :heart:\nYou also get double the credits as a bonus!"
+      },
+      "twitter": "Did you know we have a Twitter account? Yes we do! Follow us at (at)mantarodiscord <https://twitter.com/mantarodiscord> for updates and silly stuff."
     },
     "mention_user_required": "%1$sتحتاج منشن لشخص.",
     "invalid_character": "%1$sهذا حرف غير مسموح به.",
     "invalid_action": "لايمكنك فعل ذلك, يا للسخف.",
     "interactive_running": "%1$sهناك بالفعل عملية مفعله (مملوكة من قبلك) على هذه القناة.",
-    "buy_sell_paged_react": "**الصفحات: %1$d.**\nاستخدم الرمز التعبيري الموجود أسفل الرسالة لتحريك الصفحات.\n%2$s",
-    "buy_sell_paged_text": "**الصفحات: %1$d.**\nإستخدم **&p >>** و **&p <<** للتحريك بين الصفحات.\n%2$s",
+    "buy_sell_paged_react": "Use the message reactions to move between pages.\n%1$s",
+    "buy_sell_paged_text": "Use **&p >>** and **&p <<** to move across pages.\n%1$s",
     "buy_sell_paged_reference": "**المرجع %1$s شراء %2$s بيع.**",
     "cancelled": "%1$sطلب ملغى.",
     "sellout": "فكر بالتبرع في [Patreon](https://www.patreon.com/mantaro) اذا اعجبتك. حتى تبرع صغير سيساعد البوت للبقاء على قيد الحياة!",
@@ -71,12 +83,12 @@
     "space_notice": "اذا كان الإسم سحتوي على مسافات, \"ضعه في اقتباسات\".",
     "ratelimit": {
       "header": "%1$s%2$s (معدل محدد)\n**سيمكنك استخدام الأمر مره اخرى في %3$s.**",
-      "spam_1": "أرجوك إرتح, هذا جيد لصحتك :( *تذكر المعدل المحدد سوف يزيد اذا جربت الأمر قبل الكول داون!*",
+      "spam_1": "Please rest, it's good for your health. **Remember that the ratelimit will keep increasing if you try before the cooldown resets!**",
       "spam_2": "أظن التوقف هو أفضل حل للان.....",
-      "spam_3": "\nWouldn't it be better if you just go outside for a bit?",
-      "spam_4": "\nIs this thing even on?"
+      "spam_3": "ألن يكون من الأفضل أن تخرج قليلاً؟",
+      "spam_4": "هل هذا الشيء حتى على؟"
     },
-    "generic_error": "إذا أردت الدخول الى **فريق الدعم** ادخل رابط (`support.mantaro.site`), أو تحقق من صفحتنا في GitHub (`https://github.com/Kodehawa/MantaroBot`). من فضلك قل لهم أن يتوقفو عن ازعاجي والرجاء لا تنسى اي دي الخطأ عند الإبلاغ!",
+    "generic_error": "If you want, join our **support server** (`https://support.mantaro.site`), or check out our GitHub page (`https://github.com/Kodehawa/MantaroBot`). Please tell them to quit exploding me and please don't forget the Error ID, the command you used and your node (seen in `~>shard`) when reporting!",
     "boom_quotes": [
       "على ما يبدو ميغومين فجر قلعتنا...",
       "أوه, على ما يبدو أن سيدي نسي بعض الأصفار و احاد على الأرض :<",
@@ -124,7 +136,7 @@
   "commands": {
     "fish": {
       "dust": "%1$sانتهى اليوم ، ولا يستطيع دلو السمك إلا جمع الغبار. (مستوى الغبار %2$s%%)",
-      "no_rod": "%1$sليس لديك صنارة سمك لصيد السمك معه! (حاول مع قضيب آخر)",
+      "no_rod": "%1$sYou don't have any equipped rod. Use `~>equip <rod name>` to equip a rod and start your fishing trip! If you don't have any rod, first run `~>market buy rod`",
       "trash": {
         "overflow": "%1$sلقد عثرت على بعض القمامة أثناء الصيد ، لكن مخزونك كان ممتلئًا ، لذلك كان علينا أن نعيده إلى الماء...",
         "success": "%1$sأثناء الصيد بهدوء ، وجدت شيء يعوم %2$s لكن يبدو انها مجرد زبالة :("
@@ -166,7 +178,7 @@
     },
     "ban": {
       "no_permission": "%1$sلايمكنك الحظر: تحتاج الى صلاحية `حظر الأعضاء`.",
-      "no_users": "%1$sأحتاج أن تعطيني عضو لحضره.",
+      "no_users": "%1$sأحتاج أن تعطيني عضو لحظره من السيرفر.",
       "no_permission_self": "%1$sأعتذر :( ليس لدي صلاحية حظر الأعضاء في هذا السيرفر.",
       "hierarchy_conflict": "%1$sلايمكنك حظر العضو الأعلى منك رتبة في السيرفر! محاولة جيدة %2$s",
       "yourself_note": "%1$sلماذا تحاول حظر نفسك؟",
@@ -186,11 +198,6 @@
       "success": "%1$s%2$s (%3$s أعضاء حصلوا على طرد)",
       "error": "%1$soخطأ في الطرد [%2$s]: (لم أحصل على صلاحية: %3$s)",
       "unknown_error": "%1$sخطأ غير معروف في محاولة طرد %2$s"
-    },
-    "tempban": {
-      "no_time": "%1$sلايمكنك محاولة حظر عضو بدون إعطائي الوقت!",
-      "no_reason": "%2$sلايمكنك حظر عضو بدون سبب!",
-      "success": "%1$s%2$s (%3$s حصل على حظر مؤقت)"
     },
     "music_usage": {
       "1": "*كيف يمكن إستخدام الموسيقى في مونتارو؟*",
@@ -232,11 +239,14 @@
       "too_many_errors": "%1$sالكثير من الاخطاء في هذه الجلسة, توقف...",
       "no_vc_found": "%1$sانا لست متصلاََ بقناة صوتيه على الرغم من أنني يجب أن أكون؟ حاول مجددا.",
       "queue": {
+        "header_field": "Instructions",
+        "header_noreact": "Use `&p >>` and `&p <<` to move around pages.",
         "no_track_found_np": "لم يتم العثور على أي شيء أو عنوان / المدة",
         "header": "قائمة انتظار للخادم %1$s",
         "nothing_playing": "لا شيء هنا ، فقط غبار. لماذا لا تصطف بعض الأغاني؟\nإذا كنت تعتقد أن هناك أغانٍ هنا ولكنها لا تظهر ، فحاول استخدام\n`~>queue 1`.",
         "nothing_playing_2": "** إذا كانت هناك أغنية قيد التشغيل ولم تضف المزيد من الأغاني ، فهناك في الواقع غبار هنا فقط. يمكنك وضع المزيد من الأغاني في قائمة الانتظار كما تريد! **",
         "np": "أشغل حالياََ",
+        "dj_np": "**Queued by:** ",
         "page_overflow": "لا شيء هنا ، فقط غبار. لماذا لا ترجع بعض الصفحات؟",
         "page_overflow_2": "إذا كنت تعتقد أن هناك أغانٍ هنا ولكنها لا تظهر ، فحاول استخدام `~>queue 1`.",
         "total_queue_time": "إجمالي وقت الانتظار",
@@ -255,7 +265,7 @@
         "success": "%1$sتم بنجاح الإتصال بالقناة **%2$s**!",
         "full_channel": "%1$sلايمكنني الإتصال بهذه القناة لانها ممتلئه! ",
         "non_existent_channel": "%1$sتلقيت قناة غير موجودة كرد فعل. إذا قمت بتعيين قناة صوتية ثم حذفها، فقد يكون هذا هو السبب.\nتم إعادة تعيين قناتك للموسيقى، جرب تشغيل الموسيقى مره أخرى. ",
-        "user_no_vc": "%1$s**أرجولك إتصل بقناة صوتيه**",
+        "user_no_vc": "%1$s**الرجاء الدخول الى روم صوتي **. اذا كنت في روم صوتي وغادر البوت الروم يُرجى مغادرة الروم الصوتي والدخول مرة أخرى.",
         "missing_permissions_connect": "%1$sلايمكنني الإتصال بهذه القناه، لأنني لا أملك الصلاحية (%2$s).",
         "missing_permission_speak": "%1$sلايمكنني التكلم بهذه القناه، لأنني لا أملك الصلاحية (%2$s).",
         "channel_locked": "%1$sيمكنني تشغيل الموسيقى في القناة **%2$s** فقط. ",
@@ -273,10 +283,10 @@
         "loaded_playlist": "%1$sإضافة **%2$d أغاني** الى قائمة التشغيل: \n**%3$s** *(%4$s)*",
         "no_matches": "%1$sلم يسفر البحث عن أي نتائج. أذا ظهر هذا *لجميع الأغاني* التي تحاول البحث عنها، فقد ترغب في استخدام `~>play soundcloud {عبارة البحث>` بدلاً من ذلك في هذه الأثناء. وصلات مباشرة إلى يوتيوب ينبغي أن تعمل أيضا.",
         "error_loading": "%1$sخطأ أثناء جلب الأغاني: %2$s",
-        "over_queue_limit": "%1$sتعذر وضع قائمة التشغيل %2$s: تجاوز حد اغنية قائمة الإنتظار (%3$s)! ",
-        "over_32_minutes": "%1$sتعذر وضع قائمة الإنتظار %2$s: المسار أطول من 32 دقيقة! (%3$s)",
+        "over_queue_limit": "%1$s**Could not queue `%2$s`: Surpassed queue song limit (%3$s)**",
+        "over_32_minutes": "%1$s**Could not queue `%2$s`: Track is longer than %3$s.** (Reported song length is %4$s).\nYou can get a longer track length limit and livestream playback with Mantaro Premium! Check <https://patreon.com/mantaro> for more info.",
         "fair_queue_limit_reached": "%1$s**تجاوز مستوى قائمة الإنتظار في %2$d (الكثير من الأغاني التي هي متساوية تماماً)**",
-        "loaded_song": "%1$sإضافة الى قائمة الإنتظار -> **%2$s** **(%3$s)**",
+        "loaded_song": "%1$sAdded to queue -> **%2$s** *(%3$s)*",
         "selection_text": "اختيار الأغنية. اكتب رقم الأغنية للمتابعة.",
         "timeout_text": "هذه المهلة في 30 ثانية. اكتب &cancel لإلغاء."
       },
@@ -287,7 +297,7 @@
       "success": "%1$sمُشرف أو أمر بوت قرر تخطي هذه الأغنيه."
     },
     "np": {
-      "no_track": "%1$sإما لايوجد تتبع لتشغيله أو لايمكننا العثور عليه، جرب تشغيل أغنيه",
+      "no_track": "%1$sلا يوجد اغنية قيد التشغيل حالياً, قم بتشغيل اغنية اولاً",
       "header": "الآن يُشغل"
     },
     "pause": {
@@ -309,6 +319,7 @@
       "success": "%1$sتخطي الى %2$s"
     },
     "move": {
+      "no_voice": "%1$sYou're not in a voice channel, or the bot isn't in one.",
       "attempt": "%1$sسأحاول الانتقال الى القناة التي أنت بها",
       "error_moving": "%1$sفشل في تبديل القنوات الصوتية",
       "cannot_connect": "%1$sفشل الإتصال: إما ليس لدي الصلاحية للتحدث أو لنقل القنوات.",
@@ -317,7 +328,7 @@
       "vc_not_found": "%1$sلايمكن إيجاد القناة الصوتية أو لم تحدد واحدة!"
     },
     "shard": {
-      "info": "أنا في الشارد %1$d! إذا احتجت أي مُساعدة أرجوك إذهب الى <https://support.mantaro.site>"
+      "info": "**I'm in shard %1$d / %2$d** (Node %3$d / %4$d)\n\n**Shard Guilds:** %5$,d servers\n**Cached Users:** %6$,d users\n**Cached Members:** %7$,d members\n\nIf you need any help, please head to <https://support.mantaro.site>. Thanks for using Mantaro!"
     },
     "queue": {
       "clear": {
@@ -367,10 +378,11 @@
       "cleanup": "%1$sتمت ازالة **%2$d الاغاني** من قائمة الانتظار."
     },
     "volume": {
+      "no_player": "%1$sThere's nothing playing here.",
       "check": "%1$sمستوى الصوت في هذه الجلسة هو: %2$d\n\n%3$s",
       "success": "%1$sتم تثبيت مستوى الصوت الى %2$d\n\n%3$s",
       "no_args": "%1$sعليك أن تخبرني عن مستوى الصوت الذي تريده أن أضبط الموسيقى فيه (من 5 إلى 100).",
-      "premium_only": "%1$sهذه ميزة البريميوم فقط. من أجل الحصول على مزايا بريميوم مثل هذه يمكنك التعهد على patreon\n(https://www.patreon.com/mantaro). شكراََ لتفهمك.\nميزات البريميوم يمكن أن تكون مرتبطة بمستخدم أو خادم ، من فضلك ، إذا تبرعت ، انضم إلى نقابة الدعم واطلبها."
+      "premium_only": "%1$sThis is a premium-only feature. In order to get premium benefits like this one you can pledge on patreon (https://www.patreon.com/mantaro). Thanks for understanding.\nPremium features can be either bound to a user or a server, please, if you donate, join the support guild and ask for it."
     },
     "lyrics": {
       "no_current_track": "%1$sلا توجد اغنية مشغلة في هذا السيرفر!",
@@ -406,12 +418,13 @@
       },
       "raw": {
         "no_command": "%1$sعليك أن تخبرني ما الأمر الذي تريد أن تنظر إليه.",
+        "not_found": "%1$sلم أتمكن من العثور على هذا الأمر.",
         "header": "أمر مخصص خام: %1$s",
         "amount": "(عرض %1$d الردود في %2$d)",
         "description": "هذه قائمة بجميع ردود هذا الأمر على شكل خام (ما تدخله في الأمر)."
       },
       "clear": {
-        "success": "%1$sتم مسح **%2$d أوامر مخصصه**"
+        "success": "%1$s**تم مسح %2$d أمر مُخصص **. الأوامر المقفلة/المثبتة لم تُحذف, قم بفك القفل عنهم اذا اردت حذفهم."
       },
       "make": {
         "start_text": "%1$sStarted **\"Creation of Custom Command `%2$s`\"**!\nSend `&~>stop` to stop creation **without saving**.\nSend `&~>save` to stop creation an **save the new Command**. Send any text beginning with `&` to be added to the Command Responses. Use `~>nsfw` to mark this command as NSFW and `~>sfw` to revert.\nThis Interactive Operation ends without saving after 60 seconds of inactivity.",
@@ -462,6 +475,16 @@
         "success": "%1$sتم الحفظ في الأمر `%2$s`.",
         "too_many_commands": "%1%sيوجد الكثير من الأوامر في هذا الخادم، لايمكنك إضافة أكثر من 100 أمر. يمكنك تجاوز هذا اذا كان لديك premium guilds. (تفقد <https://patreon.com/mantaro> )."
       },
+      "lockcommand": {
+        "no_permission": "%1$sتحتاج الى صلاحية Manage Server لقفل او الغاء قفل الأوامر.",
+        "no_command": "%1$sيجب ان تحدد الأمر المُراد قفله.",
+        "success": "%1$sتم قفل أمر ال `%2$s` بنجاح. سوف تحتاج الى فك القفل لإجراء التعديلات."
+      },
+      "unlockcommand": {
+        "no_command": "%1$sيجب ان تحدد الأمر المُراد فك القفل عنه.",
+        "not_locked": "%1$s هذا الأمر غير مُقفل.",
+        "success": "%1$sتم فك قفل أمر ال `%2$s` بنجاح. سوف تحتاج الى قفله لاحقاً اذا اردت تجنب المزيد من التعديلات."
+      },
       "character_not_allowed": "%1$sلايسمح بإستخدام هذا الحرف في أوامر الأسماء المخصصه. ",
       "already_exists": "%1$sهذا الأمر `%2$s` موجود بالفعل وانه أمر البوت الإفتراضي. ",
       "name_too_long": "%1$sاسم طويل جداً",
@@ -471,7 +494,8 @@
       "invalid_image": "%1$sهذا الأمر يحتوي على صورة غير صالحة، أرجو الإصلاح....",
       "invalid_string": "%1$sالسلسلة `{%2$s}` غير صالحة أو الإخراج أطول من 2000 حرف. ",
       "invalid_json": "%1$sالسلسلة `{%2$s}` JSON غير صالح.",
-      "invalid_link": "%1$sالسلسلة `{%2$s}` ليست رابط صالح ."
+      "invalid_link": "%1$sالسلسلة `{%2$s}` ليست رابط صالح .",
+      "locked_command": "%1$sلا يمكنك تعديل او ازالة هذا الأمر طالما هو مقفول, يرجى اتباع الأمر التالي لفك القفل عنه\n`~>custom unlockcommand <إسم الأمر>`."
     },
     "mute": {
       "no_permissions": "%1$sيجب أن لديك صلاحية الطرد أو الحظر لإسكات عضو.",
@@ -483,6 +507,7 @@
       "time_not_specified": "%1$sأنت تريد وقت ولكن لم تحدد المدة.",
       "negative_time_notice": "%1$sلا يمكنك إسكات شخص للوقت السلبي. الا اذا كنت تستطيع ثني وقت الفضاء.. هذا هو. ",
       "default_time_too_long": "%1$sمدة الإسكات الافتراضي طويله جداً (الحد الاقصى: 10 أيام)...",
+      "time_too_little": "%1$sThe specified mute timeout length is less than 20 seconds.\nYou sure you used the right format? For 20 minutes, use 20m, for 1 hour, use 1h, or any combination of both (1h45m) for example.",
       "time_too_long": "%1$sمدة الإسكات المُحدد طويله جداً (الحد الاقصى: 10 أيام)...",
       "already_muted": "%1$sهذا العضو لديه بالفعل رتبة الإسكات. استخدم `~>unmute` لعدم إسكاته.",
       "self_hierarchy_error": "%1$sلايمكنني إسكات هذا العضو لانه اعلى مما أنا عليه. أو يملك رتبة اعلى مما أنا عليه. ",
@@ -496,23 +521,6 @@
       "no_role_assigned": "%1$sهذا العضو ليس لديه رتبة الإسكات. "
     },
     "ping": {
-      "quotes": {
-        "1": "سرعة أسرع من الصوت! :upside_down:",
-        "10": "أسرع من سونيك! :smiley:",
-        "69": "ب-بذيئ! <:MantaroGasm:318869352851963904>",
-        "100": "عظيم! :smiley:",
-        "200": "جميل! :slight_smile:",
-        "300": "لائق. :neutral_face:",
-        "400": "متوسط... :confused:",
-        "500": "بطيئ قليلاً. :slight_frown:",
-        "600": "بطيئ على ما أظن! :frowning2:",
-        "700": "بطيء..:worried:",
-        "800": "بطيئ جداََ. :disappointed:",
-        "900": "سيء :sob: (ساعدني)",
-        "1600": "#تلوم الدسكورد :angry:",
-        "10000": "هذا لا معنى له :thinking: #نلوم ستيفن",
-        "default": "بطيء :dizzy_face:"
-      },
       "display": [
         "هل كنت سريعاََ بما يكفي؟",
         "ماذا تفعل؟",
@@ -531,13 +539,13 @@
         "بينغ بونغ؟!",
         "اءء... اهلاََ"
       ],
-      "text": "%1$s*%2$s* - My ping: %3$,d ms (%4$s) `Websocket:%5$,dms`"
+      "text": "%1$s*%2$s* -- **My ping: %3$,d ms** (Websocket: %4$,d ms)"
     },
     "love": {
       "no_mention": "%1$sتيجب ذكر شخص واحد على الأقل.",
       "not_ideal": "حاول مجدداََ في المره القادمه...",
       "decent": "جيد بما فيه الكفاية!",
-      "nice": "مباراة جيدة!",
+      "nice": "تطابق جيد!",
       "perfect": "تطابق مثالي!",
       "yourself_note": "أنت مخلوق خاص ويجب أن تحب نفسك أكثر من أي شخص آخر 3>",
       "header": "مقياس الحب",
@@ -559,10 +567,38 @@
       "status": {
         "no_marriage": "%1$sأنت لست متزوجًا ، لذا أعتقد أن حالتك أه... \"غير متزوج\" (إذا رأيت زواجًا في ملفك الشخصي وشاهدت هذه الرسالة التي تعني أنك في النظام القديم ، فحاول الزواج مرة أخرى)",
         "header": "حالة الزواج الحالية",
-        "description_format": "%1$sحالة الزواج بين **%2$s#%3$s** و **%4$s#%5$s**",
+        "description_format": "%1$sMarriage status between **%2$s** and **%3$s**",
         "date": "موعد الزواج",
         "love_letter": "رسالة الحب",
-        "waifus": "ملكية الوايفو"
+        "waifus": "ملكية الوايفو",
+        "house": "House Name",
+        "car": "Car Name",
+        "pet": "Pet Name (Type)"
+      },
+      "timezone": {
+        "no_content": "%1$sYou need to specify what timezone you want this marriage to track.",
+        "invalid": "%1$sNot a valid timezone or Zone ID.",
+        "success": "%1$sSuccessfully set marriage timezone to %2$s. Pet time will be the same as the marriage timezone."
+      },
+      "general": {
+        "not_married": "%1$sYou're not married."
+      },
+      "buyhouse": {
+        "not_married": "%1$sYou can only buy a house while you're married. This might change in the future.",
+        "no_house": "%1$sYou need a house item in your inventory. Use `~>market buy house` to get one.",
+        "not_enough_money": "%1$sYou don't have enough money to buy a house. (Current house price: %2$d credits)",
+        "no_name": "%1$sYou need to give your house a name! For example, `~>marry house cozy house`",
+        "confirm": "%1$sAre you sure you wanna buy this house? The price deducted from your wallet is %2$d and the name you gave the house is %3$s. Type `yes` to confirm and `no` to cancel.",
+        "success": "%1$sYou successfully bought a house for %2$d. The name of your new cozy house is %3$s, enjoy!",
+        "cancel_success": "%1$sCancelled operation."
+      },
+      "buycar": {
+        "no_car": "%1$sYou need to buy a car first! Use `~>market buy car` to get one.",
+        "not_enough_money": "%1$sYou don't have enough money to buy a car. (Current car price: %2$d credits)",
+        "no_name": "%1$sYou need to give your car a name! For example, `~>marry car vroom`",
+        "confirm": "%1$sAre you sure you wanna buy this car? The price deducted from your wallet is %2$d and the name you gave the car is %3$s. Type `yes` to confirm and `no` to cancel.",
+        "success": "%1$sYou successfully bought a car for %2$d. The name of your new fast car is %3$s, enjoy!",
+        "cancel_success": "%1$sCancelled operation."
       },
       "no_mention": "%1$sاذكر الشخص الذي تريد ان تتزوجه.",
       "marry_yourself_notice": "%1$sلا تستطيع الزواج من نفسك, بقدر ما تريد.",
@@ -577,8 +613,11 @@
       "denied": "%1$sرفض اقتراح الزواج من **%2$s**"
     },
     "divorce": {
+      "confirm": "%1$sAre you sure you want to end this marriage? The money spent in pets, houses and cars will be split in two. Type `yes` to continue and `no` to cancel. **Your pet will dissapear, since it's tied to the marriage**",
+      "cancelled": "%1$sCancelled divorce.",
       "not_married": "%1$sأنت لست متزوج، لماذا لم تجد الشخص المميز؟ ",
-      "success": "%1$sالأن أنت غير مرتبط. أظن أن هذا جميل :)! "
+      "success": "%1$sNow you're single. That's nice I guess.\n%2$s",
+      "split": "The money left was split between the two parties by selling their assets (pet, house, car). Each one got **%1$d** credits on their wallet."
     },
     "waifu": {
       "bot": "%1$sالبوت لايمكن أن يكون وايفو، حتى لو أردت ذلك...",
@@ -611,7 +650,7 @@
         "player_locked": "%1$sلايمكنك فعل هذا الآن. ",
         "scrapped": "%1$sتم إلغاء إلغاء مطالبة الوايفو. ",
         "success": "%1$sتم بنجاح الغاء مطالبة `%2$s` بتكلفة **%3$s مال**.",
-        "not_found": "%1$sلايمكنني العثور على اي مستخدم مع هذا الاستعلام. اذا اردت الغاء مطالبة عضو غير معروف، استخدم المعرف ID وألحق `-unknown` بالنهاية. "
+        "not_found": "%1$sI can't find any user with this query. If you need to unclaim an unknown user, use their ID (`~>waifu -id`) and append `-unknown` at the end."
       },
       "buyslot": {
         "locked": "%1$sحالياً انت غير قادر على تنفيذ هذا الإجراء. ",
@@ -620,11 +659,11 @@
         "too_many": "%1$sأنت بالفعل تملك فتحات كثيرة! "
       },
       "optout": {
-        "notice": "%1$sYou've opted out of the entire waifu system, so you can't use this.",
-        "warning": "%1$sDo you want to opt-out from the waifu system? THIS IS PERMANENT AND CAN'T BE REVERTED. \nIf you only want to be opted out of new claims and wanna use the waifu system as usual, please use `~>profile claimlock` instead.\nYou won't be able to claim or be claimed, and all the claims over you will be removed.\nType `yes` or `no`. Typing yes will opt you out, no will cancel it.",
-        "success": "%1$sYou successfully opted out of the waifu system.",
-        "cancelled": "%1$sCancelled opt-out operation.",
-        "claim_notice": "%1$sThe user you're trying to claim opted out."
+        "notice": "%1$sلقد اخترت الخروج من نظام الوايفو بأكمله ، لذلك لا يمكنك استخدام هذا.\n",
+        "warning": "%1$sDo you want to opt-out from the waifu system? THIS IS PERMANENT AND CAN'T BE REVERTED. \nIf you only want to be opted out of new claims and wanna use the waifu system as usual, please use `~>profile claimlock` instead.\nYou won't be able to claim or be claimed, and all the claims over you will be removed.\nType `Yes, I want to opt out of the waifu system completely and irreversibly` or `no`. Typing the confirmation message will opt you out, no will cancel it.",
+        "success": "%1$sاخترت بنجاح الخروج من نظام الوايفو.",
+        "cancelled": "%1$sإلغاء عملية إلغاء الاشتراك.",
+        "claim_notice": "%1$sالمستخدم الذي تحاول المطالبة به قام بإلغاء الاشتراك."
       },
       "header": "لستة الوايفو",
       "description_header": "هنا قائمة مع كل من الوايفو الخاص بك، مرتبة حسب تاريخ الإضافة.\n*يمكنك أن تحصل على الحد الاقصى %1$,d من الوايفو الى الآن.*\n\nإذا أردت أن تتحقق من حالتك للوايفو، إستخدم `~>waifu stats`",
@@ -646,17 +685,18 @@
     },
     "coinflip": {
       "over_limit": "%1$sانتظر هناك! الحد الأقصى هو 1000 عملة تقليب",
-      "no_repetitions": "%1$sيجب ان تحدد عدد صحيح لعدد التكرارات",
+      "no_repetitions": "%1$sYou need to specify an Integer for the amount of repetitions (For example, `~>roll 100`)",
       "success": "%1$sنتائجك من **%2$,d** الوقت(s) أسفر **%3$,d** رأس و **%4$,d** وذيل"
     },
     "inventory": {
       "bot_notice": "%1$sهنا, البوتات ليس لديها مخزون. حسناََ, افي بعض الأحيان قد ترغب في أن يكون لديهم واحد ولكن بعد ذلك سيكون فقط  `~>market dump`",
-      "brief": "**مخزون %1$s** %2$s\n*إذا كنت تريد نسخة أكثر تفصيلا من هذا إستخدم : `~>inventory -info`. إستمتع بيومك:)!*",
+      "brief": "**%1$s's item collection** %2$s\n\n*For a detailed version, use `~>inventory -info`. Enjoy your day!*",
       "calculate": "%1$s%2$s ستحصل على **%3$,d مال** إذا تم بيع جميع أغراضك. ",
       "header": "مخزون %1$s",
       "format": "**سعر**: 📥 %1$,d 📤 %2$,d\n%3$s",
       "empty": "%1$sالمخزون هذا فاضي! :(",
-      "brief_notice": "يمكنك إستخدام `~>inventory -brief` للحصول على نسخة صديقة للهاتف."
+      "brief_notice": "يمكنك إستخدام `~>inventory -brief` للحصول على نسخة صديقة للهاتف.",
+      "sorted_by": " *(sorted by: %1$s)*"
     },
     "cast": {
       "no_item_found": "%1$sلم أجد اي غرض يُطابق هذا، اذا اسم الغرض يحتوي على مسافات، ضعه في \"اقتباسات\"",
@@ -665,10 +705,10 @@
       "no_item": "%1$sلاتملك الغرض اللام *%2$s* للمضي قدماً في عملية الصب هذه. ",
       "not_enough_items": "%1$sلاتملك الغرض الكافي *%2$s* للمضي قدماً. \n**(تحتاج: %3$s، الحالي: %4$s)**",
       "success": "%1$sتم بنجاح صب * %2$s %3$s* مقابل %4$s مال *الصب المُستخدمه: %5$s* ",
-      "no_tool": "%1$sتحتاج أن تملك %2$s للمضي بعملية الصب!",
+      "no_tool": "%1$sYou need to have a %2$s to proceed with this cast! Remember: You need to have two wrenches of the same required type to proceed with the cast.",
       "item_broke": "للأسف، المفك إنكسر بينما كنت تصب، ولكن حصلت على غرضك! ",
       "too_many": "%1$sسوف تملك أكثر من 5000 قطعة من نفس الغرض اذا تم المُضي. جرب صب أقل من هذا الغرض؟",
-      "low_tier": "%1$sYou need at least a tier 2 wrench (at least a Comet Wrench) to cast more items per call. You currently have a tier %2$s wrench.",
+      "low_tier": "%1$sYou need at least a tier 2 wrench (at least a Comet Wrench) to cast more items per call. You currently have a tier %2$s wrench. Remember: You need to have two wrenches of the same required type to proceed with the cast.",
       "not_enough_wrench_level": "%1$sمفكك غير قوي كفاية لصب هذا الغرض. ريما تحديد مفك أقوى؟  *مستوى المفك: %2$s, المستوى المطلوب: %3$s*. مثال: `~>cast \"star pick\" \"comet wrench\"`",
       "too_many_amount": "%1$sلايمكنك صب العديد من هذا الغرض مرة واحدة! الحد: %2$s، محاولة: %3$s. مفك البريق يجعل الحد مزدوج! إلا إذا كنت تستخدم واحد بالفعل. ",
       "ls": {
@@ -711,14 +751,15 @@
       "buy": {
         "no_item_amount": "%1$sتحتاج أن تحدد الكمية من هذا الغرض (اذا كان مجرد واحد، لاتحتاج لتحديد الكمية) وأيضاً الغرض الذي تريد شرائه. ",
         "invalid": "%1$sرقم غير صحيح للأغراض المراد شرائها.",
-        "non_existent": "%1$sلايمكن شراء غرض غير موجود! إذا كنت ضائع، يمكنك كتابة الإسم المُختصر أو ضعه في \"اقتباسات\" ",
+        "non_existent": "%1$sYou cannot buy an non-existent item. If you're lost, you can try typing the short name or wrapping the name in quotes. Also, the item amount goes before the item name, example: `~>market buy 15 energy`",
         "no_buy_price": "%1$sلايمكنك شراء غرض لايمكن شرائه!",
         "item_limit_reached": "%1$sلايمكنك شراء المزيد من هذا الغرض. ",
         "success": "%1$sتم بنجاح شراء %2$,d %3$s ب %4$,d مال. أنت الآن تملك %5$,d مال. ",
+        "success_breakable": "%1$sBought %2$,d %3$s for %4$,d credits successfully. You now have %5$,d credits. You can equip this using `~>equip <item name>`",
         "not_enough_money": "%1$sلاتملك المال الكافي لشراء هذا الغرض! "
       },
       "header": "سوق مونتارو ",
-      "reference": "يمكنك شراء و بيع غرض بإستخدام `~>market buy <item>` و `~>market sell <item>`. تحقق من  `~>help market` للمزيد من المعلومات.\n",
+      "reference": "\nYou can buy and sell items using `~>market buy <item>` and `~>market sell <item>`. Check `~>help market` for more info, you can also see shorter market lists there, like `~>market tools`.",
       "sell_price": "-**سعر البيع:**",
       "buy_price": "-**سعر الشراء:**"
     },
@@ -727,16 +768,19 @@
       "bot_notice": "%1$sلايمكنك تحويل غرض لبوت.",
       "locked_notice": "%1$sلايمكنك تحويل أغراض الآن. (العضو مقفول) ",
       "hidden_item": "%1$sلايمكنك تحويل هذا الغرض!",
-      "overflow": "%1$sهذا العضو لديه الحد الأقصى من هذا الغرض (5000).",
+      "overflow": "%1$sThis player has the maximum amount (5000) of this item.",
+      "overflow_after": "%1$sAfter transferring the item, the player would have more than the maximum amount (5000) of this item.",
       "success": "%1$s%2$s أعطى **%3$s** **%4$s** الى %5$s",
       "multiple_items_error": "%1$sلاتملك أي من هذه الأغراض في مخزونك",
       "error": "%1$sأنت لاتملك مايكفي من هذا الغرض في مخزونك للقيام بهذا!",
       "no_item_mention": "%1$sيجب أن تحدد عضو لتحويل غرض له وأيضا يجب أن تحدد الغرض المراد تحويله."
     },
     "transfer": {
+      "new_account_notice_yourself": "%1$sYour account must be at least 7 days old to transfer money.",
+      "new_account_notice_other": "%1$sThe account you're transferring to must be at least 7 days old.",
       "transfer_yourself_note": "%1$sلايمكنك تحويل مال لنفسك.",
       "bot_notice": "%1$sلايمكنك تحويل مال لبوت.",
-      "no_amount": "%1$sيجب أن تُحدد المبلغ.",
+      "no_amount": "%1$sYou need to specify the amount. Use the `transferitems` command instead if you meant to transfer an item.",
       "no_money_specified_notice": "%1$sلايمكنك تحويل أي أموال P:",
       "over_transfer_limit": "%1$sلايمكنك تحويل هذا الكثير من المال. (الحد: %2$,d مال)",
       "own_locked_notice": "%1$sلايمكنك تحويل مال الآن.",
@@ -746,7 +790,7 @@
       "receipt_over_limit": "%1$sهذا العضو بالفعل لديه الكثير من المال....",
       "success": "%1$sتم تحويل **%2$,d** *(%3$,d بعد 8%% ضريبة)* الى **%4$s** بنجاح.",
       "item_transfer": "%1$sلايمكنك تحويل غرض بإستخدام transfer، إستخدم `transferitems` بدلاً من ذلك.",
-      "party": "يمكنك التحويل لنفس الشخص (%1$s) مرة واحدة كل 4 دقائق."
+      "party": "You can only transfer to the same person (%1$s) once every 10 minutes."
     },
     "useitem": {
       "ls": {
@@ -760,7 +804,7 @@
       "no_item": "%1$sلاتملك أي من هذا الغرض في مخزونك.",
       "not_enough_items": "%1$sلاتملك العدد الكافي من هذا الغرض! ",
       "too_little": "%1$sلايمكنك إستخدام أقل من 1 غرض.",
-      "invalid_amount": "%1$sالمبلغ يجب أن يكون عدد صحيح مابين `1` و `9`!"
+      "invalid_amount": "%1$sThe amount needs to be a valid number between `1` and `15`!"
     },
     "opts": {
       "note": "%1$s مهلا، إذا كنت فقدت أو تريد مساعدة على استخدام ال opts، تحقق من <https://github.com/Mantaro/MantaroBot/wiki/Configuration> للحصول على دليل حول كيفية استخدام opts.\nملاحظة: يمكن للمسؤولين فقط أو الأشخاص الذين يستخدمون خادم الإدارة أو الأشخاص الذين يتمتعون بدور القائد استخدام هذا الأمر!",
@@ -817,29 +861,11 @@
       "cancelled": "%1$sإستطلاع تم إلغاؤه",
       "incorrect_time_format": "تنسيق الوقت غير صحيح. تذكر، تنسيق الوقت المناسب هو رقم متبوع بـ \"h أو m أو s\" (ساعات أو دقائق أو ثوان). مثال: `-time 40m`"
     },
-    "osustats": {
-      "user": {
-        "header": "أوسو! الإحصائيات ل %1$s",
-        "rank": "مركز",
-        "acc": "دِقة",
-        "level": "مستوى",
-        "ranked": "نقاط المركز",
-        "country_rank": "مركز البلد "
-      },
-      "retrieving_info": "%1$sإسترجاع المعلومات من أوسو! سيرفر...",
-      "timeout": "%1$sالأوسو! يبدو أن آبي يأخذ قيلولة. يمكنك المحاولة لاحقاً.",
-      "best_format": "# %1$s [%2$s] -> %3$s (★%4$.2f*) \n | ####### | [%5$,dpp] | مركز: %6$s -> الحد الأقصى من السرد: %7$,d",
-      "best": "**10 أفضل أوسو! عشرات لـ: %1$s** (وضع: %2$d)\n```md\n%3$s```",
-      "error": "%1$sآه أوه... يبدو أنني تلقيت للتو حساء التدافع كاستجابة... (خطأ أثناء استرداد النتائج)",
-      "recent_format": "# %1$s -> %2$s\n | (★%3$s) - %4$s | تاريخ: %5$s -> الحد الأقصى للسرد: %6$s",
-      "recent": "**أحدث 10 أوسو! نقاط لـ: %1$s** (وضع: %2$d)\n```md\n%3$s```",
-      "error_detailed": "أووووه... يبدو أنني تلقيت للتو حساء التدافع كاستجابة... (%1$s)"
-    },
     "profile": {
       "timezone": {
-        "not_specified": "%1$sيجب أن تُحدد المنطقة الزمنية (timezone).",
+        "not_specified": "%1$sYou need to specify the timezone. A valid timezone would be, for example `GMT-3` or `America/Chicago` (ZoneId).",
         "reset": "%1$sإعادة تعيين المنطقة الزمنية(timezone).",
-        "invalid": "%1$sمنطقة زمنية خاطئة.",
+        "invalid": "%1$sInvalid timezone. A valid timezone would be, for example `GMT-3` or `America/Chicago` (ZoneId). Usually you can get your timezone by looking \"what timezone am I in\"",
         "success": "%1$sتم حفظ المنطقة الزمنية، منطقتك الزمنية هي **%2$s**",
         "reset_success": "%1$sتم بنجاح إعادة تعيين المنطقة الزمنية."
       },
@@ -851,7 +877,7 @@
         "clear_success": "%1$sتم بنجاح مسح وصف الحساب. "
       },
       "displaybadge": {
-        "not_specified": "%1$sأنت بحاجة إلى تحديد ميداليتك الرئيسية!",
+        "not_specified": "%1$sYou need to specify your main badge! For example, `~>profile displaybadge claimer`",
         "reset_success": "%1$sلن تظهر أي ميدالية على أعلى ملفك الشخصي الآن!",
         "important_success": "%1$sميدالية العرض الخاصة بك هي الآن الأكثر أهمية. ",
         "no_such_badge": "%1$sلاتوجد مثل هذه الميدالية....\nميدالياتك المُتاحة: %2$s",
@@ -864,6 +890,10 @@
         "success": "%1$sسيتحدث لك مونتارو الآن في `%2$s`",
         "invalid": "%1$sهذه اللغة غير موجودة! يمكنك إستخدام أمر `reset` لإعادة تعيين إعدادات لغتك. "
       },
+      "inventorysort": {
+        "not_valid": "%1$sThis sort type is not valid. Available types: `%2$s`",
+        "success": "%1$sSuccessfully changed your inventory sort type, now it is: **%2$s**"
+      },
       "stats": {
         "header": "إحصائيات الملف ل %1$s",
         "wins": "فوزات الكازينو",
@@ -875,6 +905,7 @@
         "experience": "خبرة",
         "mine_xp": "خبرة الحفر ",
         "fish_xp": "خبرة صيد السمك",
+        "chop_xp": "Chopping Experience",
         "sharks_caught": "اصطدت قرش ",
         "crates_open": "فتح الصناديق ",
         "times_mop": "عدد مرات المسح",
@@ -903,18 +934,21 @@
         "success": "%1$sتم بنجاح تركيب %2$s *%3$s*، و سوف نتذكر في المرة القادمة التي تستخدم العملة المناسبة للأمر. ",
         "not_suitable": "%1$sلايمكنك تركيب هذا الغرض.",
         "not_equipped": "%1$sلاتملك هذه مُجهزه.",
-        "already_equipped": "لديك بالفعل عنصر من هذا النوع مجهز! جرب `~>unequip <type>` (النوع يمكن أن يكون rod/سنارة أو pick/فأس) إذا كنت ترغب في عدم تجهيزه ذلك."
+        "already_equipped": "%1$sYou already have an item of this type equipped! Try `~>unequip <type>` (Type can be rod, axe or pick) if you wanna unequip it."
       },
       "unequip": {
-        "no_content": "%1$sتحتاج لتحديد نوع الأداة لإلغاء تركيبه، `إما pick أو rod`",
-        "invalid_type": "%1$sنوع غير صحيح، الأنواع الصحيحة هي `pick, rod`",
+        "not_equipped": "%1$sليس لديك اي شيء مُجهز في هذا المكان.",
+        "no_content": "%1$sYou need to specify a tool type to unequip, can be either `pick, axe, rod`",
+        "invalid_type": "%1$sInvalid type. Valid types are `pick, axe, rod`",
+        "confirm": "%1$sAre you sure you want to **unequip** your %2$s %3$s? Type `yes` to confirm, `no` to cancel.",
         "success": "%1$sتم بنجاح إلغاء تركيب %2$s بفتحتك الخاصة",
         "equipment_recover": "بما أنك لم تستخدم مُعداتك أبداً، حصلت على %1$s الخاص بك. ",
         "broken_equipment_recover": "تم استخدام المعدات الخاصة بك، ولكنك حصلت على %1$s ، يمكنك إصلاحه إذا كنت في حاجة إليها في وقت لاحق!",
-        "broken_equipment_recover_none": "هذا النوع من المعدات لم يكن لديه نوع مكسور للتعافي منه، وتم استخدامه، لذلك اختفى في الفراغ، ولكن حصلت على %1$s مال مرة أخرى."
+        "broken_equipment_recover_none": "هذا النوع من المعدات لم يكن لديه نوع مكسور للتعافي منه، وتم استخدامه، لذلك اختفى في الفراغ، ولكن حصلت على %1$s مال مرة أخرى.",
+        "cancelled": "%1$sCancelled operation."
       },
       "display": {
-        "not_premium": "%1$sال profile widgets متوفر للأعضاء البريميوم فقط! ",
+        "not_premium": "%1$sProfile widget personalization is only available to premium users. For more perks, you can check <https://github.com/Mantaro/MantaroBot/wiki/Premium-Perks>",
         "not_enough": "%1$sال Widgets غير كافي لوضعه على ملف التعريف الخاص بك (الحد الأدنى: 3). إذا كنت ضائع، تحقق من `~>profile widgets ls`",
         "success": "%1$sتعيين تخطيط ملف التعريف الجديد بنجاح. التخطيط الجديد هو `%2$s`",
         "ls": "%1$sقائمة مكونات ملف التعريف:\n%2$s **ال widgets في الترتيب الإفراضي:** `%3$s`\n%2$s **ال widgets الخاص بك** `%4$s`\nيمكنك إستخدام `~>profile widgets reset` لإعادة تعيين ملفك الشخصي. ",
@@ -923,52 +957,54 @@
       },
       "claimlock": {
         "removed": "%1$sتم بنجاح إعادة تعيين حالة قفل المُطالبة.",
-        "success": "%1$s لا يمكن أن تتم مُطالبتك ك وايفو بعد الآن. هذا استخدم مفتاح المطالبة.",
-        "no_key": "%1$sلا تملك مفتاح المُطالبة للقيام بهذا!"
+        "success": "%1$sYou can't be waifu claimed anymore. This used up a claim key. Use `~>profile claimlock remove` to remove it later.",
+        "no_key": "%1$sYou don't have a claim key to do this. You can buy one from the market using `~>market buy \"claim key\"`",
+        "already_locked": "%1$sYou're already claim locked. Use `~>profile claimlock remove` to remove it."
       },
       "autoequip": {
         "disable": "%1$sتم بنجاح إلغاء التركيب التلقائي. ",
         "success": "%1$sتشغيل التركيب التلقائي."
       },
-      "badge_header": "%1$sميدالية العرض",
+      "badge_header": "%1$s Display Badge",
       "bot_notice": "%1$sالبوتات لاتملك صفحة شخصية",
       "header": "صفحة %1$s الشخصية",
       "no_desc": "لم يتم وضع وصف",
       "credits": "مال",
+      "old_credits": "Legacy Credits",
       "level": "مستوى",
       "xp": "XP",
       "rep": "ريب",
       "birthday": "يوم الميلاد",
       "married": "متزوج من ",
       "nobody": "لا أحد",
-      "inventory": "مجموعة الأصناف",
-      "badges": "أفضل 5 ميداليات ",
+      "inventory": "Item Collection (Top 10)",
+      "badges": "Badge Collection (Top 5)",
       "no_badges": "لا ميداليات (بعد!)",
       "no_timezone": "لم يتم تعيين",
       "timezone_user": "المنطقة الزمنية للعضو: %1$s",
       "not_specified": "غير محدد.",
       "potion": "جرعة نشطة",
-      "no_potion": "لا توجد جرعات نشطة"
+      "no_potion": "لا توجد جرعات نشطة",
+      "hidelegacy": "%1$sLegacy credits show status is now: `%2$s`"
     },
     "badges": {
       "info": {
-        "not_specified": "%1$sتحتاج إلى تحديد ميدالية لرؤية المعلومات عنها. ",
+        "not_specified": "%1$sYou need to specify a badge to see the info of. For example, `~>badge info claimer`",
         "not_found": "%1$sلايوجد مثل هذه الميدالية",
         "header": "معلومات ميدالية ل %1$s",
         "achieved": "تحقيق"
       },
       "brief_success": "**ميداليات %1$s.**\n%2$s",
       "profile_notice": "إذا إعتقدت أنك حصلت على ميدالية جديدة ولم تظهر هُنا، إستخدم أمر `~>profile` وبعدها إستخدم الأمر مرة أخرى. ",
-      "info_notice": "Use `~>badges info <badge name>` to get more information about a badge. [You can also check the wiki.](https://github.com/Mantaro/MantaroBot/wiki/Badge-reference-and-documentation)\n",
-      "upvote_notice": "**You can get a free badge for [up-voting Mantaro on discordbots.org](https://discordbots.org/bot/mantaro)!** (It might take some minutes to process)\n\n",
-      "donate_notice": "**You can get a badge for [supporting the development of Mantaro!](https://patreon.com/mantaro)!** (It might take some minutes to process)\n\n",
+      "info_notice": "Use `~>badges info <badge name>` to get more information about a badge. [You can also check the wiki](https://github.com/Mantaro/MantaroBot/wiki/Badge-reference-and-documentation)\n",
+      "donate_notice": "**يمكنك الحصول على ميدالية لدعم تطوير مونتارو! (https://patreon.com/mantaro)!**\n(من الممكن أن يأخذ بعض الدقائق)",
       "no_badges": "لايوجد ميداليات لعرضها (بَعد:)!)",
       "header": "الميداليات التي تحققت من قبل %1$s",
       "total_badges": "**جميع الميداليات الي تحققت:** %1$s",
-      "footer": "Badges are like achievements, and they're gained through progression in Mantaro's game or by just using the bot."
+      "footer": "الشارات هي مثل الإنجازات ، وأنها اكتسبت من خلال التقدم في لعبة مانتارو أو مجرد استخدام البوت."
     },
     "rep": {
-      "new_account_notice": "%1$sThe account age (amount of time since the Discord account was created) for giving or receiving rep must be older than 5 days. Try again later.",
+      "new_account_notice": "%1$sيجب أن يكون عمر الحساب (مقدار الوقت منذ إنشاء حساب دسكورد) لإعطاء أو استقبال ريب أقدم من 5 أيام. حاول مرة أخرى في وقت لاحق.",
       "no_mentions": "%1$sتحتاج إلى منشن أو وضع اسم عضو واحد. %2$s",
       "more_than_one": "%1$sيمكنك إعطاء الريب لشخص واحد فقط",
       "rep_bot": "%1$sلايمكنك إعطاء بوت ريب \n%2$s",
@@ -981,100 +1017,91 @@
     },
     "birthday": {
       "reset": "%1$sتم بنجاح إعادة تعيين تاريخ ميلادك.",
-      "no_global_birthdays": "%1$sالأشياء تبدو فارغة قليلاً هنا...",
-      "no_guild_month_birthdays": "%1$sThere are no birthdays for this month (%2$s) here :(\n%3$sIf you just setup the birthday announcer, please wait a bit until running this again. (Cache refreshes every 23h)",
+      "no_guild_birthdays": "%1$sالاشياء تبدو فارغة قليلاً هنا.\nتذكر ان ذاكرة التخزين المؤقت يتم تحديثها كل 23 ساعة وانه يتعين على الاعضاء الان كتابة الأمر \n`~>birthday allowserver` للسماح لهذا السيرفر بالاعلان عن اعياد ميلادهم.",
+      "no_guild_month_birthdays": "%1$sلا يوجد اعياد ميلاد لهذا الشهر (%2$s) هنا :(.\n%3$sإذا قمت للتو بإعداد مُعلن عيد الميلاد ، يرجى الانتظار قليلاً قبل استعمال الأمر مرة أخرى. (يتم تحديث ذاكرة التخزين المؤقت كل 23 ساعة)\nتذكر انه يتعين على الأعضاء الان استعمال الأمر\n `~>birthday allowserver` للسماح للسيرفر بالاعلان عن اعياد ميلادهم .",
       "cache_not_running": "%1$sيبدو أن ميلاد ساشير لايمكن إستخدامه (خطأ داخلي) :(.",
       "error": "%1$sحصل شئ خطأ ما بينما كنت تحاول الحصول على عيدميلاد (خطأ داخلي) :(.",
-      "header": "**ميلاد %1$s ل %2$s** ",
-      "full_header": "**أعياد ميلاد %1$s**\n%2$s",
-      "invalid_date": "%1$sتاريخ غير صحيح أو غير صالح. تذكر تسلسل التاريخ `dd-mm-yyyy` (اليوم-الشهر-السنة)",
-      "error_date": "%1$s%2$sإما تاريخ غير صالح أو لايمكنني تحليل هذا بشكل صحيح. أرجوك جرب التسلسل الصحيح. تذكر أن تاريخ الميلاد يشمل السنة، وأيضا يمكنك إضافة أي سنة لن يؤثر. \nالتسلسل الصحيح: `dd/mm/yyyy`",
-      "added_birthdate": "%1$sتم بنجاح إضافة تاريخ الميلاد. تاريخ الميلاد الجديد %2$s *(التسلسل dd/mm/yyyy)* [يوم-شهر-سنة]",
+      "header": "**%1$s's Birthdays for %2$s**\nBirthday cache is updated every 23 hours, so if your birthday doesn't appear here, don't panic and wait it out.\n",
+      "full_header": "**%1$s's Birthdays**\n%2$s\nRemember that birthdays are cached every 23 hours and that they have to run `~>birthday allowserver`",
+      "invalid_date": "%1$sNot a valid date or it's not in the correct format.\nRemember that the date format is `dd-mm` (For example, use `~>birthday 16-11` for the 16th of November)",
+      "error_date": "%1$s%2$s is either not a valid date or I can't parse it properly. Please try with the correct formatting.\nRemember that the date format is `dd/mm` (For example, use `~>birthday 16-11` for the 16th of November)",
+      "added_birthdate": "%1$sتم اضافة تاريخ الميلاد بنجاح. تاريخ الميلاد الجديد: %2$s *(الصيغة: dd-MM)* [day-month]. للسماح لهذا السيرفر بالاعلان عن عيد ميلادك يجب عليك استخدام الأمر:\n `~>birthday allowserver`",
       "invalid_month": "%1$sرقم الشهر غير صالح! (الأرقام الصحيحة من 1 إلى 12)",
-      "no_content": "%1$sتحتاج إلى تحديد ميلادك. لإعادة تعيين ميلادك إستخدم الأمر `remove` أو `month` للتحقق من لستة أعياد الميلاد لهذا الشهر. "
+      "no_content": "%1$sيجب عليك تحديد تاريخ ميلادك, `remove` لإعادة ضبط تاريخ ميلادك أو `month` لعرض اعياد الميلاد بهذا الشهر. للسماح لهذا السيرفر بالاعلان عن عيد ميلادك, يجب عليك استعمال الأمر \n`~>birthday allowserver`",
+      "new_format": "%1$sالصيغة الجديدة للتاريخ هي `dd-mm` (يوم-شهر, على سبيل المثال 20-10 ك 20 اكتوبر). لاحاجة لادخال العام, لذلك يمكنك حذف ذلك الجزء.",
+      "allowed_server": "%1$sتم السماح للسيرفر الحالي بالاعلان عن عيد ميلادك. لمنعه من ذلك, استعمل الأمر \n `~>birthday denyserver` بهذا السيرفر.",
+      "denied": "%1$sتم منع السيرفر الحالي من الاعلان عن عيد ميلادك., اذا اردت السماح له بذلك, استعمل الأمر\n `~>birthday allowserver` on this server.",
+      "already_denied": "%1$sهذا السيرفر بالفعل لا يمكنه الاعلان عن عيد ميلادك. اذا اردت السماح له بذلك, استعمل الأمر\n`~>birthday allowserver`\n هذا هو الخيار الافتراضي.",
+      "already_allowed": "%1$sYou already allowed this server to show your birthday."
     },
     "choose": {
-      "nothing_to": "%1$sيجب أن تخبرني ما الذي أختار هُنا. (مثال: `~>choose anime manga`)",
+      "nothing_to": "%1$sYou need to tell me what to choose between. (example: `~>choose anime manga \"sleeping out\"`)",
       "success": "%1$sأنا أختار `%2$s` :)"
     },
-    "dictionary": {
-      "no_word": "%1$sيجب أن تُحدد كلمة.",
-      "header": "التعريف ل %1$s",
-      "description": "**Part of speech:** `%1$s`\n**Headword:** `%2$s`"
-    },
     "remindme": {
-      "nothing_specified": "%1$sWhat could I remind you of if you don't give me what to remind you? Oh! Lemme remind you of setting a reminder!",
+      "nothing_specified": "%1$sما الذي يمكنني أن أذكرك به إذا لم تعطني ما أذكرك؟ اوه! اجعلني أُذكرك بوضع تذكير!",
       "no_reminders": "%1$sلم تضع أي تذكير.",
       "cancel": {
         "success": "%1$sإلغاء تذكيرك.",
         "select": "إختار التذكير المُراد إلغاءه. "
       },
       "no_time": "لم تعطني وقت `-time` (مثال: `-time 1h`)\n",
-      "too_little_time": "%1$sهذا وقت قصير جداً! (الحد الأدني :1 دقيقة) ",
+      "too_little_time": "%1$sThat's too little time (Minimum: 1 minute, Example: `-time 1m`)",
       "too_long": "هذا وقت طويل جداً! (الحد الأقصى: 3 أشهر)",
       "success": "%1$sسأقوم بتذكيرك (%2$s#%3$s) من `%4$s` في %5$s",
       "too_many_reminders": "%1$sلديك الكثير من التذكيرات! جرب حذف بعضها؟"
     },
     "time": {
       "invalid_timezone": "%1$sمنطقة زمنية غير صحيحة. ",
-      "success": "%1$sIt's %2$s in the %3$s timezone.",
-      "error": "%1$sI found an error while looking for the timezone in the big book over there... or it could be invalid."
+      "success": "%1$sانه %2$s في %3$s المنطقة الزمنية. ",
+      "error": "%1$sوجدت خطأ اثناء النظر في المنطقة الزمنية في الكتاب الكبير... أو يمكنه ان يكون غير صالح. ",
+      "user_no_timezone": "%1$s المستخدم المذكور لم يقم بتعيين منطقة زمنية بالبروفايل الخاص به."
     },
     "urban": {
-      "no_args": "%1$sYou need to tell me what term to look for in Urban Dictionary.",
-      "header": "Urban Dictionary definition for %1$s",
-      "too_many_args": "%1$sToo many arguments! Page format is `name->page number`",
+      "no_args": "%1$sتحتاج إلى أن تقول لي ما هو المصطلح للبحث عنه في القاموس الحضري.",
+      "header": "تعريف القاموس الحضري ل %1$s",
+      "too_many_args": "%1$sالكثير من الحجج! تنسيق الصفحة هو \n`name->page number`\n",
       "main_def": "التعريف الرئيسي.",
-      "footer": "Information by Urban Dictionary",
-      "nsfw_notice": "%1$sThis command can only be used in NSFW channels due to the nature of its results."
-    },
-    "weather": {
-      "header": "%1$s Forecast information for %2$s",
-      "clouds": "الغيوم",
-      "temperature": "درجة الحرارة",
-      "humidity": "الرطوبة",
-      "wind_speed": "سرعة الرياح",
-      "pressure": "الضغط",
-      "footer": "Information provided by OpenWeatherMap (Process time: %1$dms)",
-      "error": "%1$sError while fetching results. (Not found?)",
-      "no_content": "%1$sYou need to specify which city and country to search the weather of!"
+      "footer": "معلومات حسب القاموس الحضري",
+      "nsfw_notice": "%1$sيمكن استخدام هذا الأمر فقط في روم NSFW نظرًا لطبيعة نتائجه.",
+      "error": "%1$sحدث خطأ اثناء معالجة الاستجابة من Urban Dictionary. حاول مرة أخرى؟"
     },
     "activatekey": {
       "check": {
         "key_valid_for": "%1$sمفتاحك صالح لغاية %2$s يوم :heart:",
-        "no_key_found": "%1$sYou don't have a key enabled... If you're a premium from the old system you should still have your rewards, though!"
+        "no_key_found": "%1$sليس لديك مفتاح مُفعل... إذا كنت بريميوم من النظام القديم يجب أن يكون لا يزال لديك المكافآت الخاصة بك، وإن كان!"
       },
-      "no_key_provided": "%1$sI cannot enable a premium key if you don't give me one",
-      "invalid_key": "%1$sYou provided an invalid or already enabled key",
-      "guild_already_premium": "%1$sThis server already has a premium subscription",
-      "guild_successful": "%1$sThis server is now **Premium** :heart: (For: %2$d days)\nIf you're pledging in Patreon, this key is linked to your pledge.",
+      "no_key_provided": "%1$sلا يمكنني تفعيل مفتاح بريميوم إذا لم تعطني مفتاحًا",
+      "invalid_key": "%1$sلقد قمت باستخدام مفتاح غير صالح أو مُفعل بالفعل",
+      "guild_already_premium": "%1$sيحتوي هذا السيرفر بالفعل على اشتراك بريميوم",
+      "guild_successful": "%1$sهذا السيرفر الآن **Premium** :heart: (لعدد من الأيام : %2$d)\nإذا كنت مُتعهد في Patreon، هذا المفتاح مرتبط بتعهدك.\n",
       "user_already_premium": "%1$sأنت بالفعل بريميوم :heart:",
-      "user_successful": "%1$sYou're now **Premium** :heart: (For: %2$d days)\nIf you're pledging in Patreon, this key is linked to your pledge.",
-      "mp": "Mantaro Patreon uses no keys, instead, it's a given that it's premium by the fact that the bot itself works."
+      "user_successful": "%1$sYou're now **Premium** :heart:\nIf you're pledging in Patreon, this key is linked to your pledge.",
+      "mp": "مونتارو Patreon لا يستخدم مفاتيح ، بدلا من ذلك ،نظرا لأنه بريميوم من حقيقة أن بوت نفسه يعمل."
     },
     "claimkey": {
-      "not_patron": "%1$sYou're not a patron, so you can't do this. If you want to support Mantaro and get perks along with it, head over to <https://www.patreon.com/mantaro>\nIf you're currently pledging and you see this message, it means you don't have an active key. Please double-check that you enabled the key Mantaro should've DM'd you.",
-      "already_top": "%1$sYou already claimed all the keys you had. If any of them expired, please head over to the support server at <https://support.mantaro.site> (Though they should renew automatically)",
-      "successful": "%1$sSuccessfully claimed key `%2$s`. You have claimed a total of %3$s keys and have %4$s left keys to claim. This key is of type %5$s. (If this is a guild key, use it on the server where you want it on)",
-      "cant_dm": "%1%sI can't DM you the key because of your privacy settings, seemingly, so it wasn't generated.",
+      "not_patron": "%1$sأنت لست patron، لذا لا يمكنك فعل هذا. إذا كنت ترغب في دعم مانتارو والحصول على الامتيازات معها، توجه إلى <https://www.patreon.com/mantaro>\nإذا كنت مُتعهد حاليًا وترى هذه الرسالة، فهذا يعني أنه ليس لديك مفتاح نشط. يرجى التحقق مرة أخرى من أنك قمت بتمكين المفتاح مونتارو يجب أن يكون تم ارساله لك بالخاص.\n",
+      "already_top": "%1$sلقد استخدمت كل المفاتيح التي لديك وإذا انتهت صلاحية أي منها، يرجى التوجه إلى سيرفر الدعم الفني <https://support.mantaro.site> (على الرغم من أنه يجب تجديدها تلقائيًا)",
+      "successful": "%1$sتم بنجاح تجميع مفتاح '%2$s'. لقد جمعت مجموع %3$s مفاتيح ولديك مفاتيح متبقية %4$s لتجميعها. هذا المفتاح من نوع %5$s. (إذا كان هذا مفتاح النقابة، استخدمه على السيرفر حيث تريد تفعيله)",
+      "cant_dm": "%1%sلايمكنني إرسال المفتاح اليك بالخاص، بسبب اعدادات الخصوصية، على مايبدو.",
       "success": "%1$sتم إرسال المعلومات عن طريق الرسائل الخاصة",
-      "invalid_scope": "%1$sInvalid key scope! Valid are `user` and `guild`. Without any arguments, this command defaults to `user`. Example: `~>claimkey guild` or `~>claimkey user`"
+      "invalid_scope": "%1$sنطاق مفتاح غير صالح! صالح هي `user` و `guild`. بدون أية وسيطات، هذا الأمر افتراضياً إلى `user`.. مثال: \n`~>claimkey guild` أو `~>claimkey user`"
     },
     "vipstatus": {
       "user": {
         "header": "حالة البريميوم الخاصة بك",
         "header_other": "حالة %1$s البريميوم",
-        "not_premium": "%1$sأنت لست بريميوم :(",
+        "not_premium": "%1$s%2$s ليس بريميوم :c",
         "premium": "**عضو بريميوم! 3>**",
-        "old_system": "**Premium user under the old system! Don't worry tho, you're premium and your benefits will work properly!**"
+        "old_system": "**عضو بريميوم تحت النظام القديم! لا تقلق ، أنت عضو بريميوم والفوائد الخاصة بك سوف تعمل بشكل صحيح!**"
       },
       "guild": {
         "header": "حالة %1$s البريميوم",
         "not_premium": "%1$sهذه النقابة ليست بريميوم :(",
         "premium": "**بريميوم النقابة! 3>**",
-        "old_system": "**Premium guild under the old system! Don't worry tho, you're premium and your benefits will work properly!**"
+        "old_system": "**النقابة بريميوم تحت النظام القديم! لا تقلق ، النقابة بريميوم والفوائد الخاصة بك سوف تعمل بشكل صحيح!**"
       },
-      "description": "Keys are valid for as long as your pledge is active, unless stated otherwise. Thanks for donating or pledging <3",
+      "description": "المفاتيح صالحة طالما أن تعهدك نشط، ما لم ينص على خلاف ذلك. شكرا ً للتبرع أو التعهد 3>",
       "valid_for_old": "صالح ل",
       "old_days_more": "%1$,dأيام أكثر ",
       "thank_note": "شكراً لك لدعمك 3>",
@@ -1088,12 +1115,13 @@
       "keys_claimed": "مفاتيح إضافية تُطالب"
     },
     "support": {
-      "info": "%1$sIf you need support, head to the support server over to <https://support.mantaro.site> and ask your question in the #support channel!"
+      "info": "%1$sأذا احتجت الى مساعدة، توجه الى سيرفر الدعم الفني \n<https://support.mantaro.site> وتفضل بالسؤال عن أسالتك في روم الدعم #support!"
     },
     "action": {
-      "no_mention": "%1$sتحتاج منشن عضو.",
-      "error_retrieving": "%1$sI found an error while retrieving the next gif for this action... (external error)",
-      "permission_or_unexpected_error": "%1$sS-Sorry! I dropped the image. (Probably I don't have permissions to send it)",
+      "no_mention": "%1$sYou need to mention a user.",
+      "error_retrieving": "%1$sI found an error while retrieving the next gif for this action... (external error, maybe WeebAPI is down?)",
+      "no_type": "%1$sThis action command has no type. (internal error)",
+      "permission_or_unexpected_error": "%1$sأعتذر! لقد أسقطت الصورة (ربما ليس لدي اذن لإرسالها)",
       "lonely": {
         "pat": "اووووو، أرى أنك وحيد، خُذ بات 3>",
         "hug": "اووووو، أرى أنك وحيد، خُذ عناق 3>",
@@ -1111,16 +1139,17 @@
         "holdhands": "*يُمسك يَدك*",
         "cuddle": "*يُعانقك*",
         "nuzzle": "*يُضايقك*",
-        "bloodsuck": "J-Just how am I meant to? Oh well.. *sucks your blood*"
+        "blush": "*blushes at you*",
+        "bloodsuck": "فقط كيف أنا مقدر لي ذلك؟ أوه جيدا.. * تمتص دمك *"
       },
       "self": {
         "pat": "*يربت*",
         "hug": "*الحمره* أوووه... شككراً! ",
-        "kiss": "*blushes*... I- uh... don't think you should be kissing a bot but...",
+        "kiss": "*أحمر الخدود*... أنا... لا أعتقد أنك يجب أن تقبل بوت ولكن...",
         "poke": "اوووه! ماذا تُريد؟",
         "slap": ":(",
         "bite": "هذا يؤلم!!!",
-        "lick": "How does metal taste? I don't believe it's too great...",
+        "lick": "كيف طعم المعدن؟ لا أعتقد أنه رائع جداً...",
         "tickle": "هههههههه... توقف أرجوك >u<",
         "highfive": "*كفك بكفي*",
         "pout": "هل أنت غاضب مني؟ :(",
@@ -1130,6 +1159,7 @@
         "holdhands": "أوووه... ;//;",
         "cuddle": "هذا لطيف!",
         "nuzzle": "أوووووه كيوووت!",
+        "blush": ";////;",
         "bloodsuck": "هل أنت مصاص دماء الآن؟ أوه!!"
       },
       "pat": "%1$sلقد حصلت على بات من %2$s",
@@ -1137,18 +1167,19 @@
       "kiss": "%1$sلقد حصلت على قبلة من %2$s",
       "poke": "%1$sلقد حصلت على بوك من %2$s",
       "slap": "%1$sتم صفعك من قبل %2$s",
-      "bite": "%1$s you have been bitten by %2$s :eyes:",
-      "tickle": "%1$s you have been tickled by %2$s",
-      "lick": "%1$s you have been licked by %2$s",
-      "highfive": "%1$s highfives %2$s :heart:",
+      "bite": "%1$sلقد لدغك %2$s",
+      "tickle": "%1$s دغدغك %2$s",
+      "lick": "%1$s تم لعقتك من قِبل %2$s",
+      "highfive": "%1$s هاي فايف %2$s :heart:",
       "pout": "%1$s pouts at %2$s *hmph*",
-      "teehee": "%1$s is teasing %2$s",
+      "teehee": "%1$s يضايق %2$s",
       "smile": "%1$s is smiling at %2$s :heart:",
-      "stare": "%1$s is staring at %2$s",
-      "holdhands": "%1$s is holding %2$s's hand",
-      "cuddle": "%1$s you have been cuddled by %2$s",
-      "nuzzle": "%1$s is nuzzling %2$s",
-      "bloodsuck": "%1$s is sucking the blood of %2$s!",
+      "stare": "%1$s يُحدق ب %2$s",
+      "holdhands": "%1$s يُمسك يد %2$s",
+      "cuddle": "%1$s تم حضنك من قبل %2$s",
+      "nuzzle": "%1$s يحضن %2$s",
+      "bloodsuck": "%1$s يمتص دم %2$s!",
+      "blush": "%1$s is blushing at %2$s",
       "nom": "لذيذ.",
       "facedesk": "*facedesks*",
       "lewd": "أ.. أنت بذيئ!",
@@ -1157,7 +1188,7 @@
     "game": {
       "won_games": "%1$s%2$s فاز **%3$s لعبة**",
       "nothing_specified": "%1$sلم تحدد أي شيء لتلعبه.",
-      "not_enough_games": "%1$sتحتاج إلى تحديد لعبتين على الأقل",
+      "not_enough_games": "%1$sYou need to specify two games at least (For example: `~>game lobby pokemon,trivia`)",
       "invalid_selection": "%1$sتحتاج إلى تحديد لعبتين على الأقل. (الألعاب الصالحة: character, pokemon, number, trivia)!",
       "multiple": {
         "invalid": "%1$sتحتاج إلى تحديد اللعبة وعدد المرات المُراد لعبها.",
@@ -1166,14 +1197,14 @@
         "no_character": "%1$sYou cannot use character game in game multiple or lobby due to AniList API limitations."
       },
       "trivia": {
-        "wrong_diff": "%1$sWrong difficulty specified! (Supported: easy, medium and hard)",
-        "fetch_error": "%1$sError while starting trivia. Seemingly Open Trivia DB is having trouble.",
+        "wrong_diff": "%1$sاختيار خاطئ! (المُتاح: easy, medium and hard)",
+        "fetch_error": "%1$sخطأ أثناء تشغيل تريڤيا. على ما يبدو هنالك مشكلة اثناء فتح قاعدة بيانات تريڤيا.",
         "possibilities": "الإحتمالات",
         "difficulty": "الصعوبة",
         "category": "الفئة"
       },
       "number": {
-        "start": "%1$sخَمن الرقم! **لديك 5 محاولات و 30 ثانية لتخمين الرقم الصحيح. الرقم بين ال 0 و 150**",
+        "start": "%1$sخمن الرقم! **لديك خمس محاولات ودقيقة واحدة. الرقم يجب ان يكون بين 0 و 150**",
         "nan": "%1$sهذا ليس رقم...",
         "ended_game": "%1$sنهاية اللعبة. الرقم الصحيح هو: %2$d",
         "all_attempts_used": "%1$sتم إستخدام جميع المحاولات، نهاية اللعبة. الرقم الصحيح هو: %2$d",
@@ -1201,6 +1232,7 @@
       "end_footer": "You have 5 attempts and 60 seconds. (Type end to end the game)",
       "trivia_end_footer": "You have %1$s attempts and 60 seconds. (Type end to end the game)",
       "error": "%1$sI found an error while setting up the game... (internal error)",
+      "error_missing_permissions": "%1$sI can't attach files. Please check permissions.",
       "character_load_error": "%1$sFailed to setup game for pre-saved character: %2$s. If this happens for all characters, it could be a temporary error.",
       "character_request_error": "%1$sError requesting this character from Kitsu's API.",
       "character_start": "Guess the character",
@@ -1212,203 +1244,228 @@
       "not_crate": "%1$sThat is not a valid loot crate."
     },
     "dailycrate": {
-      "key": "%1$sYou need a crate key to use this! Please buy one and try again!",
-      "not_premium": "%1$sYou're not premium!\nYou can open a daily premium crate with a high chance of getting good items with premium! Please check out more at <https://patreon.com/mantaro>.\nThis can be ran every 24 hours.",
-      "success": "%1$sYou just got a **%2$s**! Come back in 24 hours to get another one! You can open this using `~>opencrate <crate name>`. You need to buy a crate key to open it."
+      "check": "%1$sسوف تتمكن من الحصول على الصندوق اليومي الخاص بك في: **%2$s.**",
+      "not_premium": "%1$sYou're not premium!\nYou can open a daily premium crate with a high chance of getting good items with premium! Please check out more at <https://patreon.com/mantaro>\nThis can be ran every 24 hours.",
+      "success": "%1$sYou just got a **%2$s**! Come back in 24 hours to get another one! You can open this using `~>opencrate <crate name>`. You need to buy a crate key using `~>market buy key` to open it."
     },
     "prune": {
       "no_messages_specified": "%1$sYou specified no messages to prune.",
       "no_permissions": "%1$sI cannot prune on this server since I don't have the Manage Messages permission.",
+      "no_permissions_user": "%1$sلا يمكنني القيام بالبرون في هذا السيرفر لأنك لا تملك صلاحية إدارة الرسائل.",
       "bot_no_messages": "%1$sThere are no messages from bots or bot calls here.",
       "no_pins_no_messages": "%1$sThere are no non-pinned messages here...",
       "mention_no_messages": "%1$sThere are no messages from users which you mentioned here.",
-      "too_few_messages": "%1$sToo few messages to prune. The minimum is 5.",
+      "too_few_messages": "%1$sToo few messages to prune. The minimum is 5. This is computed after the message list has been filtered, so if you used a filter (say, mentioned someone), make sure you fetch 100 messages (or don't specify the amount).",
       "error_retrieving": "%1$sI found an unknown error while retrieving the history to prune the messages (Internal: %2$s %3$s)",
       "invalid_number": "%1$sPlease specify a valid number.",
       "not_valid": "%1$sThat's not a valid number of messages to delete.",
-      "less_than_five": "%1$sYou need to provide at least 5 messages.",
+      "less_than_five": "%1$sYou need to provide at least 5 messages. For example, use `~>prune 20` to delete 20 messages.",
       "messages_too_old": "%1$sThere are no messages newer than 2 weeks old, discord won't let me delete them.",
       "success": "%1$sSuccessfully pruned %2$s messages from this channel.",
       "lack_perms": "%1$sLack of permission while pruning messages (No permission provided: %2$s)",
-      "error_deleting": "%1$sUnknown error while pruning messages (Internal: %2$s %3$s). If this keeps happening, please report it at <https://support.mantaro.site>"
+      "error_deleting": "%1$sحد خطأ غير معروف اثناء محاولتي بالقيام بالبرون (داخلي: %2$s %3$s). اذا استمر هذا الخطأ بالظهور يرجى القيام ب ابلاغنا في <https://support.mantaro.site>"
     },
     "imageboard": {
       "catgirl": {
-        "error": "Error retrieving cute catgirl images :("
+        "error": "حدث خطأ اثناء البحث عن صور لفتاة قطة لطيفة :("
       },
       "cat": {
-        "error": "%1$sError retrieving cute cat images :("
+        "error": "%1$sحدث خطأ اثناء البحث عن صور لقطط لطيفة :("
       },
       "too_many_tags": "%1$sYou specified too many tags for the current imageboard! Imageboard %2$s accepts a maximum of %3$d tags.",
-      "invalid_rating": "%1$sYou provided an invalid rating (Available types: questionable, explicit, safe)",
-      "nsfw_no_nsfw": "%1$sI cannot send a NSFW image in a non-nsfw channel :(",
-      "no_images": "%1$sThere are no images matching your search criteria...",
+      "invalid_rating": "%1$sلقد قدمت تصنيف غير صالح (الانواع المتاحة: questionable, explicit, safe)",
+      "nsfw_no_nsfw": "%1$s لا يمكنني إرسال صورة NSFW في قناة غير محددة ك روم nsfw :(",
+      "no_images": "%1$sلا توجد صور مطابقة لما بحثت عنه. قد يحدث هذا لأن خدمة الصور لم تجد شيئاً لما بحثت عنه, او انك بحثت عن عناوين محظورة.",
       "no_results": "%1$s**There aren't any more images or no results found**! Please try with a lower number or another search.",
       "error": "%1$sThere was an error while looking for an image...",
       "wrong_argument": "%1$sWrong argument type. Check ~>help %2$s",
       "blacklisted_tag": "%1$sThis image tag has been blacklisted here by an administrator.",
       "error_tag": "%1$sThere was an error while looking for this tag...",
-      "error_random": "%1$sThere was an error while looking for a random image...",
-      "non_nsfw_channel": "%1$sNot on an NSFW channel. Cannot send lewd images.\n**Reminder:** You can set this channel as NSFW by going to the channel settings and checking `Set this Channel as NSFW`.",
+      "error_random": "%1$sحدث خطأ اثناء البحث عن صورة عشوائية...",
+      "non_nsfw_channel": "%1$sلست في روم NSFW. لايُمكن ارسال صور بذيئة.\n**تذكير:** يمكنك تعيين الروم على انه NSFW وذلك بالذهاب الى اعدادات الروم وتحديد `تعيين هذا الروم على أنه NSFW.",
       "loli_content_disallow": "%1$sI cannot display images that allegedly contain `loli` or `shota` (or related tags) lewd/NSFW content because discord prohibits it. Try again with other tags?",
-      "null_list_notice": "%1$sOops... something went wrong when searching... (If you used a tag, the tag might not exist)",
-      "found_image": "Found an image",
+      "null_list_notice": "%1$sاوه... حدث خطأ اثناء البحث... (اذا استخدمت وسم في البحث, ربما يكون هذا الوسم غير موجود)",
+      "found_image": "تم العثور على صورة",
       "description_image": "Rating: **%1$s**, Imageboard: **%2$s**",
-      "width": "Width",
+      "width": "العرض",
       "height": "Height",
-      "tags": "Tags",
-      "load_notice": "If the image doesn't load, click the title.",
-      "rule34_notice": "If you don't like the content on this command, you can use ~>yandere",
+      "tags": "العلامات",
+      "load_notice": "إذا لم يتم تحميل الصورة ، فانقر على العنوان.",
+      "rule34_notice": "If you don't like the content on this command, you can use `~>yandere`. If animated gifs/webm content doesn't play, click the link in the embed title.",
       "yandere_nsfw_notice": "%1$sThe Yande.re and Gelbooru commands can only be used in NSFW channels due to numerous reports of it sending explicit images which are marked as safe on their side.\nYou can try using `~>konachan` instead!",
-      "e621_nsfw_notice": "%1$sThe e621 command can only be used on NSFW channels."
-    },
-    "about": {
-      "title": "About Mantaro",
-      "description": {
-        "1": "Hello, I'm **Mantaro**! I'm here to make your life a little easier. To get started, type `~>help`!",
-        "2": "Some of my features include:",
-        "3": "**Moderation made easy** (`Mass kick/ban, prune commands, logs and more!`)",
-        "4": "**Funny and useful commands**, see `~>help remindme` or `~>help hug` for examples.",
-        "5": "**First quality music**, check out `~>music`!.",
-        "support": "**[Support server](https://discordapp.com/invite/cMTmuPa)! | [Support Mantaro development!](https://www.patreon.com/mantaro)**",
-        "credits": "%1$sCheck ~>about credits!"
-      },
-      "patreon": {
-        "header": "**Mantaro's Patreon Pledgers**"
-      },
-      "credits": {
-        "main_dev": "Main developer",
-        "dev": "Developer",
-        "docs": "Documentation",
-        "translators": "Translators",
-        "community_admin": "Community Admin",
-        "special_mentions": "Thanks to bots.discord.pw, Carbonitex and discordbots.org for helping us with increasing the bot's visibility.",
-        "thank_note": "Much thanks to everyone above for helping make Mantaro better!"
-      },
-      "version": "MantaroBot Version",
-      "uptime": "Uptime",
-      "shards": "Shards",
-      "threads": "Threads",
-      "guilds": "Servers",
-      "users": "Users (Unique)",
-      "tc": "Text Channels",
-      "vc": "Voice Channels",
-      "invite": "Invite link: http://is.gd/mantaro (Commands this session: %1$,d | Current shard: %2$,d)"
+      "e621_nsfw_notice": "%1$sThe e621 command can only be used on NSFW channels.",
+      "e926_nsfw_notice": "%1$sThe e926 command can only be used on NSFW channels. The images should be mostly safe, but the rating is inconsistent."
     },
     "pet": {
-      "no_content": "%1$sYou need to specify the pet to look up the stats of (and the user you want to check the pet from, if it's not yours. Make sure to quote the name on this case!).",
-      "not_specified": "%1$sYou didn't specify the pet name.",
-      "not_found": "%1$sI didn't find a pet with the provided name.",
-      "character_not_allowed": "%1$sThis character isn't allowed in pet names. Try another name?",
-      "overview": "Pet Overview and Statistics",
-      "name": "Name",
-      "tier": "Tier",
-      "element": "Element",
-      "owner": "Owner",
-      "created": "Created At",
-      "affection": "Affection",
-      "stamina": "Current Stamina",
-      "hp": "Current HP",
-      "fly": "Fly",
-      "venom": "Venom",
-      "inventory": "Inventory",
-      "id": "Pet ID: %1$s",
-      "hunger": "Hunger",
-      "hydration": "Hydration"
-    },
-    "petactions": {
-      "general": "Pets are your companion on the usage of currency! **You can train them, pet them, feed them or have fights between your own pets or pets from other people!** To create a pet you need an incubator, which you can cast from milk, old beverage and diamonds, this will allow you to incubate a pet, which will require you to give it a name.\n\nPets can fight in PetBattle, which is a turn-based (ish) fight system based in a one-turn strategy, with an emergency turn on the half-turn if the HP difference between the pets is too different, which would allow you to change your strategy.\n\nFor competition, you need to use different skills, which will cater to different elements and types. You chose them at the start of your turn or half-turn.\nSkills are the main weapon you have! But, pets can also have a main weapon equipped, based on their type and affection. The weapon shop is available at `~>petaction shop` and you can equip it using `~>petaction weapon`, weapons *do not* have damage multiplier by themselves, but they can improve the effectiveness of some attacks and skills, as the result of this, there are no melee weapons, as all damage on PetBattle is done based on their will, not on their actual life.\n\nDo `~>help petaction` to get a list of the commands you can use with your pet.",
-      "incubate": {
-        "no_name": "%1$sYou need to specify a name to give to your pet.",
-        "only_letters": "%1$sThe name can only contain letters from a to z.",
-        "no_egg": "%1$sYou don't have an incubator egg on your inventory.",
-        "not_enough_slots": "%1$sYou don't have enough pet slots left. (Total: %2$s, Used: %3$s)",
-        "no_money": "%1$sYou don't have enough money to incubate this egg. (Required: **%2$s** credits)",
-        "success": "%1$sSuccessfully incubated your pet egg! Your new pet %2$s `(ID: %3$s)` is now ready. Check `~>pet <name>` to check pet stats."
+      "explanation": "Pets are a useful companion in currency!\nThey help you gain more money, loot more, find random stuff on mine, chop trees, and even catch fish. The higher the level, the higher the rewards!\nGetting the right pet for your activities is important, so make sure to check the type and abilities of the pet you want to choose!\nRemember that you need to feed your pet and give it water, aswell as let it rest and charge up in energy every once in a while, just like a real pet! You can even pat it :)\nFor more help, use `~>help pet` and `~>pet list` for a list of pets.",
+      "no_marriage": "%1$sYou need to be married to have a pet. For now. Check `~>help marry` and `~>pet`.",
+      "no_marriage_other": "%1$s%2$s needs to be married to have a pet. For now. Check `~>help marry` and `~>pet`.",
+      "status": {
+        "no_pet": "%1$sYou don't have any pets to check the status of. Check `~>pet` for an explanation.",
+        "header": "Status for %1$s",
+        "description": "Remember to take care and love your pet :heart:\nSee `~>pet` and `~>help pet` for an explanation.",
+        "cost": "Price",
+        "type": "Type",
+        "abilities": "Abilities",
+        "level": "Level",
+        "health": "Health",
+        "thirst": "Thirst",
+        "hunger": "Hunger",
+        "stamina": "Stamina",
+        "pet": "Pats",
+        "footer": "Thanks you for using Mantaro! <3"
       },
-      "rename": {
-        "not_enough_args": "%1$sYou need to specify the current name and the new name.",
-        "new_name_exists": "%1$sYou already have a pet with this name.",
-        "not_enough_money": "%1$sYou don't have enough money for this. **(Required: %2$s)**",
-        "confirmation": "%1$sDo you really want to rename **%2$s** to **%3$s**? Type *yes* to confirm and *no* to cancel.",
-        "success": "%1$sSuccessfully renamed **%2$s** to **%3$s** (ID: %4$s). Cost: %5$s"
+      "list": {
+        "summary": "%1$s **Name:** %2$s, **Abilities:** `%3$s`, **Value:** %4$,d credits",
+        "abilities": "*Fish*: Useful for `~>fish`\n*Catch*: Useful for `~>mine`\n*Chop*: Useful for `~>chop`\n*Cheer*: Gives you a nice morale boost.",
+        "header": "%1$s**Current available Pets**\n\n%2$s\n\n%3$s**Ability explanation:**\n%4$s"
       },
-      "ls": {
-        "experience": "XP",
-        "age": "Age",
-        "no_pets": "%1$sYou have no pets.",
-        "header": "This is a list of the pets you currently own.\nPets are your companion on the usage of currency! **You can train them, pet them, feed them or have fights between your own pets or pets from other people!** To create a pet you need an incubator, which you can cast from milk, old beverage and diamonds, this will allow you to incubate a pet, which will require you to give it a name.",
-        "pages": "**Total pages:** %1$s \nUse the message reaction to move between pages.\n\n"
+      "pat": {
+        "no_pet": "%1$sYou don't have any pets to pat. Check `~>pet` for an explanation.",
+        "no_pet_other": "%1$s%2$s doesn't have any pets to pat. Check `~>pet` for an explanation.",
+        "too_many": "How did you even get this many pats?"
       },
-      "train": {
-        "success": "%1$sSuccessfully trained skill **%2$s**. Experience gained: %3$s. Current skill experience: %4$s. (Cost: %5$s)"
+      "pet_reactions": {
+        "cute": "%1$s**%2$s** happily wags their tail as you caress their head. **Pat counter: %3$s**.%4$s",
+        "cute_not_animal": "%1$s**%2$s** happily smiles as you caress their head. **Pat counter: %3$s**.%4$s",
+        "nothing": "%1$s**%2$s** just sits there, doing nothing. **Pat counter: %3$s**.%4$s",
+        "cheer": "%1$s**%2$s**'s reaction was so cute it managed to cheer you up. **Pat counter: %3$s**.%4$s",
+        "scare": "%1$sThe pet got scared when you patted them. Maybe it was too sudden? **Pat counter: %3$s**.%4$s",
+        "counter_100": "%1$sIt seems like their head will get shiny with so many pats."
       },
-      "pet": {
-        "no_pet": "%1$sI can't find a pet with the name you specified.",
-        "pet": "%1$sAww! T-Thanks. (Affection: %2$s, Total pets: %3$s)"
+      "buy": {
+        "not_enough_arguments": "%1$sYou need to specify the name of the pet and the type of pet you want to buy. (For example, `~>pet buy hello dog`)",
+        "no_requirements": "%1$sYou need both a car and a house to go buy a pet! House: %2$s, Car: %3$s\nTo buy a house and a car use `~>marry buyhouse` and `~>marry buycar` :heart:",
+        "no_house": "%1$sYou need to have a pet house on your inventory to do this. You can buy it on the market.",
+        "already_has_pet": "%1$sYou already have a pet.",
+        "nothing_found": "%1$sCan't find the type of pet you specified. You specified: `%2$s`, Valid types: `%3$s`",
+        "not_enough_money": "%1$sYou don't have enough money to buy this pet. Value: %2$,d credits, Wallet: %3$,d credits",
+        "confirm": "%1$sAre you sure you want to buy this pet? Name: %2$s, Type: %3$s, Cost: %4$,d credits. Type `yes` to continue, `no` otherwise.",
+        "success": "%1$sCongratulations! You're both now the proud owner of a `%2$s%3$s` and they were named `%4$s`. The cost to buy this pet was %5$,d credits.",
+        "cancel_success": "%1$sCancelled operation.",
+        "too_long": "%1$sThis name is too long. It needs to be shorter than 150 characters."
       },
       "feed": {
-        "fire_type": "%1$sYou can't really feed a fire type pet... unless you wanna make charcoal.",
-        "no_item": "%1$sI can't find that item.",
-        "not_food": "%1$sThe specified item is not food.",
-        "full": "%1$sYour pet is currently full and can't eat more.",
-        "success": "%1$sSuccessfully fed your pet %2$s. (Current hunger level: %3$s. Saturation: %4$s)"
+        "no_pet": "%1$sYou don't have any pets to feed. Check `~>pet` for an explanation.",
+        "no_content": "%1$sYou need to specify what you want to feed your pet with (for example, `~>pet feed steak`)",
+        "no_item": "%1$sI didn't find the item you specified.",
+        "not_food": "%1$sWoah there! This isn't food!",
+        "no_need": "%1$sYour pet isn't hungry, so they don't want to eat right now.",
+        "not_inventory": "%1$sYou don't have the item you want to feed your pet. Make sure it's in your inventory and you have the right amount (%2$s).",
+        "not_applicable": "%1$sYou can't feed this food to your pet type.",
+        "success": "%1$sYay! Succesfully fed your pet with `%2$s` x%3$s and it recovered %4$s%% of their hunger. Their hunger is now %5$s%% satisfied.",
+        "too_much": "%1$sMaybe give it a little less food? You'd be wasting food otherwise! (Increase is over needed to reach 100%%)"
       },
-      "hydrate": {
-        "fire_type": "%1$sYou can't really hydrate a fire type pet... unless you wanna put them off.",
-        "not_water": "%1$sThis pet isn't a water type pet.",
-        "no_water": "%1$sYou don't have a water bottle in your inventory",
-        "success": "%1$sSuccessfully hydrated your pet. (Current hydration level: %2$s)"
+      "water": {
+        "no_pet": "%1$sYou don't have any pets to water. Check `~>pet` for an explanation.",
+        "no_need": "%1$sYour pet isn't thirsty, so they don't want to drink right now.",
+        "not_inventory": "%1$sYou don't have a Water Bottle. Make sure it's in your inventory.",
+        "not_enough_inventory": "%1$sYou don't have enough water bottles in your inventory! You need %2$s.",
+        "too_much": "%1$sMaybe give it a little less water? You'd be wasting water otherwise! (Increase is over needed to reach 100%%)",
+        "success": "%1$sYay! Succesfully gave your pet %2$d water and it recovered %3$s%% of their thirst. Their thirst is now %4$s%% quenched."
+      },
+      "activity": {
+        "low_stamina": "%1$s**%2$s** has a really low stamina. Give it food/water to replenish.",
+        "low_health": "%1$s**%2$s** has really low health. Give it food/water and let it rest for a while to replenish.",
+        "low_hunger": "%1$s**%2$s** is too hungry to do anything right now. *Fooood~*",
+        "low_thirst": "%1$s**%2$s** is too thirsty to do anything right now.",
+        "success_fish": "%1$s**%2$s** successfully helped you catch fish! You got a buff and extra credits **(%3$,d extra credits, %4$,d extra items)** thanks to the extra work your pet was able to do for you! *included on what you got*",
+        "success_chop": "%1$s**%2$s** successfully helped you chop a tree! You got a buff and extra credits **(%3$,d extra credits, %4$,d extra items)** thanks to the extra work your pet was able to do for you! *included on what you got*",
+        "success_mine": "%1$s**%2$s** successfully helped you mine! You got a buff and extra credits **(%3$,d extra credits, and a extra item drop chance)** thanks to the extra work your pet was able to do for you! *included on what you got*"
+      },
+      "rename": {
+        "no_pet": "%1$sYou don't have a pet to rename.",
+        "same_name": "%1$sThe name you gave me is the same as the current name of your pet.",
+        "no_content": "%1$sYou need to give me the new name of your pet.",
+        "not_enough_money": "%1$sYou don't have enough money to do this. Cost: %2%s, Current: %3$s.",
+        "success": "%1$sSuccessfully renamed your pet from `%2$s` to `%3$s`. %4$s has been deducted from your wallet. Enjoy!"
+      },
+      "remove": {
+        "no_pet": "%1$sYou don't have a pet to remove",
+        "confirm": "%1$sAre you sure you wanna remove this pet? The person you're married to will receive %2$s credits, and you will receive %2$s credits aswell.\nType `yes` to confirm or `no` otherwise. Keep in mind your refund won't scale with levels or anything, so take this as buying a new tomagotchi or something similar.",
+        "success": "%1$sSuccessfully removed pet. Every person in this marriage received %2$s credits as a refund."
+      },
+      "info": {
+        "not_found": "%1$sI can't find the pet type you're looking for. Use `~>pet list` for a list of pet types.",
+        "author": "Pet information for type %1$s%2$s",
+        "name": "Pet Name",
+        "cost": "Pet Cost",
+        "abilities": "Abilities",
+        "food": "Edibles",
+        "coin_buildup": "Coin Buildup (Lvl. 1 / 100)",
+        "item_buildup": "Item Buildup (Lvl. 1 / 100)"
       }
     },
     "invite": {
       "url": "Invite URL",
-      "server": "Support Server",
+      "server": "سيرفر الدعم الفني",
       "patreon": "Patreon URL",
       "description": {
-        "1": "Here are some useful links!",
-        "2": "**If you have any questions about the bot, feel free to join the support guild and ask**!.",
-        "3": "We provided a patreon link in case you would like to help Mantaro keep running by donating [and getting perks by doing so!].",
-        "4": "Thanks you for using the bot! **<3 from the developers and the Mantaro team**"
+        "1": "هذه بعض الروابط المفيدة!",
+        "2": "**اذا كان لديك أي اسئلة عن البوت, لا تتردد في الدخول الى سيرفر الدعم الفني**!.",
+        "3": "قدمنا رابط patreon في حال كنت تريد مساعدة مانتارو على الاستمرار في العمل عن طريق التبرع [والحصول على امتيازات من خلال القيام بذلك].",
+        "4": "شكراً لك لاستخدامك البوت! ** 3> من المطورين وفريق مانتارو**"
       },
-      "footer": "We hope you have fun with the bot."
+      "footer": "نتمنى أن تستمع مع البوت."
+    },
+    "salvage": {
+      "not_broken": "%1$sYou can only salvage broken tools.",
+      "no_item": "%1$sYou need to specify the item you want to salvage.",
+      "no_item_found": "%1$sI can't find the item you specified.",
+      "cant_salvage": "%1$sYou can't salvage this item.",
+      "not_wrench": "%1$sYou need a wrench to salvage an item. You might need to specify it manually after the item.",
+      "not_enough_level": "%1$sYou need at least a level 2 wrench to salvage this item.",
+      "no_main_item": "%1$sYou don't appear to have the item you're trying to salvage.",
+      "no_tool": "%1$sYou don't have this wrench. Try specifying it, or specifying another wrench.",
+      "no_tool_default": "%1$sYou need at least a Comet Wrench in your inventory to do this, but you can also specify a higher one if you want to.",
+      "dust": "%1$sYour inventory is too dusty to attempt a item salvage, try cleaning it with a mop.",
+      "no_returnables": "%1$sThis item has no returnable salvage elements.",
+      "item_broke": "%1$sYour wrench broke while trying to salvage this item :(",
+      "success": "%1$sSuccessfully salvaged %2$s and got %3$s in return. The cost was %4$s credits.\n%5$s",
+      "ls": {
+        "header": "Salvageable Item List",
+        "cost": "Salvage Cost: ",
+        "return": "Could Return: ",
+        "desc": "This is a list of the items you can salvage using `~>salvage`.\nYou can use full name or the short name (example: `~>salvage \"diamond pickaxe\"`, or `~>salvage \"diamond p\"`, works)\n**Salvaging has a cost of 1/3rd the price of the item. The salvage price will be shown down below.**.\nYou will only get one item of the listed here, choosen randomly.\nWrench tier 2 and 3 are comet and sparkle, respectively."
+      }
     },
     "stats": {
-      "header": "Mantaro Statistics",
-      "description": "Well... I did my math!",
+      "header": "إحصائيات مانتارو",
+      "description": "حسنًا... لقد قمت بحساباتي!",
       "usage": {
-        "header": "Mantaro's usage information",
-        "description": "Hardware and usage information.",
+        "header": "معلومات استخدام مانتارو",
+        "description": "معلومات الهاردوير والاستخدام.",
         "threads": "Threads",
         "memory_usage": "Memory Usage",
         "cores": "CPU Cores",
         "cpu_usage": "CPU Usage",
-        "assigned_mem": "Assigned Memory",
-        "assigned_remaining": "Remaining from assigned"
+        "assigned_mem": "الذاكرة المُخصصة",
+        "assigned_remaining": "المُتبقى من الذاكرة المُخصصة"
       },
       "server": {
         "header": "Mantaro's server usage information",
         "cpu_usage": "CPU Usage",
-        "rem": "RAM (TOTAL/FREE/USED)"
+        "rem": "الرام (الإجمالي/المُتاح/المُستخدم)"
       }
     },
     "social": {
-      "header": "%1$sO-Oh, I see you're interested on seeing my social networks!\n\n",
+      "header": "%1$sاوه, انا أرى أنك مهتم برؤية الشبكات الاجتماعية الخاصة بي!\n\n",
       "description": {
-        "1": "W-Well, here we go!",
-        "2": "**- Website:** <%1$s>"
+        "1": "حسناً, ها نحن ذا!",
+        "2": "**- الموقع الإلكتروني:** <%1$s>"
       },
-      "note": "**If you like Mantaro, please up-vote on** <https://discordbots.org/bot/mantaro> **and/or consider donating on Patreon or Paypal! Thanks you~**"
+      "note": "**اذا حاز مانتارو على اعجابك, يرجى التصويت له من خلال ** <https://discordbots.org/bot/mantaro> **و/أو فكر بالتبرع عن طريق باتريون او بيبال\nشكراً لك~**"
     },
     "avatar": {
-      "result": "%1$sAvatar for: **%2$s**\n%3$s"
+      "result": "Avatar for %1$s",
+      "footer": "Hopefully a very pretty one."
     },
     "serverinfo": {
-      "header": "Server Information",
-      "description": "Server information for %1$s",
-      "users": "Users (Online/Unique)",
-      "created": "Creation Date",
-      "channels": "Voice/Text Channels",
+      "header": "معلومات السيرفر",
+      "description": "معلومات السيرفر لـ %1$s",
+      "users": "المستخدمين",
+      "created": "تاريخ الإنشاء",
+      "channels": "رومات الصوت/الكتابة",
       "owner": "Owner",
       "region": "Region",
       "roles": "Roles (%1$,d)",
@@ -1424,7 +1481,7 @@
       "mutual_guilds": "Mutual Guilds",
       "vc": "Voice Channel",
       "color": "Color",
-      "status": "Status",
+      "status": "الحالة",
       "nothing": "Nothing",
       "default": "Default"
     },
@@ -1433,7 +1490,7 @@
       "id": "Role ID",
       "created": "Role Created",
       "age": "Role Age",
-      "color": "Color",
+      "color": "اللون",
       "members": "Members",
       "position": "Position",
       "hoisted": "Hoisted",
@@ -1447,13 +1504,13 @@
     "help": {
       "title": "Mantaro Help",
       "base_category": "Command list for category %1$s. For a detailed guide, please check the [wiki](https://github.com/Mantaro/MantaroBot/wiki). [Currency Guide](https://github.com/Mantaro/MantaroBot/wiki/Currency-101)\n",
-      "base": "**Full command list**. For a detailed guide, please check the [wiki](https://github.com/Mantaro/MantaroBot/wiki).\nGuides: [Currency](https://github.com/Mantaro/MantaroBot/wiki/Currency-101), [Custom Commands](https://github.com/Mantaro/MantaroBot/wiki/Custom-Command-%22v3%22), [Welcome Messages](https://github.com/Mantaro/MantaroBot/wiki/Welcome-and-Leave-Messages-tutorial)\n",
-      "support": "[For help, you can join the support server](https://support.mantaro.site). [You can follow me on Twitter for updates.](https://twitter.com/mantarodiscord)\n",
-      "patreon": "[**We need your help to keep Mantaro online! Click here for more info.**](https://www.patreon.com/mantaro)",
+      "base": "**Full command list**. For a detailed guide, please check our [wiki](https://github.com/Mantaro/MantaroBot/wiki).\nRemember you can get more information on a command using `~>help <name of command>`\n",
+      "support": "If you're still lost you can join the [support server](https://support.mantaro.site). You can also follow me on [Twitter](https://twitter.com/mantarodiscord) for updates.\n",
+      "patreon": "**[We need your help to keep Mantaro online! Click here for more info.](https://www.patreon.com/mantaro)**",
       "disabled_commands": "Only showing non-disabled commands. Total disabled commands: %1$s",
       "channel_specific_disabled_commands": "\nOnly showing non-disabled commands. Total channel-specific disabled commands: %1$s",
-      "footer": "To check command usage, type %1$shelp <command> // -> Commands: %2$s",
-      "commands": "Commands",
+      "footer": "Thanks for using Mantaro %1$s (Total Commands: %2$s)",
+      "commands": "أوامر",
       "extended": {
         "no_help": "%1$sThere's no extended help set for this command.",
         "not_found": "%1$sA command with this name doesn't exist"
@@ -1467,7 +1524,7 @@
       "no_tool": "%1$sYou need a Tier 2 (at least Comet Wrench) or above wrench to repair this item. Make sure you have it and that you specified the correct wrench in case you specified it. Remember to use quotes if the name has spaces.",
       "dust": "%1$sYour inventory it's too dusty to perform a repair. Dust level: %2$s",
       "not_wrench": "%1$sYou can't use this as a wrench. Remember to use quotes if the name has spaces.",
-      "not_enough_level": "%1$sYou need a higher tier wrench to perform this repair.",
+      "not_enough_level": "%1$sYou need a higher tier wrench to perform this repair. Try specfying it manually if you have it on your inventory.",
       "not_enough_money": "%1$sYou don't have enough money to repair this item.",
       "no_item_recipe": "%1$sYou don't have the necessary *%2$s* to perform this repair.",
       "not_enough_items": "%1$sYou don't have enough of *%2$s* to perform this repair. **(Needed: %3$s, Current: %4$s)**",
@@ -1476,7 +1533,7 @@
       "ls": {
         "header": "Repair-able Items List",
         "cost": "Repair Cost: ",
-        "desc": "This is a list of the items you can repair using `~>repair`.\nYou can use full name or the short name, or the emoji.\nRepairing has a minimum cost of 1/3rd of the item cost. The price will be shown below, alongside the needed materials."
+        "desc": "This is a list of the items you can repair using `~>repair`.\nYou can use full name or the short name, or the emoji.\nRepairing has a minimum cost of 1/3rd of the item cost. You need at least a Comet Wrench to repair something.\nThe price will be shown below, alongside the needed materials.\nThe full syntax of repair is `~>repair <item> <wrench>`"
       }
     },
     "anime": {
@@ -1493,35 +1550,36 @@
       "favorite_count": "Favorite Count",
       "end_date": "End Date",
       "average_score": "Average Score",
-      "type": "Type",
-      "episodes": "Episodes",
-      "episode_duration": "Episode Duration",
-      "genres": "Genres",
-      "minutes": "minutes",
-      "description": "Description"
+      "type": "النوع",
+      "episodes": "الحلقات",
+      "episode_duration": "مدة الحلقة",
+      "genres": "التصنيف",
+      "minutes": "دقائق",
+      "description": "الوصف"
     },
     "character": {
-      "no_args": "%1$sYou need to tell me what character you want to look for.",
+      "no_args": "%1$sعليك أن تخبرني ما الشخصية التي تريد البحث عنها.",
       "selection_start": "Type the number of the character you want to select.",
       "error": "%1$s**I swear I didn't d-drop your waifu, please forgive me!**\nI got ``%2$s`` while trying to process this command. (internal error)",
-      "information_header": "Character information for %1$s",
-      "information": "Information",
-      "no_aliases": "No aliases",
-      "alias_start": "Also known as:",
-      "no_info": "No info."
+      "information_header": "معلومات الشخصية لـ%1$s",
+      "information": "المعلومات",
+      "no_aliases": "لا توجد أسماء مستعارة",
+      "alias_start": "يُعرف أيضًا باسم:",
+      "no_info": "لاتوجد معلومات."
     },
     "balance": {
-      "bot_notice": "%1$sBots cannot have money.",
-      "external_balance": "%1$s's balance is **$%2$,d credits.**",
-      "own_balance": "Your balance is **$%1$,d credits.**"
+      "bot_notice": "%1$sلا يمكن أن تمتلك البوتات المال.",
+      "external_balance": "رصيد %1$s هو **%2.**",
+      "own_balance": "Your balance is **$%1$,d credits.**%2$s",
+      "reset_notice": "\nIf you wanna know what happened to your money, read <https://github.com/Mantaro/MantaroBot/wiki/Money-Reset-FAQ-and-General-Statements>\nYou didn't lose your old money completely, it's still visible on `~>profile` :heart:\nYour inventory was kept, maybe sell some stuff to get some money?\nThis will only be shown once. Read the page linked for more details."
     },
     "daily": {
       "check": "%1$sYou'll be able to claim your daily on: **%2$s.**",
-      "about_now": "about now",
+      "about_now": "تقريبا الآن",
       "errors": {
         "bot": "%1$sYou cannot transfer your daily to a bot.",
         "receipt_locked": "That user cannot receive daily credits now.",
-        "own_locked": "You cannot receive your daily now.",
+        "own_locked": "لايمكنك ان تستلم مكافئتك اليومية الآن.",
         "same_user": "%1$sUse daily without mentioning yourself if you're gonna mention yourself :P"
       },
       "streak": {
@@ -1538,51 +1596,51 @@
         },
         "watch_used": "Your `Magical Watches` saved your streak! You used `%1$d` of them to extend your streaks survival time to %2$dx, you have `%3$d` of them remaining!"
       },
-      "given_credits": "%1$sI gave your **$%2$,d** daily credits to %3$s",
-      "credits": "%1$sYou got **$%2$,d** daily credits.",
+      "given_credits": "%1$sقمت بإعطاء **$%2$,d** الخاصة بمكآفأتك اليومية الى %3$s",
+      "credits": "%1$sلقد حصلت على **$%2$,d** كمكآفأة يومية من الكردت.",
       "sellout": {
-        "get_premium": "We need your help to keep Mantaro alive! Check <https://patreon.com/mantaro> for more info.",
-        "already_premium": "Thank you for supporting Mantaro. Without help from people like you we couldn't keep Mantaro alive :heart:"
+        "get_premium": "We need your help to keep Mantaro alive! Check <https://patreon.com/mantaro> for more info. **You can get up to twice as many credits with Premium!** Memberships start at only $2/month, the price of cheap snack!",
+        "already_premium": "شكرا لدعمك مانتارو. بدون مساعدة من أشخاص مثلك لم نتمكن من إبقاء مانتارو على قيد الحياة :heart:"
       },
-      "crate": "You won a loot crate because your daily streak is a multiple of 20! Enjoy.",
-      "watch_get": "You won a `Magic Watch` because your daily streak is a multiple of 50! Enjoy."
+      "crate": "لقد فزت ب صندوق غنيمة لأن الستريك الخاص بك من مضاعفات ال 20! استمتع.",
+      "watch_get": "لقد فزت ب `ساعة سحرية` لأن الستريك الخاص بك من مضاعفات ال 50! استمتع."
     },
     "gamble": {
       "no_credits": "%1$sYou're broke. Maybe search for some credits first.",
       "too_much_money": "%1$sYou have too much money! Maybe transfer or buy items? Now you can also use `~>slots` for all your gambling needs! Thanks for not breaking the local bank. *(Gamble absolute limit: %2$d credits)*",
       "invalid_money_or_modifier": "%1$sPlease type a valid number less than or equal to your current balance or `all` to gamble all your credits.",
       "not_enough_money": "%1$sPlease type a value within your balance.",
-      "invalid_percentage": "%1$sPlease type a valid percentage value.",
-      "confirmation_message": "%1$sYou're about to bet **%2$,d** credits (which seems to be a lot). Are you sure? Type **yes** to continue and **no** otherwise.",
-      "cancelled_bet": "%1$sCancelled bet.",
-      "win": "%1$sCongrats, you won %2$,d credits and got to keep what you had.",
-      "win_overflow": "%1$sCongrats, you won %2$,d credits. But you already had too many credits. Your bag overflowed.",
-      "lose": "%1$sSadly, you lost %2$s credits. %3$s",
+      "invalid_percentage": "%1$s يرجى كتابة قيمة نسبة مؤية صحيحة.",
+      "confirmation_message": "%1$sانت على وشك المراهنة على **%2$,d** كريدت (والتي يبدو انها كثيرة). هل أنت متأكد؟ قم بكتابة **yes** للاستمرار**no** للالغاء.",
+      "cancelled_bet": "%1$sتم الغاء الرهان.",
+      "win": "%1$sتهانينا, انت فزت بـ %2$,d كريدت واحتفظت بما كان لديك.",
+      "win_overflow": "%1$sتهانينا, انت فزت بـ %2$,d كريدت. لكن انت فعلاً تملك الكثير من الكريدت. حقيبتك ممتلئة بالأموال.",
+      "lose": "%1$sللأسف, انت خسرت %2$s كريدت. %3$s",
       "lose_all": "all of your",
       "credits": "credits",
-      "too_much": "%1$sYou can only gamble up to 275 million at once. You don't want to go full broke do you? *(Gamble single limit: %2$,d credits)*",
-      "too_little": "%1$sYou cannot gamble so little money (Minimum: 100 credits)"
+      "too_much": "%1$sYou can only gamble up so much at once. You don't want to go full broke do you? *(Gamble single limit: %2$,d credits)*",
+      "too_little": "%1$sلا يمكنك المقامرة على القليل من الكريدت (الحد الأدنى: 100 كريدت)"
     },
     "loot": {
-      "player_locked": "%1$sYou cannot loot now.",
-      "item_overflow": "But you already had too many items, so you decided to throw away the excess.",
+      "player_locked": "%1$sلا يمكنك النهب الآن.",
+      "item_overflow": "ولكن كان لديك بالفعل الكثير من العناصر ، لذلك قررت التخلص من الفائض.",
       "with_item": {
-        "found": "%1$sDigging through messages, you found %2$s, along with **$%3$,d credits!** %4$s",
-        "found_but_overflow": "%1$sDigging through messages, you found %2$s, along with **$%3$,d credits.**%4$sBut you already had too many credits, so I donated the excess.",
-        "found_only_item_but_overflow": "%1$sDigging through messages, you found %2$s. %3$s"
+        "found": "%1$s بالتنقيب في الرسائل, عثرت على %2$s, مع **$%3$,d كريدت!** %4$s",
+        "found_but_overflow": "%1$sبالتنقيب في الرسائل, انت عثرت على %2$s, مع **$%3$,d كريدت.**%4$sلكنك بالفعل تملك الكثير من الكريدت, لذلك قمت بالتبرع بالفائض.",
+        "found_only_item_but_overflow": "%1$sبالتنقيب في الرسائل, انت عثرت %2$s. %3$s"
       },
       "without_item": {
-        "found": "%1$sDigging through messages, you found **$%2$s credits!**",
-        "found_but_overflow_no_item": "%1$sDigging through messages, you found **$%2$,d credits.** But you already had too many credits, so I donated the excess."
+        "found": "%1$sDigging through messages, you found **$%2$s credits!**%3$s",
+        "found_but_overflow_no_item": "%1$sبالتنقيب في الرسائل, انت عثرت على **$%2$,d كريدت.** لكنك بالفعل تملك الكثير من الكريدت, لذلك قمت بالتبرع بالفائض."
       },
-      "dust": "Digging through messages, you found nothing but dust (Dust level %1$s%%)",
-      "easter": "\nSeems like you've got so much dust here... You might want to clean this up before it gets too messy!"
+      "dust": "بالتنقيب في الرسائل, لم تعثر على شيء سوا الغبار (مستوى الغبار %1$s%%)",
+      "easter": "\nيبدو انك لديك الكثير من الغبار هنا... قد ترغب في تنظيفه قبل أن تصبح الفوضى شديدة!"
     },
     "mine": {
-      "not_equipped": "%1$sYou don't have any equipped pick. Use `~>equip <pick name>` to equip a pick and start your adventure!",
+      "not_equipped": "%1$sYou don't have any equipped pick. Use `~>equip <pick name>` to equip a pick and start your adventure! If you don't have any pick, first run `~>market buy pick`",
       "no_pick": "%1$sYou don't have any pick to mine. If you want to use any other pick use `~>mine <pick name>`.",
       "not_suitable": "%1$sThis is not a pick you can use to mine!",
-      "not_in_inventory": "%1$sYou don't have this pick on your inventory, switching to the default pick.",
+      "not_in_inventory": "%1$sليس لديك هذا الخيار في المخزن الخاص بك, التبديل الى الخيار الافتراضي.",
       "success": "%1$sYou mined minerals worth **$%2$,d credits**, using a *%3$s*",
       "reminder": "\n*You can cast better picks using the gems you get while mining. Check `~>cast ls` for a list of things you can cast*",
       "diamond": {
@@ -1591,59 +1649,72 @@
       },
       "gem": {
         "overflow": "Huh, you found *%1$s* while mining, but you already had too much of that gem, so I sold it for you.",
-        "success": "Huh! You got lucky and found *%1$s* while mining, check your inventory."
+        "success": "هاه! لقد حالفك الحظ وعثرت على *%1$s* اثناء التنقيب, تحقق من المخزن الخاص بك."
       },
       "sparkle": {
-        "overflow": "You found a sparkling gem, but it seems like you had too much of it already, so we sold it for you.",
-        "success": "Hurray! You found one %1$s sparkling gem. Make sure to keep it around, check your inventory."
+        "overflow": "لقد عثرت على جوهرة متلألئة ، ولكن يبدو أن لديك الكثير منها بالفعل ، لذلك قمنا ببيعها لك.",
+        "success": "أجل! لقد عثرت على واحدة %1$s جوهرة متلألئة. تأكد من الاحتفاظ بها, تحقق من المخزن الخاص بك."
       },
       "crate": {
-        "overflow": "You found a **%1$s** while mining, but you had too many and left it behind...",
-        "success": "You found a %1$s **%2$s** while mining and pick it up. Go and open it with `~>opencrate <crate name>`. You need a crate key!"
+        "overflow": "لقد عثرت على **%1$s** اثتاء التنقيب, لكنك تملك الكثير لذلك تركته خلفك...",
+        "success": "You found a %1$s **%2$s** while mining and pick it up. Go and open it with `~>opencrate <crate name>`. You need a crate key, which you can buy using `~>market buy key`!"
       },
       "autoequip": {
-        "success": "%1$sAutomatically equipped a **%2$s** on your pick slot."
+        "success": "%1$sتم تجهيز **%2$s** تلقائياً في مكان الاختيار الخاص بك."
       },
-      "item_broke": "%1$sYour %2$s broke while using it :( %3$s",
+      "item_broke": "%1$sالـ %2$s الخاص بك انكسر اثناء استخدامه :( %3$s",
       "item_broke_autoequip": "*Hint: You can use `~>profile autoequip` and it'll automatically equip the item for you when it breaks, assuming you have one in your inventory.*",
       "waifu_help": "Your waifu came and joined your mining adventure and you both get a larger haul!",
       "missing_equipped": "%1$sYou had an equipped %2$s pick, but you no longer have any of its kind on your inventory! Equipped pick has been reset.",
       "broken_drop": "%1$sYour tool broke, but you can repair it. Got broken item: %2$s *%3$s*"
     },
+    "chop": {
+      "not_equipped": "%1$sYou don't have any equipped axe. Use `~>equip <axe name>` to equip a axe and start your adventure! If you don't have any, first run `~>market buy axe`",
+      "dust": "%1$sThe tree was too brittle and you only got sawdust out of it (Dust level: %2$d%%)",
+      "autoequip": {
+        "success": "%1$sAutomatically equipped a **%2$s** on your axe slot."
+      },
+      "success_only_item": "%1$sWhile chopping trees, you found %2$s proceed to save them into your inventory.",
+      "success": "%1$sWhile chopping trees, you found %2$s and **$%3$d credits** and proceed to save them into your inventory.",
+      "success_money_noitem": "%1$sWhile chopping trees, you found **$%2$d credits** and proceed to save them into your pocket."
+    },
     "slots": {
       "errors": {
         "amount_not_ticket": "%1$sYou cannot specify how many tickets you're gonna use if you're not using tickets!",
         "not_enough_tickets": "%1$sYou don't have enough slots tickets.",
-        "too_much_money": "%1$sThis machine cannot dispense that much money!",
+        "too_much_money": "%1$sهذه الآلة لا يمكنها صرف هذا القدر من المال!",
         "not_enough_money": "%1$sYou don't have enough money to play the slots machine!",
-        "below_minimum": "%1$sThe minimum amount is 25 credits",
-        "no_tickets": "%1$sYou wanted to use tickets but you don't have any :<",
-        "no_amount": "%1$sYou didn't specify the amount!",
-        "no_valid_amount": "%1$sThat's not a valid amount of money! (Example of valid amounts: 1000, 1k, 14000, 2M)"
+        "below_minimum": "%1$sالحد الأدنى هو 25 كريدت",
+        "no_tickets": "%1$sأردت استخدام التذاكر لكنك لا تملك أي منها :<",
+        "no_amount": "%1$sلم تحدد المبلغ!",
+        "no_valid_amount": "%1$sThat's not a valid amount of money! (Example of valid amounts: 1000, 1k, 14000)",
+        "too_many_tickets": "%1$sYou're trying to use too many slot tickets. Maximum allowed is %2$d"
       },
       "roll": "%1$s**You used %2$s and rolled the slot machine**\n",
       "win": "And you won **%1$,d** credits and got to keep what you bet (%2$,d credits)! Lucky!",
-      "lose": "And you lost %1$s\nI hope you do better next time!",
+      "lose": "لقد خسرت %1$s\nأتمنى أن تكون أفضل في المرة القادمة!",
       "tickets": "slots ticket(s)",
       "credits": "credits"
     },
     "leaderboard": {
-      "header": "Mantaro's Leaderboard",
-      "header_seasonal": "Mantaro's %1$s season Leaderboard",
-      "money": "Money Leaderboard",
-      "reputation": "Reputation Leaderboard",
-      "gamble": "Gamble Wins Leaderboard",
-      "slots": "Slots Wins Leaderboard",
-      "daily": "Daily Streak Leaderboard",
-      "level": "Level leaderboard",
-      "game": "Game Wins leaderboard",
-      "waifu": "Waifu Value leaderboard",
-      "claim": "Waifu Claim leaderboard",
+      "main_page_redirect": "You can see `~>help leaderboard` for a list of available leaderboards.\nIf you're looking for the money leaderboard, run `~>leaderboard money`",
+      "header": "قائمة المتصدرين في مانتارو",
+      "header_seasonal": "قائمة متصدرين الموسم %1$s في مانتارو",
+      "money": "قائمة متصدرين الاموال",
+      "reputation": "قائمة المتصدرين في اعلى عدد نقاط سمعة",
+      "gamble": "قائمة المتصدرين في عدد مرات الفوز في القمار",
+      "slots": "قائمة المتصدرين في عدد مرات الفوز في عجلة الحظ",
+      "daily": "قائمة المتصدرين في اعلى عدد ستريك يومي",
+      "level": "قائمة المتصدرين في اعلى لفل",
+      "game": "قائمة المتصدرين في اعلى عدد انتصارات في اللعبة",
+      "waifu": "قائمة الاشخاص ذو اعلى قيمة في نظام ال waifu",
+      "claim": "قائمة المتصدرين في عدد مرات المطالبة في نظام ال waifu",
       "inner": {
         "experience": "Experience",
-        "game": "%1sThis page shows the top 10 people who have won the most games.\n\nCheck out `~>help game` or `~>help trivia` for details on how games work!",
-        "claim": "%1sThis page shows the top 10 people who have been waifu claimed the most.\n\nCheck out `~>help waifu` for details on the waifu system.",
-        "money": "%1$sThis page shows the top 10 richest people on Mantaro.\nThis leaderboard has been stale for a while, but never give up!",
+        "game": "%1sتعرض هذه الصفحة أفضل 10 أشخاص فازوا بأكبر عدد من الألعاب.\n\nقم بمراجعة `~>help game`\n أو`~>help trivia`\n للحصول على تفاصيل حول كيفية عمل الألعاب!",
+        "claim": "%1sتعرض هذه الصفحة أفضل 10 أشخاص تمت المطالبة بهم في نظام ال waifu.\n\nقم بمراجعة `~>help waifu`\n للحصول على تفاصيل حول كيفية عمل نظام ال waifu.",
+        "money_old": "%1$sThis page shows the top 10 richest people on Mantaro (before the reset).\n",
+        "money": "%1$sThis page shows the top 10 richest people on Mantaro. Grinding is hard!",
         "seasonal_money": "%1$sThis page shows the top 10 richest people on Mantaro for this season.",
         "rep": "%1sThis page shows the top 10 people with the most reputation.",
         "streak": "%1sThis page shows the top 10 people with the most daily streaks.\n\nCheck out `~>help daily` for more info",
@@ -1751,49 +1822,49 @@
       "success": "%1$sSet max fair queue (max duplicated songs) size to %2$d"
     },
     "musicannounce_toggle": {
-      "success": "%1$sSet music announce to **%2$s**"
+      "success": "%1$sتم وضع روم اعلانات الميوزك الى **%2$s**"
     },
     "music_channel": {
-      "no_channel": "%1$sYou need to specify what voice channel you want to bind the music player to.",
-      "success": "%1$sMusic Channel set to: %2$s"
+      "no_channel": "%1$sيجب ان تحدد الروم الصوتي الذي تريد تقييد تشغيل الأغاني فيه.",
+      "success": "%1$sتم تعيين روم الميوزك الى: %2$s"
     },
     "music_queuelimit": {
-      "no_args": "%1$sYou need to specify what's the queue limit you want to use. *(Default: 350)*",
-      "success": "%1$sThe queue limit on this server is now **%2$d** songs.",
-      "invalid": "%1$sYou're trying to set too high of a number (which won't be applied anyway), silly"
+      "no_args": "%1$sيجب ان تذكر حد قائمة الانتظار الذي تريده. *(الافتراضي: 350)*",
+      "success": "%1$sحد قائمة الانتظار في هذا السيرفر الآن **%2$d** اغنية.",
+      "invalid": "%1$sأنت تحاول تعيين رقم كبير جدًا (لن يتم تطبيقه على أي حال) ، هذا سخيف"
     },
     "music_clearchannel": {
-      "success": "%1$sI can play music on all channels now."
+      "success": "%1$sيمكنني تشغيل الاغاني في جميع الرومات الآن."
     },
     "music_vote_toggle": {
-      "success": "%1$sVoting (to stop/skip) is now set to %2$s"
+      "success": "%1$sتم وضع التصويت (للايقاف/التخطي) الان الى %2$s"
     },
     "localblacklist_add": {
-      "invalid": "%1$s**You need to specify the users to locally blacklist.**",
-      "yourself_notice": "%1$sWhy are you trying to blacklist yourself?...",
-      "admin_notice": "%1$sOne (or more) of the users you're trying to blacklist are admins or Bot Commanders!",
-      "success": "%1$sLocally blacklisted users: **%2$s**"
+      "invalid": "%1$s**يجب عليك تجديد الاعضاء لاضافتهم للقائمة السوداء المحلية.**",
+      "yourself_notice": "%1$sلماذا تحاول اضافة نفسك للقائمة السوداء؟...",
+      "admin_notice": "%1$sواحد (او اكثر) من المستخدمين الذين تحاول اضافتهم للقائمة السوداء هم مشرفيين في السيرفر!",
+      "success": "%1$sالاعضاء المدرجون في القائمة السوداء محلياً: **%2$s**"
     },
     "localblacklist_remove": {
-      "invalid": "%1$s**You need to specify the users to locally un-blacklist.**",
-      "success": "%1$sLocally un-blacklisted users: **%2$s**"
+      "invalid": "%1$s**يجب عليك تجديد الاعضاء لازالتهم من القائمة السوداء محلياً.**",
+      "success": "%1$sعدد الاعضاء الذين تم ازالتهم من القائمة السوداء: **%2$s**"
     },
     "logs_enable": {
-      "no_channel": "%1$sYou need to specify which channel to use as the log channel.",
-      "success": "%1$sMessage logging has been enabled with parameters -> `Channel #%2$s (%3$s)`"
+      "no_channel": "%1$sيجب انت تحدد أي روم تريده ان يكون روم اللوق.",
+      "success": "%1$sتم تفعيل اللوق وسيتم ارسال رسائل اللوق في الروم الآتي -> `%2$s (%3$s)`"
     },
     "logs_disable": {
-      "success": "%1$sMessage logging has been disabled."
+      "success": "%1$sتم الغاء تفعيل اللوق."
     },
     "logs_exclude": {
-      "no_args": "%1$sYou need to specify which channel to exclude, or `clearchannels` to clear all exceptions, or `remove` to remove a single channel from the exception list.",
+      "no_args": "%1$sيجب ان تحدد الروم الذي تريد استثناءه, أو `clearchannels` لمسح جميع الاستثناءات, أو `remove` لإزالة روم معين من قائمة الاستثناءات.",
       "clearchannels": {
-        "success": "%1$sCleared log exceptions!"
+        "success": "%1$sتم مسح استثناءات اللوق!"
       },
       "remove": {
-        "success": "%1$sRemoved logs exception on channel: %2$s"
+        "success": "%1$sتم ازالة الاستثناء في الروم: l: %2$s"
       },
-      "success": "%1$sAdded logs exception on channel: %2$s",
+      "success": "%1$sتم اضافة استنثاء في الروم: %2$s",
       "invalid": "%1$sIncorrect argument length."
     },
     "lobby_reset": {
@@ -1806,28 +1877,6 @@
     "modlog_whitelist": {
       "no_mentions": "%1$s**You need to specify the users to locally whitelist from mod logs.**",
       "success": "%1$sLocally un-blacklisted users from mod-log: **%2$s**"
-    },
-    "linkprotection_toggle": {
-      "success": "%1$sSet link protection to `%2$s`"
-    },
-    "linkprotection_channel_allow": {
-      "no_channel": "%1$sYou need to specify what channel you want to exclude from the invite checker.",
-      "success": "%1$s%2$s can now be used to send discord invites."
-    },
-    "linkprotection_channel_disallow": {
-      "no_channel": "%1$sYou need to specify what channel you want to include on the invite checker. (All channels included by default)",
-      "success": "%1$s%2$s cannot longer be used to send discord invites."
-    },
-    "linkprotection_user_allow": {
-      "no_channel": "%1$sYou need to specify what user you want to exclude from the invite checker.",
-      "no_mentions": "%1$sYou need to mention the user to whitelist from posting invites!",
-      "success": "%1$sSuccessfully whitelisted %2$s#%3$s from posting discord invites."
-    },
-    "linkprotection_user_disallow": {
-      "no_channel": "%1$sYou need to specify what user you want to include on the invite checker. (Everyone but admins included by default)",
-      "no_mentions": "%1$sYou need to mention the user to blacklist from posting invites!",
-      "not_whitelisted": "%1$sThis user isn't in the invite posting whitelist!",
-      "success": "%1$sSuccessfully blacklisted %2$s#%3$s from posting discord invites."
     },
     "imageboard_tags_blacklist_add": {
       "no_tag": "%1$sYou need to specify at least a tag to blacklist!",
@@ -1843,11 +1892,11 @@
       "autorole": "%1$sYou cannot set the autorole role as a birthday role! Remember that the birthday role is a role that gets assigned to the person when the birthday comes, and then removes when the day passes away.",
       "warning": "%1$sRemember that the birthday role is a role that gets assigned to the person when the birthday comes, and then removes when the day passes away.If you have any doubts on how to configure it, you can always join our support guild and ask. You can also check `~>opts help birthday enable` for an example.",
       "warning_1": "This is because of how the birthday assigner works: It assigns a temporary role to the person having its birthday, and un-assigns it when the birthday day has passed. **This means that everyone with the birthday role will get the role removed the day the birthday passes through**. Please take caution when choosing what role to use, as a misconfiguration might make bad things happen (really)!",
-      "warning_2": "The role *has to be a newly created role or a role you don't use for anyone else*. It MUST NOT be a role you already have on your users.",
+      "warning_2": "The role *has to be a newly created role or a role you don't use for anyone else*. It MUST NOT be a role you already have on your users. Users will need to allow this server to announce their birthday by using `~>birthday allowserver` else their birthday won't appear! Read <https://github.com/Mantaro/MantaroBot/wiki/Changes-to-the-birthday-announcement-system> for more info.",
       "warning_3": "Additionally the birthday cache (what is used to store them) is only updated every 23 hours. Meaning if you set your birthday today to tomorrow to test this announcer it will **not** work.",
-      "warning_4": "Type **yes** if you agree to set the role %2$s as a birthday role, and **no** to cancel. This timeouts in 45 seconds.",
+      "warning_4": "قم بكتابة**yes** اذا كنت توافق على تعيين الرتبة %2$s ك رتبة عيد ميلاد, و**no**. لديك 45 ثانية للاختيار.",
       "success": "%1$sBirthday logging enabled on this server with parameters -> Channel: `%2$s (%3$s)` and role: `%4$s (%5$s)`",
-      "error_channel_1": "%1$sI didn't find a channel or role!",
+      "error_channel_1": "%1$sلم اعثر على الروم او الرتبة!",
       "error_channel_2": "*Remember, you don't have to mention neither the role or the channel, rather just type its name, order is <channel> <role>, without the leading \"<>\".* If the role contains spaces \"wrap it in quotes like this\""
     },
     "birthday_disable": {
@@ -1855,46 +1904,46 @@
     },
     "prefix_set": {
       "no_prefix": "%1$sYou need to tell me what prefix you want to use.",
-      "too_long": "%1$sDon't you think that's a bit too long?",
-      "empty_prefix": "%1$sCannot set the guild prefix to nothing...",
-      "success": "%1$sYour server's custom prefix has been set to %2$s"
+      "too_long": "%1$sالا تعتقد انه طويل قليلاً؟",
+      "empty_prefix": "%1$sلا يمكن تعيين بريفكس فارغ للسيرفر...",
+      "success": "%1$sتم تغيير البريفكس الخاص بسيرفرك الى %2$s"
     },
     "prefix_clear": {
-      "success": "%1$sYour server's custom prefix has been disabled"
+      "success": "%1$s تم تعطيل البريفكس المخصص بسيرفرك"
     },
     "autorole_set": {
-      "no_role": "%1$sYou didn't tell me what role to look for!",
-      "no_role_found": "%1$sI couldn't find a role with that name. If the role has spaces, try wrapping it in quotes.",
-      "hierarchy_conflict": "%1$sThis role is placed higher than your highest role, therefore you cannot put it as autorole!",
-      "self_hierarchy_conflict": "%1$sThis role is placed higher than my highest role, therefore you cannot put it as autorole!",
-      "success": "%1$sThe server autorole is now set to: **%2$s** (Position: %3$d)"
+      "no_role": "%1$sلم تخبرني ب اسم الرتبة التي تريدها!",
+      "no_role_found": "%1$sلم أتمكن من العثور على رتبة بهذا الاسم. بحال كان اسم الرتبة يحتوي على مسافات, ضعه بين علامتي اقتباس.",
+      "hierarchy_conflict": "%1$sهذه الرتبة اعلى من الرتبة الخاصة بك, لذلك لا يمكنك وضعها ك رتبة تلقائية!",
+      "self_hierarchy_conflict": "%1$sهذه الرتبة اعلى من الرتبة الخاصة بي, لذلك لا يمكنك وضعها ك رتبة تلقائية!",
+      "success": "%1$sتم تعيين الرتبة التلقائية الى: **%2$s** (الموضع: %3$d)"
     },
     "autorole_unbind": {
-      "success": "%1$sThe autorole for this server has been removed."
+      "success": "%1$sتم ازالة الرتب التلقائية في هذا السيرفر."
     },
     "usermessage_resetchannel": {
-      "success": "%1$sSuccessfully reset the join/leave channel."
+      "success": "%1$sتم اعادة ضبط روم المغادرة/الدخول."
     },
     "usermessage_resetdata": {
-      "success": "%1$sSuccessfully reset the join/leave data."
+      "success": "%1$sتم اعادة ضبط بيانات الدخول/المغادرة."
     },
     "usermessage_join_channel": {
-      "no_channel": "%1$sYou need to specify what channel you want me to send the join message.",
-      "success": "%1$sThe user join log channel is now set to: %2$s"
+      "no_channel": "%1$sيجب ان تحدد الروم الذي تريد مني ارسال رسالة دخول الاعضاء فيه.",
+      "success": "%1$sتم تغيير روم لوق دخول الاعضاء الى: %2$s"
     },
     "usermessage_join_resetchannel": {
-      "success": "%1$sSuccessfully reset log join channel!"
+      "success": "%1$sتم اعادة ضبط لوق دخول الاعضاء!"
     },
     "usermessage_leave_channel": {
-      "no_channel": "%1$sYou need to specify what channel you want me to send the leave message.",
-      "success": "%1$sThe user leave log channel is now set to: %2$s"
+      "no_channel": "%1$sيجب عليك ان نحدد الروم الذي تريد مني ارسال رسالة المغادرة فيه.",
+      "success": "%1$sتم تغيير قناة تسجيل مغادرة الاعضاء الى: %2$s"
     },
     "usermessage_leave_resetchannel": {
-      "success": "%1$sSuccessfully reset log leave channel!"
+      "success": "%1$sتم اعادة ضبط لوق مغادرة الاعضاء!"
     },
     "usermessage_channel": {
-      "no_channel": "%1$sYou need to specify what channel you want me to send the join and leave messages.",
-      "success": "%1$sThe logging Join/Leave channel is set to: %2$s"
+      "no_channel": "%1$sيجب ان تحدد الروم الذي تريد مني ارسال رسائل دخول و مغادرة الاعضاء فيه.",
+      "success": "%1$sتم تغيير روم لوق دخول/مغادرة الاعضاء الى: %2$s"
     },
     "usermessage_joinmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone joins!",
@@ -1903,6 +1952,12 @@
     "usermessage_leavemessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone leaves!",
       "success": "%1$sServer leave message set to: `%2$s`"
+    },
+    "usermessage_joinmessage_reset": {
+      "success": "%1$sReset server join message."
+    },
+    "usermessage_leavemessage_reset": {
+      "success": "%1$sReset server leave message."
     },
     "autoroles_add": {
       "no_args": "%1$sYou need to specify the name of the iam and the name of the role.",
@@ -1959,16 +2014,6 @@
     },
     "server_ignorebots_joinleave_toggle": {
       "success": "%1$sSet bot join/leave ignore to: **%2$s**"
-    },
-    "levelupmessages_toggle": {
-      "success": "%1$sSet level up messages to: **%2$s**"
-    },
-    "levelupmessages_message_set": {
-      "no_message": "%1$sYou need to specify the message you want to show on user level-up. *Tip: The username of the person is done using the $(user) argument on the message*",
-      "success": "%1$sServer level-up message set to: `%2$s`"
-    },
-    "levelupmessages_message_clear": {
-      "success": "%1$sCleared level-up message!"
     },
     "levelupmessages_channel_set": {
       "no_channel": "%1$sYou need to specify a channel to show level-up messages!",
@@ -2053,19 +2098,31 @@
     },
     "logs_editmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone edits a message!",
-      "success": "%1$sMessage edit message set to: `%2$s`"
+      "success": "%1$sMessage edit message set to: `%2$s`",
+      "reset_success": "%1$sReset logs edit message."
     },
     "logs_deletemessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone deletes a message!",
-      "success": "%1$sMessage delete message set to: `%2$s`"
+      "success": "%1$sMessage delete message set to: `%2$s`",
+      "reset_success": "%1$sReset logs delete message."
     },
     "logs_banmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone gets banned!",
-      "success": "%1$sBan message set to: `%2$s`"
+      "success": "%1$sBan message set to: `%2$s`",
+      "reset_success": "%1$sReset logs ban message."
     },
     "logs_unbanmessage": {
       "no_message": "%1$sYou need to specify what message you want me to say when someone gets unbanned!",
-      "success": "%1$sUnban message set to: `%2$s`"
+      "success": "%1$sUnban message set to: `%2$s`",
+      "reset_success": "%1$sReset logs unban message."
+    },
+    "djrole_set": {
+      "no_role": "%1$sYou need to give me a role to use as the DJ role.",
+      "success": "%1$sSuccessfully set the DJ role to %2$s."
+    },
+    "djrole_reset": {
+      "not_set": "%1$sYou have no custom DJ role set.",
+      "success": "%1$sSuccessfully reset the DJ role."
     },
     "showdisablewarning": {
       "success": "%1$sDisplay warning on disabled command is set to: %2$s"
@@ -2123,8 +2180,8 @@
     "manage_roles": "Manage Roles",
     "manage_permissions": "Manage Permissions",
     "manage_webhooks": "Manage Webhooks",
-    "manage_emotes": "Manage Emojis",
-    "priority_speaker": "Priority Speaker"
+    "manage_emotes": "ادارة الايموجيات",
+    "priority_speaker": "المتحدث ذو الاولوية"
   },
   "items": {
     "headphones": "Headphones",
@@ -2135,19 +2192,19 @@
     "maths": "My Maths",
     "racket": "Ping Racket",
     "loaded_die": "Loaded Die",
-    "forgotten": "Forgotten Music",
+    "forgotten": "موسيقى منسية",
     "pencil": "Pencil",
     "moneybag": "Money Bag",
-    "pick": "Brom's Pickaxe",
+    "pick": "فأس بروم",
     "milk": "Milk",
     "beverage": "Beverage",
-    "lewd": "Lewd Magazine",
-    "ring": "Marriage Ring",
+    "lewd": "مجلة بذيئة",
+    "ring": "خاتم الزواج",
     "letter": "Love Letter",
     "key": "Crate Key",
     "clothes": "Clothes",
     "diamond": "Diamond",
-    "dress": "Wedding Dress",
+    "dress": "فستان الزفاف",
     "necklace": "Necklace",
     "tuxedo": "Tuxedo",
     "shoes": "Shoes",
@@ -2156,43 +2213,43 @@
     "cookie": "Cookie",
     "die_2": "Special Loaded Die",
     "booster": "Booster",
-    "berserk": "Berserk",
+    "berserk": "هائج",
     "Companion": "Companion",
     "special_ring": "Special Ring",
-    "enchancer": "Enchancer",
+    "enchancer": "مُحسِّن",
     "prize": "Prize",
     "crate": "Loot Crate",
     "prize_2": "Prize 2",
     "slot_ticket": "Slot Ticket",
     "house": "House",
     "car": "Car",
-    "bell": "Christmas Bell",
-    "tree": "Christmas Tree",
+    "bell": "جرس عيد الميلاد",
+    "tree": "شجرة عيد الميلاد",
     "pants": "Pants",
     "haste": "Haste Potion",
     "milky": "Milky Potion",
-    "energy": "Energy Beverage",
+    "energy": "مشروب طاقة",
     "rod": "Fishing Rod",
     "fish": "Fish",
-    "tropical_fish": "Tropical Fish",
+    "tropical_fish": "سمكة استوائية",
     "blowfish": "Blowfish",
     "comet_gem": "Comet Gem",
     "star_gem": "Star Gem",
     "cobweb": "Cobweb",
-    "fragment": "Gem Fragment",
+    "fragment": "قطعة من جوهرة",
     "mop": "Mop",
     "claim_key": "Claim Key",
     "coffee": "Coffee",
     "waifu_pill": "Waifu Pill",
-    "bait": "Fishing Bait",
-    "diamond_pick": "Diamond Pickaxe",
+    "bait": "طُعم الصيد",
+    "diamond_pick": "فأس الماس",
     "tv": "Television",
     "wrench": "Wrench",
     "star_wrench": "Star Wrench",
-    "sparkle_wrench": "Sparkle Wrench",
+    "sparkle_wrench": "مفتاح فك متلألأ",
     "motorcycle": "Motorcycle",
-    "comet_pick": "Comet Gem Pickaxe",
-    "star_pick": "Star Gem Pickaxe",
+    "comet_pick": "Comet Pickaxe",
+    "star_pick": "Star Pickaxe",
     "sparkle": "Sparkle Matter",
     "sparkle_pick": "Sparkle Pickaxe",
     "pizza": "Pizza",
@@ -2217,8 +2274,40 @@
     "broken_sparkle_rod": "Broken Sparkle Rod",
     "broken_star_rod": "Broken Star Rod",
     "incubator_egg": "Incubator Egg",
-    "water_bottle": "Water Bottle",
-    "magic_watch": "Magical Watch",
+    "water_bottle": "زجاجة ماء",
+    "magic_watch": "ساعة سحرية",
+    "pet_house": "Pet House",
+    "steak": "Steak",
+    "chicken": "Chicken",
+    "milk_3": "Milk Bottle",
+    "dog_food": "Dog Food",
+    "cat_food": "Cat Food",
+    "hamster_food": "Hamster Food",
+    "wood": "Wood",
+    "moon_pick": "Moon Pickaxe",
+    "hellfire_pick": "Hellfire Pickaxe",
+    "axe": "Axe",
+    "comet_axe": "Comet Axe",
+    "star_axe": "Star Axe",
+    "sparkle_axe": "Sparkle Axe",
+    "moon_axe": "Moon Axe",
+    "hellfire_axe": "Hellfire Axe",
+    "moon_rod": "Moon Rod",
+    "hellfire_rod": "Hellfire Rod",
+    "leaves": "Leaves",
+    "apple": "Apple",
+    "pear": "Pear",
+    "cherry_blossom": "Cherry Blossom",
+    "rock": "Rock",
+    "broken_moon_pick": "Broken Moon Pick",
+    "broken_moon_axe": "Broken Moon Axe",
+    "broken_moon_rod": "Broken Moon Rod",
+    "broken_star_axe": "Broken Star Axe",
+    "broken_comet_axe": "Broken Comet Axe",
+    "broken_sparkle_axe": "Broken Sparkle Axe",
+    "broken_hellfire_pick": "Broken Hellfire Pick",
+    "broken_hellfire_axe": "Broken Hellfire Axe",
+    "broken_hellfire_rod": "Broken Hellfire Rod",
     "description": {
       "headphones": "That's what happens when you listen to too much music. Should be worth something, tho.",
       "ban_hammer": "Left by an admin.",
@@ -2226,26 +2315,26 @@
       "floppy": "Might have some games. Don't copy the floppy.",
       "maths": "Oh, I forgot my maths.",
       "racket": "I won the game of ping-pong with Discord by a few milliseconds. Maybe.",
-      "loaded_die": "Stolen from the `~>roll` command.",
-      "forgotten": "Never downloaded. Probably has been copyrighted.",
-      "pencil": "We have plenty of those!",
+      "loaded_die": "مسروق من أمر `~>roll`.",
+      "forgotten": "لم يتم تنزيلها. ربما بسبب حقوق الطبع والنشر.",
+      "pencil": "لدينا الكثيرة من هذا!",
       "moneybag": "What else?",
-      "pick": "That guy liked Minecraft way too much (40 durability). (`~>mine` tool)",
-      "milk": "Maybe it's okay to have some.",
+      "pick": "A basic pick for your regularly scheduled mining (40 durability).",
+      "milk": "ربما لا بأس في الحصول على البعض.",
       "beverage": "Does really weird stuff in big quantities. Well, depends on what kind ;)",
       "lewd": "Too many lewd commands. Way too many. Had fun?",
       "ring": "Basically what makes your marriage official.",
-      "letter": "A letter from your loved one.",
+      "letter": "رسالة من حبيبك.",
       "key": "Used to open various crates with `~>opencrate <crate name>` or `~>useitem <crate name>`.",
       "clothes": "Basically what you wear. Hopefully...",
       "diamond": "Basically a better way of saving your money. It's shiny too. And let's you cast shiny stuff. How nice.",
-      "dress": "Isn't it cute?",
+      "dress": "أليست لطيفة؟",
       "necklace": "Looks nice.",
-      "tuxedo": "What you wear when you're going to get married with a girl, or going to a nice place, or maybe everywhere, who knows?",
+      "tuxedo": "ما ترتدي عندما تتزوج بفتاة ، أو تذهب إلى مكان جميل ، أو ربما في كل مكان ، من يدري؟",
       "shoes": "'Cause walking barefoot is just nasty. Or painful.",
       "rose": "The embodiment of your love. Also it's a nice decoration.",
       "chocolate": "Yummy.",
-      "cookie": "Delicious",
+      "cookie": "Delicious.",
       "die_2": "Even more loaded. `Leftover from Currency version 1. No longer obtainable.`",
       "booster": "Used to give you some kind of boost, now it's broken. `Leftover from Currency version 1. No longer obtainable.`",
       "berserk": "Currency Berserk? Anyone? `Leftover from Currency version 1. No longer obtainable.`",
@@ -2253,21 +2342,21 @@
       "special_ring": "It's so special, it's not even a ring. `Leftover from Currency version 1. No longer obtainable.`",
       "enchancer": "A broken enchanter, I wonder if it could be fixed? `Leftover from Currency version 1. No longer obtainable.`",
       "prize": "Pretty much, huh? `Leftover from Currency version 1. No longer obtainable.`",
-      "crate": "You can use this along with a loot key to open a loot crate! Can be opened with `~>opencrate`",
-      "prize_2": "In the first place, how did you get so much money?",
+      "crate": "You can use this along with a loot key to open a loot crate! Can be opened with `~>opencrate`.",
+      "prize_2": "بالبداية, كيف حصلت على الكثير من الأموال؟",
       "slot_ticket": "Gives you extra chance in slots, also works as bulk storage.",
-      "house": "Cozy place to live in.",
-      "car": "To move around.",
-      "bell": "Christmas reward. Gives you a cozy christmas feeling on your tree.",
-      "tree": "Christmas reward. Who doesn't like a christmas tree?.",
+      "house": "مكان مريح للعيش فيه.",
+      "car": "للتجول بالجوار.",
+      "bell": "مكافأة عيد الميلاد. تمنحك شعوراً دافئاً بعيد الميلاد على شجرتك.",
+      "tree": "مكافأة عيد الميلاد. من منا لا يحب شجرة الكريسماس ؟.",
       "pants": "Basically what you wear on your legs... hopefully.",
-      "haste": "Allows you to collect more stuff from lootable commands for 2 sessions.",
-      "milky": "Clears all potion effects.",
-      "energy": "Makes a pick or rod lose less durability per swing. Lasts only 3 mining/fishing sessions.",
-      "rod": "Enables you to fish. (40 durability)",
-      "fish": "Fish. Caught in fishing.",
-      "tropical_fish": "A very tropical fish. Caught in fishing.",
-      "blowfish": "I wonder... is this good? Caught in fishing.",
+      "haste": "Allows you to collect more stuff from currency commands for 2 sessions.",
+      "milky": "يزيل كل تأثيرات الجرعة.",
+      "energy": "Makes a tool lose less durability per swing. Lasts 3 sessions.",
+      "rod": "A basic rod for your fishing activities (40 durability).",
+      "fish": "سمكة التُقِطت اثناء الصيد.",
+      "tropical_fish": "سمكة استوائية. التقطت في الصيد.",
+      "blowfish": "أتساءل... هل هذا جيد؟ التُقِط في الصيد.",
       "comet_gem": "Fragments of a comet you found while mining. Useful for casting.",
       "star_gem": "Fragments of a fallen star you found while mining.",
       "cobweb": "Something a spider left over on the mine. Wonder if it's worth something.",
@@ -2275,29 +2364,29 @@
       "mop": "A delightful way to clean all the dust you have around. I bet there's a lot of it.",
       "claim_key": "This item makes you un-claimeable (as a waifu) when you run `~>profile claimlock`.",
       "coffee": "A delightful way to start your day.",
-      "waifu_pill": "Gives you a significant advantage on mine and fish if one of your waifus is valued at over 10 million. Lasts 5 sessions.",
+      "waifu_pill": "Gives you a significant advantage on mine and fish if one of your waifus is valued at over 20,000. Lasts 3 sessions.",
       "bait": "Gives you a higher chance of catching fish.",
-      "diamond_pick": "A very much stronger pick (150 durability). (`~>mine` tool).",
-      "tv": "Must... watch... TV...",
+      "diamond_pick": "A strong-ish pick (150 durability).",
+      "tv": "يجب... مشاهدة... التلفاز...",
       "wrench": "Casting tool. Useful to put stuff together.",
       "star_wrench": "Casting tool. Useful to put stuff together. Less chance of breaking, needed to cast multiple items at once. Tier 2.",
       "sparkle_wrench": "Casting tool. Useful to put stuff together. Less chance of breaking. Less cost per cast. Tier 3.",
-      "motorcycle": "Going around, the cool way.",
-      "comet_pick": "A very much stronger pick (160 durability). (`~>mine` tool).",
-      "star_pick": "A very much stronger pick (210 durability). (`~>mine` tool).",
-      "sparkle": "One of the rarest gems around. Make sure to keep it. (Used to cast sparkle pickaxe & sparkle rods)",
-      "sparkle_pick": "The strongest pick out there (450 durability). (`~>mine` tool)",
+      "motorcycle": "تجول, الطريق الرائع.",
+      "comet_pick": "A stronger pick (180 durability).",
+      "star_pick": "A much stronger pick (220 durability).",
+      "sparkle": "One of the rarest gems around. Make sure to keep it. It is used to cast sparkle pickaxe & sparkle rods.",
+      "sparkle_pick": "One of the strongests pick out there (450 durability).",
       "pizza": "Yummy.",
-      "mine_crate": "A gem, you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem crate`",
-      "fish_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate treasure`",
-      "mine_premium_crate": "A gem you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem premium crate`",
-      "fish_premium_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate premium treasure`",
-      "comet_rod": "A slightly stronger rod. (90 durability)",
-      "star_rod": "A stronger rod. (130 durability)",
-      "sparkle_rod": "A way stronger rod. (250 durability)",
+      "mine_crate": "A gem, you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem crate`.",
+      "fish_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate treasure`.",
+      "mine_premium_crate": "A gem you find while mining. Might have some nice stuff inside. Can be opened with `~>opencrate gem premium crate`.",
+      "fish_premium_crate": "A treasure you find while fishing. Might have some nice stuff inside. Can be opened with `~>opencrate premium treasure`.",
+      "comet_rod": "A slightly stronger rod (130 durability).",
+      "star_rod": "A stronger rod (170 durability).",
+      "sparkle_rod": "A way stronger rod (300 durability).",
       "shell": "Found at the bottom of the ocean. What could it be worth for?",
-      "shark": "Woah. How did you catch *this*?",
-      "crab": "A crab. It dances, maybe.",
+      "shark": "Woah. How did you catch this?",
+      "crab": "سلطعون, ربما هي ترقص.",
       "squid": "Not to confuse with Squidward.",
       "shrimp": "Pinkish stuff. I think.",
       "moon": "Moon Rune. Needed to cast some stuff.",
@@ -2306,11 +2395,43 @@
       "broken_sparkle_pick": "A sparkle pick that broke while mining. Still salvageable.",
       "broken_star_pick": "A star pick that broke while mining. Still salvageable.",
       "broken_comet_rod": "A comet rod that broke while fishing. Still salvageable.",
-      "broken_sparkle_rod": "A sparkle rod that broke while fishing. Still salvageable.",
+      "broken_sparkle_rod": "العصى اللامعة انكسرت اثناء الصيد. لاتزال قابلة للإصلاح.",
       "broken_star_rod": "A star rod that broke while fishing. Still salvageable.",
-      "incubator_egg": "TBD",
-      "water_bottle": "TBD",
-      "magic_watch": "A magic watch that slows time when you need it. This will automatically be consumed to save your daily streak!"
+      "incubator_egg": "Does still not have an use. It's an egg, though. Maybe.",
+      "water_bottle": "An item that magically heals your pet's thirst.",
+      "magic_watch": "ساعة سحرية تبطئ الوقت عندما تحتاجه. سيتم استهلاك هذا تلقائيًا لحفظ الستريك اليومي الخاص بك!",
+      "pet_house": "A house where your pet lives. Maybe. Sometimes they just like to flop outside.",
+      "steak": "Very yummy if you're not vegetarian.",
+      "chicken": "Very yummy if you're not vegetarian, but it comes from a chicken instead.",
+      "milk_3": "Very good food for cats, I've heard.",
+      "dog_food": "Food your dog might like a lot. Or they might like bread more, like mines.",
+      "cat_food": "Food your cat might like a lot.",
+      "hamster_food": "Food your hamster might enjoy.",
+      "wood": "Common drop from trees. Useful for casting.",
+      "moon_pick": "A very much stronger pick (320 durability).",
+      "hellfire_pick": "Way too OP pick (too much durability, find out ;)).",
+      "axe": "A normal, middle-of-the-road axe (35 durability).",
+      "comet_axe": "A stronger axe (170 durability).",
+      "star_axe": "A much stronger axe (220 durability).",
+      "moon_axe": "A very much stronger axe (350 durability).",
+      "sparkle_axe": "A way stronger axe (500 durability).",
+      "hellfire_axe": "Way too OP axe (too much durability, find out ;)).",
+      "moon_rod": "A stronger rod (170 durability).",
+      "hellfire_rod": "Way too OP rod (too much durability, find out ;)).",
+      "leaves": "A slow drop from a tree you tried to chop.",
+      "apple": "You happened to chop an apple tree and the apple fell on your head. Ouch.",
+      "pear": "You happened to chop a pear tree and the pear fell on your head. Ouch.",
+      "cherry_blossom": "A very slow drop from a cherry tree. Lovely, huh?",
+      "rock": "A rock. Yep. It's very hard, isn't it?",
+      "broken_moon_pick": "A moon pick that broke while mining. Still salvageable.",
+      "broken_moon_axe": "A moon axe that broke while chopping. Still salvageable.",
+      "broken_moon_rod": "A moon rod that broke while fishing. Still salvageable.",
+      "broken_star_axe": "A star axe that broke while chopping. Still salvageable.",
+      "broken_comet_axe": "A comet axe that broke while chopping. Still salvageable.",
+      "broken_sparkle_axe": "A sparkle axe that broke while chopping. Still salvageable.",
+      "broken_hellfire_pick": "A hellfire pick that extinguished while chopping. Still salvageable.",
+      "broken_hellfire_axe": "A hellfire axe that extinguished while chopping. Still salvageable.",
+      "broken_hellfire_rod": "A hellfire rod that extinguished while chopping. Still salvageable."
     }
   },
   "test": {

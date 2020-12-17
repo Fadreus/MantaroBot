@@ -74,6 +74,7 @@ public class CustomCommand implements ManagedObject {
         return values;
     }
 
+    @Nonnull
     public String getId() {
         return this.id;
     }
@@ -85,6 +86,7 @@ public class CustomCommand implements ManagedObject {
         return DB_TABLE;
     }
 
+    @Nonnull
     public CustomCommandData getData() {
         return this.data;
     }

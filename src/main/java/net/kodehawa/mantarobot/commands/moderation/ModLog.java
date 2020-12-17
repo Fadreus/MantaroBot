@@ -18,25 +18,22 @@ package net.kodehawa.mantarobot.commands.moderation;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.ManagedDatabase;
-import net.kodehawa.mantarobot.db.entities.DBGuild;
-import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
 import net.kodehawa.mantarobot.utils.Utils;
 
 public class ModLog {
-    private static ManagedDatabase db = MantaroData.db();
+    private static final ManagedDatabase db = MantaroData.db();
 
-    public static void log(Member author, User target, String reason, String channel, ModAction action, long caseNumber, int messagesDeleted) {
-        DBGuild guildDB = db.getGuild(author.getGuild());
-        Player player = db.getPlayer(author);
-        PlayerData playerData = player.getData();
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+    public static void log(Member author, User target, String reason,
+                           String channel, ModAction action, long caseNumber, int messagesDeleted) {
+        var guildDB = db.getGuild(author.getGuild());
+        var player = db.getPlayer(author);
+        var playerData = player.getData();
+        var embedBuilder = new EmbedBuilder();
 
         embedBuilder.addField("Responsible Moderator", author.getEffectiveName(), true);
 
@@ -54,17 +51,19 @@ public class ModLog {
             embedBuilder.addField("Messages Deleted", String.valueOf(messagesDeleted), true);
         }
 
-        //Why was this a giant switch statement?
         embedBuilder.setAuthor(String.format("%s | Case #%s", Utils.capitalize(action.name()), caseNumber),
                 null, author.getUser().getEffectiveAvatarUrl());
 
         if (!playerData.hasBadge(Badge.POWER_USER)) {
             playerData.addBadgeIfAbsent(Badge.POWER_USER);
-            player.saveAsync();
+            player.saveUpdating();
         }
 
         if (guildDB.getData().getGuildLogChannel() != null) {
-            TextChannel logChannel = MantaroBot.getInstance().getShardManager().getTextChannelById(guildDB.getData().getGuildLogChannel());
+            var logChannel = MantaroBot.getInstance()
+                    .getShardManager()
+                    .getTextChannelById(guildDB.getData().getGuildLogChannel());
+
             if (logChannel != null) {
                 logChannel.sendMessage(embedBuilder.build()).queue();
             }
@@ -72,7 +71,8 @@ public class ModLog {
     }
 
     //Overload
-    public static void log(Member author, User target, String reason, String channel, ModAction action, long caseNumber) {
+    public static void log(Member author, User target, String reason,
+                           String channel, ModAction action, long caseNumber) {
         log(author, target, reason, channel, action, caseNumber, 0);
     }
 

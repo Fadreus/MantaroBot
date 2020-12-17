@@ -17,11 +17,11 @@
 package net.kodehawa.mantarobot.core.modules.commands.base;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.concurrent.Task;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
 import net.kodehawa.mantarobot.commands.music.MantaroAudioManager;
@@ -31,10 +31,14 @@ import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.ManagedDatabase;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.db.entities.DBUser;
+import net.kodehawa.mantarobot.db.entities.Marriage;
 import net.kodehawa.mantarobot.db.entities.Player;
+import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.StringUtils;
+import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import redis.clients.jedis.JedisPool;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +48,8 @@ public class Context {
     private final Config config = MantaroData.config().get();
 
     private final GuildMessageReceivedEvent event;
-    private final I18nContext languageContext;
     private final String content;
+    private I18nContext languageContext;
 
     public Context(GuildMessageReceivedEvent event, I18nContext languageContext, String content) {
         this.event = event;
@@ -191,7 +195,11 @@ public class Context {
     }
 
     public Map<String, String> getOptionalArguments() {
-        return StringUtils.parse(getArguments());
+        return StringUtils.parseArguments(getArguments());
+    }
+
+    public Marriage getMarriage(UserData userData) {
+        return MantaroData.db().getMarriage(userData.getMarriageId());
     }
 
     public void send(Message message) {
@@ -207,7 +215,9 @@ public class Context {
     }
 
     public void send(MessageEmbed embed) {
-        getChannel().sendMessage(embed).queue();
+        // Sending embeds while supressing the failure callbacks leads to very hard
+        // to debug bugs, so enable it.
+        getChannel().sendMessage(embed).queue(success -> {}, Throwable::printStackTrace);
     }
 
     public void sendLocalized(String localizedMessage, Object... args) {
@@ -219,20 +229,53 @@ public class Context {
     }
 
     public void sendStripped(String message) {
-        new MessageBuilder().setContent(message)
-                .stripMentions(event.getGuild(), Message.MentionType.HERE, Message.MentionType.EVERYONE, Message.MentionType.USER)
-                .sendTo(getChannel())
+        getChannel().sendMessageFormat(message)
+                .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
                 .queue();
     }
 
     public void sendStrippedLocalized(String localizedMessage, Object... args) {
-        new MessageBuilder().setContent(String.format(languageContext.get(localizedMessage), args))
-                .stripMentions(event.getGuild(), Message.MentionType.HERE, Message.MentionType.EVERYONE, Message.MentionType.USER)
-                .sendTo(getChannel())
+        getChannel().sendMessageFormat(languageContext.get(localizedMessage), args)
+                .allowedMentions(EnumSet.noneOf(Message.MentionType.class))
                 .queue();
+    }
+
+    public Task<List<Member>> findMember(String query, Message message) {
+        return CustomFinderUtil.lookupMember(getGuild(), message,this, query);
+    }
+
+    public User retrieveUserById(String id) {
+        User user = null;
+        try {
+            user = MantaroBot.getInstance().getShardManager().retrieveUserById(id).complete();
+        } catch (Exception ignored) { }
+
+        return user;
+    }
+
+    public Member retrieveMemberById(Guild guild, String id, boolean update) {
+        Member member = null;
+        try {
+            member = guild.retrieveMemberById(id, update).complete();
+        } catch (Exception ignored) { }
+
+        return member;
+    }
+
+    public Member retrieveMemberById(String id, boolean update) {
+        Member member = null;
+        try {
+            member = getGuild().retrieveMemberById(id, update).complete();
+        } catch (Exception ignored) { }
+
+        return member;
     }
 
     public JedisPool getJedisPool() {
         return MantaroData.getDefaultJedisPool();
+    }
+
+    public void setLanguageContext(I18nContext languageContext) {
+        this.languageContext = languageContext;
     }
 }

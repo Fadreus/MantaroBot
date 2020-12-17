@@ -18,125 +18,177 @@ package net.kodehawa.mantarobot.commands.currency.profile;
 
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.MantaroBot;
+import net.kodehawa.mantarobot.commands.currency.item.Item;
+import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.DBUser;
-import net.kodehawa.mantarobot.db.entities.Marriage;
 import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.helpers.Inventory;
 import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
+import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum ProfileComponent {
-    HEADER(null, i18nContext -> String.format(i18nContext.get("commands.profile.badge_header"), EmoteReference.TROPHY), (holder, i18nContext) -> {
+    HEADER(null,
+            i18nContext -> String.format(i18nContext.get("commands.profile.badge_header"), EmoteReference.TROPHY), (holder, i18nContext) -> {
         PlayerData playerData = holder.getPlayer().getData();
-        if (holder.getBadges().isEmpty() || !playerData.isShowBadge())
-            return "None";
+        if (holder.getBadges().isEmpty() || !playerData.isShowBadge()) {
+            return " \u2009\u2009None";
+        }
 
-        if (playerData.getMainBadge() != null)
-            return String.format("**%s**\n", playerData.getMainBadge());
-        else
-            return String.format("**%s**\n", holder.getBadges().get(0));
+        if (playerData.getMainBadge() != null) {
+            return String.format(" \u2009**%s**\n", playerData.getMainBadge());
+        } else {
+            return String.format(" \u2009**%s**\n", holder.getBadges().get(0));
+        }
     }, true, false),
-    CREDITS(EmoteReference.DOLLAR, i18nContext -> i18nContext.get("commands.profile.credits"), (holder, i18nContext) ->
-            "$ " + holder.getPlayer().getMoney(),
+    CREDITS(EmoteReference.MONEY, i18nContext -> i18nContext.get("commands.profile.credits"), (holder, i18nContext) ->
+            "$ %,d".formatted(holder.isSeasonal() ? holder.getSeasonalPlayer().getMoney() : holder.getPlayer().getCurrentMoney()),
+            true, false
+    ),
+    OLD_CREDITS(EmoteReference.DOLLAR, i18nContext -> i18nContext.get("commands.profile.old_credits"), (holder, i18nContext) ->
+            "$ %,d".formatted(holder.getPlayer().getOldMoney()),
             true, false
     ),
     REPUTATION(EmoteReference.REP, i18nContext -> i18nContext.get("commands.profile.rep"), (holder, i18nContext) ->
             holder.isSeasonal() ? String.valueOf(holder.getSeasonalPlayer().getReputation()) : String.valueOf(holder.getPlayer().getReputation())
     ),
     LEVEL(EmoteReference.ZAP, i18nContext -> i18nContext.get("commands.profile.level"), (holder, i18nContext) -> {
-        Player player = holder.getPlayer();
-        return String.format("%d (%s: %d)", player.getLevel(), i18nContext.get("commands.profile.xp"), player.getData().getExperience());
+        var player = holder.getPlayer();
+        return String.format("%d (%s: %,d)", player.getLevel(), i18nContext.get("commands.profile.xp"), player.getData().getExperience());
     }),
     BIRTHDAY(EmoteReference.POPPER, i18nContext -> i18nContext.get("commands.profile.birthday"), (holder, i18nContext) -> {
-        UserData data = holder.getDbUser().getData();
-        if (data.getBirthday() == null)
+        var data = holder.getDbUser().getData();
+
+        try {
+            if (data.getBirthday() == null)
+                return i18nContext.get("commands.profile.not_specified");
+            else {
+                // This goes through two Formatter calls since it has to first format the stuff birthdays use.
+                var parsed = LocalDate.parse(data.getBirthday(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                // Then format it back to a readable format for a human. A little annoying, but works.
+                var readable = DateTimeFormatter.ofPattern("MMM d", Utils.getLocaleFromLanguage(data.getLang()));
+                return String.format("%s (%s)", readable.format(parsed), data.getBirthday().substring(0, 5));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
             return i18nContext.get("commands.profile.not_specified");
-        else
-            return data.getBirthday().substring(0, 5);
+        }
     }, true, false),
     MARRIAGE(EmoteReference.HEART, i18nContext -> i18nContext.get("commands.profile.married"), (holder, i18nContext) -> {
-        Player player = holder.getPlayer();
-        PlayerData playerData = player.getData();
-        //LEGACY SUPPORT
-        User marriedTo = (playerData.getMarriedWith() == null || playerData.getMarriedWith().isEmpty()) ? null :
-                MantaroBot.getInstance().getShardManager().getUserById(playerData.getMarriedWith());
-
-        //New marriage support.
-        UserData userData = holder.getDbUser().getData();
-        Marriage currentMarriage = userData.getMarriage();
-        User marriedToNew = null;
-        boolean isNewMarriage = false;
+        var userData = holder.getDbUser().getData();
+        var currentMarriage = userData.getMarriage();
+        User marriedTo = null;
 
         //Expecting save to work in PlayerCmds, not here, just handle this here.
         if (currentMarriage != null) {
             String marriedToId = currentMarriage.getOtherPlayer(holder.getUser().getId());
-            if (marriedToId != null) {
-                marriedToNew = MantaroBot.getInstance().getShardManager().getUserById(marriedToId);
-                playerData.setMarriedWith(null); //delete old marriage
-                marriedTo = null;
-                isNewMarriage = true;
-            }
+            if (marriedToId != null)
+                //Yes, this uses complete, not like we have many options.
+                try {
+                    marriedTo = MantaroBot.getInstance().getShardManager().retrieveUserById(marriedToId).complete();
+                } catch (Exception ignored) { }
         }
 
-        if (marriedTo == null && marriedToNew == null) {
+        if (marriedTo == null) {
             return i18nContext.get("commands.profile.nobody");
-        } else if (isNewMarriage) {
-            if (userData.isPrivateTag())
-                return String.format("%s", marriedToNew.getName());
-            else
-                return String.format("%s#%s", marriedToNew.getName(), marriedToNew.getDiscriminator());
-        } else { //is this still needed?
-            if (userData.isPrivateTag())
+        } else {
+            if (userData.isPrivateTag()) {
                 return String.format("%s", marriedTo.getName());
-            else
+            } else {
                 return String.format("%s#%s", marriedTo.getName(), marriedTo.getDiscriminator());
+            }
         }
     }, true, false),
     INVENTORY(EmoteReference.POUCH, i18nContext -> i18nContext.get("commands.profile.inventory"), (holder, i18nContext) -> {
-        Inventory inv = holder.isSeasonal() ? holder.getSeasonalPlayer().getInventory() : holder.getPlayer().getInventory();
-        return inv.asList().stream().map(i -> i.getItem().getEmoji()).collect(Collectors.joining("  "));
+        var inv = holder.isSeasonal() ? holder.getSeasonalPlayer().getInventory() : holder.getPlayer().getInventory();
+        final var stackList = inv.asList();
+        if (stackList.isEmpty()) {
+            return i18nContext.get("general.dust");
+        }
+
+        return stackList.stream()
+                .map(ItemStack::getItem)
+                .sorted(Comparator.comparingLong(Item::getValue).reversed())
+                .limit(10)
+                .map(Item::getEmoji)
+                .collect(Collectors.joining(" \u2009\u2009"));
     }, true, false),
     BADGES(EmoteReference.HEART, i18nContext -> i18nContext.get("commands.profile.badges"), (holder, i18nContext) -> {
-        String displayBadges = holder.getBadges().stream().map(Badge::getUnicode).limit(5).collect(Collectors.joining("  "));
+        final var badges = holder.getBadges();
+        if (badges.isEmpty()) {
+            return i18nContext.get("general.dust");
+        }
 
-        if (displayBadges.isEmpty())
+        var displayBadges = badges
+                .stream()
+                .limit(5)
+                .map(Badge::getUnicode)
+                .collect(Collectors.joining(" \u2009\u2009"));
+
+        if (displayBadges.isEmpty()) {
             return i18nContext.get("commands.profile.no_badges");
-        else
+        } else {
             return displayBadges;
+        }
     }, true, false),
+    QUESTS(EmoteReference.PENCIL, i18nContext -> i18nContext.get("commands.profile.quests.header"), (holder, i18nContext) -> {
+        var tracker = holder.getPlayer().getData().getQuests();
+        var quests = tracker.getCurrentActiveQuests();
+
+        var builder = new StringBuilder();
+
+        // Create a string for all active quests.
+        for(var quest : quests) {
+            if (quest.isActive()) {
+                builder.append(String.format(i18nContext.get(quest.getType().getI18n()), quest.getProgress()))
+                        .append("\n");
+            } else {
+                // This should get saved? Else we can just remove it when checking status.
+                tracker.removeQuest(quest);
+            }
+        }
+
+        if (builder.length() == 0) {
+            builder.append(i18nContext.get("commands.profile.quests.no_quests"));
+        }
+
+        return builder.toString();
+    }),
     FOOTER(null, null, (holder, i18nContext) -> {
-        UserData userData = holder.getDbUser().getData();
+        var userData = holder.getDbUser().getData();
         String timezone;
 
-        if (userData.getTimezone() == null)
+        if (userData.getTimezone() == null) {
             timezone = i18nContext.get("commands.profile.no_timezone");
-        else
+        } else {
             timezone = userData.getTimezone();
+        }
 
-        String seasonal = holder.isSeasonal() ? " | Seasonal profile (" + MantaroData.config().get().getCurrentSeason().getDisplay() + ")" : "";
+        var seasonal = holder.isSeasonal() ? " | Seasonal profile (" + MantaroData.config().get().getCurrentSeason().getDisplay() + ")" : "";
 
         return String.format("%s%s", String.format(i18nContext.get("commands.profile.timezone_user"), timezone), seasonal);
     }, false);
 
     //See: getTitle()
-    private EmoteReference emoji;
-    private Function<I18nContext, String> title;
+    private final EmoteReference emoji;
+    private final Function<I18nContext, String> title;
 
-    private BiFunction<Holder, I18nContext, String> content;
-    private boolean assignable;
-    private boolean inline;
+    private final BiFunction<Holder, I18nContext, String> content;
+    private final boolean assignable;
+    private final boolean inline;
 
-    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title, BiFunction<Holder, I18nContext, String> content, boolean isAssignable, boolean inline) {
+    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title,
+                     BiFunction<Holder, I18nContext, String> content, boolean isAssignable, boolean inline) {
         this.emoji = emoji;
         this.title = title;
         this.content = content;
@@ -144,7 +196,8 @@ public enum ProfileComponent {
         this.inline = inline;
     }
 
-    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title, BiFunction<Holder, I18nContext, String> content, boolean isAssignable) {
+    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title,
+                     BiFunction<Holder, I18nContext, String> content, boolean isAssignable) {
         this.emoji = emoji;
         this.title = title;
         this.content = content;
@@ -152,7 +205,8 @@ public enum ProfileComponent {
         this.inline = true;
     }
 
-    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title, BiFunction<Holder, I18nContext, String> content) {
+    ProfileComponent(EmoteReference emoji, Function<I18nContext, String> title,
+                     BiFunction<Holder, I18nContext, String> content) {
         this.emoji = emoji;
         this.title = title;
         this.content = content;
@@ -167,16 +221,16 @@ public enum ProfileComponent {
      * @return The component, or null if nothing is found.
      */
     public static ProfileComponent lookupFromString(String name) {
-        for (ProfileComponent c : ProfileComponent.values()) {
-            if (c.name().equalsIgnoreCase(name)) {
-                return c;
+        for (var component : ProfileComponent.values()) {
+            if (component.name().equalsIgnoreCase(name)) {
+                return component;
             }
         }
         return null;
     }
 
     public String getTitle(I18nContext context) {
-        return (emoji == null ? "" : emoji) + title.apply(context);
+        return (emoji == null ? "" : emoji) + " " + title.apply(context);
     }
 
     public BiFunction<Holder, I18nContext, String> getContent() {

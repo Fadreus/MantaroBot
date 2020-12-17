@@ -19,9 +19,7 @@ package net.kodehawa.mantarobot.commands.action;
 import net.kodehawa.mantarobot.MantaroInfo;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.Utils;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -34,84 +32,73 @@ public class WeebAPIRequester {
     private static final String ALL_TAGS = "/tags";
     private static final String ALL_TYPES = "/types";
     private static final String API_BASE_URL = "https://api.weeb.sh/images";
-    private final String AUTH_HEADER = "Bearer " + MantaroData.config().get().weebapiKey;
-    private final String RANDOM_IMAGE = "/random";
-
-    private final OkHttpClient httpClient = new OkHttpClient();
+    private static final String AUTH_HEADER = "Bearer " + MantaroData.config().get().weebapiKey;
+    private static final String RANDOM_IMAGE = "/random";
 
     public Pair<String, String> getRandomImageByType(String type, boolean nsfw, String filetype) {
         HashMap<String, Object> queryParams = new HashMap<>();
         queryParams.put("type", type);
-        if (nsfw)
+
+        if (nsfw) {
             queryParams.put("nsfw", "only");
-        else
+        }
+        else {
             queryParams.put("nsfw", false);
+        }
 
-        if (filetype != null)
+        if (filetype != null) {
             queryParams.put("filetype", filetype);
+        }
 
-        String r = request(RANDOM_IMAGE, Utils.urlEncodeUTF8(queryParams));
-        if (r == null)
+        var req = request(RANDOM_IMAGE, Utils.urlEncodeUTF8(queryParams));
+        if (req == null) {
             return Pair.of(null, null);
+        }
 
-        JSONObject object = new JSONObject(r);
+        var object = new JSONObject(req);
         return Pair.of(object.getString("url"), object.getString("id"));
     }
 
-    public String getRandomImageByTags(String tags, boolean nsfw, String filetype) {
-        HashMap<String, Object> queryParams = new HashMap<>();
-        queryParams.put("tags", tags);
-
-        if (nsfw)
-            queryParams.put("nsfw", "only");
-        else
-            queryParams.put("nsfw", false);
-
-        if (filetype != null)
-            queryParams.put("filetype", filetype);
-
-        String r = request(RANDOM_IMAGE, Utils.urlEncodeUTF8(queryParams));
-        if (r == null)
-            return null;
-
-        return new JSONObject(r).getString("url");
-    }
-
     public JSONObject getTypes() {
-        String r = request(ALL_TYPES, null);
-        if (r == null)
+        var req = request(ALL_TYPES, null);
+        if (req == null) {
             return null;
+        }
 
-        return new JSONObject(r);
+        return new JSONObject(req);
     }
 
     public JSONObject getTags() {
-        String r = request(ALL_TAGS, null);
-        if (r == null)
+        var req = request(ALL_TAGS, null);
+        if (req == null) {
             return null;
+        }
 
-        return new JSONObject(r);
+        return new JSONObject(req);
     }
 
     private String request(String endpoint, String e) {
         try {
-            StringBuilder builder = new StringBuilder(endpoint);
+            var builder = new StringBuilder(endpoint);
             if (e != null) {
                 builder.append("?");
                 builder.append(e);
             }
 
-            Request r = new Request.Builder()
-                    .url(API_BASE_URL + builder.toString())
+            var r = new Request.Builder()
+                    .url(API_BASE_URL + builder)
                     .addHeader("User-Agent", MantaroInfo.USER_AGENT)
                     .addHeader("Authorization", AUTH_HEADER)
                     .build();
 
-            Response r1 = httpClient.newCall(r).execute();
-            String response = r1.body().string();
+            try(var response = Utils.httpClient.newCall(r).execute()) {
+                var body = response.body();
+                if (body == null) {
+                    throw new IllegalStateException("body == null");
+                }
 
-            r1.close();
-            return response;
+                return body.string();
+            }
         } catch (Exception ex) {
             log.error("Error getting image from weeb.sh", ex);
             return null;

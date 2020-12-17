@@ -21,7 +21,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public class ItemStack {
-    public static int MAX_STACK_SIZE = 5000;
+    public static final int MAX_STACK_SIZE = 5000;
     private final int amount;
     private final Item item;
 
@@ -31,11 +31,15 @@ public class ItemStack {
     }
 
     public ItemStack(int i, int amount) {
-        this(Items.fromId(i), amount);
+        this(ItemHelper.fromId(i), amount);
     }
 
     public static Map<Item, ItemStack> mapped(List<ItemStack> list) {
-        return list.stream().filter(stack -> stack.getAmount() != 0).collect(Collectors.toMap(ItemStack::getItem, UnaryOperator.identity(), ItemStack::join));
+        return list.stream()
+                .filter(stack -> stack.getAmount() != 0)
+                .collect(
+                        Collectors.toMap(ItemStack::getItem, UnaryOperator.identity(), ItemStack::join)
+                );
     }
 
     public static List<ItemStack> reduce(List<ItemStack> list) {
@@ -43,7 +47,9 @@ public class ItemStack {
     }
 
     public static String toString(List<ItemStack> list) {
-        if (list.isEmpty()) return "There's only dust.";
+        if (list.isEmpty()) {
+            return "There's only dust.";
+        }
 
         return list.stream().filter(stack -> stack.getAmount() != 0)
                 .sorted(Comparator.comparingInt(ItemStack::getAmount).reversed())
@@ -69,10 +75,13 @@ public class ItemStack {
     }
 
     public ItemStack join(ItemStack stack) {
-        if (!stack.getItem().equals(this.getItem()))
+        if (!stack.getItem().equals(this.getItem())) {
             throw new UnsupportedOperationException("Not the same Items");
-        if (!canJoin(stack))
+        }
+
+        if (!canJoin(stack)) {
             throw new UnsupportedOperationException("Add a check for canJoin before this");
+        }
 
         return new ItemStack(this.getItem(), this.getAmount() + stack.getAmount());
     }
