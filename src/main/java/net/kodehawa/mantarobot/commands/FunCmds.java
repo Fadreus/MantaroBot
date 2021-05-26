@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -21,7 +21,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.kodehawa.mantarobot.commands.currency.TextChannelGround;
 import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
-import net.kodehawa.mantarobot.commands.info.stats.CommandStatsManager;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
@@ -29,6 +28,7 @@ import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.data.MantaroData;
+import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.commands.RPGDice;
 import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
@@ -105,9 +105,7 @@ public class FunCmds {
                     waifuRate = 100;
                 }
 
-                ctx.sendStrippedLocalized(
-                        "commands.ratewaifu.success", EmoteReference.THINKING, content, waifuRate
-                );
+                ctx.sendStrippedLocalized("commands.ratewaifu.success", EmoteReference.THINKING, waifuRate);
             }
 
             @Override
@@ -122,6 +120,8 @@ public class FunCmds {
         });
 
         cr.registerAlias("ratewaifu", "rw");
+        cr.registerAlias("ratewaifu", "rate");
+
     }
 
     @Subscribe
@@ -129,7 +129,7 @@ public class FunCmds {
         final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
                 .limit(1)
                 .spamTolerance(2)
-                .cooldown(4, TimeUnit.SECONDS)
+                .cooldown(5, TimeUnit.SECONDS)
                 .maxCooldown(1, TimeUnit.MINUTES)
                 .randomIncrement(true)
                 .pool(MantaroData.getDefaultJedisPool())
@@ -280,7 +280,7 @@ public class FunCmds {
                         .setThumbnail(ctx.getAuthor().getEffectiveAvatarUrl())
                         .setDescription("\n**" + toDisplay + "**\n\n" +
                                 percentage + "% **\\|\\|**  " +
-                                CommandStatsManager.bar(percentage, 30) + "  **\\|\\|** \n\n" +
+                                Utils.bar(percentage, 30) + "  **\\|\\|** \n\n" +
                                 "**" + languageContext.get("commands.love.result") + "** " + result
                         ).setColor(ctx.getMember().getColor())
                         .build();

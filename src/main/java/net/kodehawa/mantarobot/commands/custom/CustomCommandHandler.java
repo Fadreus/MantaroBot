@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.custom;
@@ -25,7 +25,6 @@ import net.kodehawa.mantarobot.commands.custom.legacy.ConditionalCustoms;
 import net.kodehawa.mantarobot.commands.custom.legacy.DynamicModifiers;
 import net.kodehawa.mantarobot.commands.custom.v3.CCv3;
 import net.kodehawa.mantarobot.commands.custom.v3.Parser;
-import net.kodehawa.mantarobot.commands.info.stats.CategoryStatsManager;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.db.entities.helpers.GuildData;
 import net.kodehawa.mantarobot.utils.StringUtils;
@@ -166,7 +165,6 @@ public class CustomCommandHandler {
         }
 
         ctx.send(builder.build());
-        CategoryStatsManager.log("custom");
     }
 
     public void handle() {
@@ -190,7 +188,7 @@ public class CustomCommandHandler {
     private String processText(String text) {
         if (text.contains("$(")) {
             text = new DynamicModifiers()
-                    .mapEvent(prefixUsed, "event", ctx.getEvent())
+                    .mapEvent(prefixUsed, "event", ctx)
                     .resolve(text);
         }
 

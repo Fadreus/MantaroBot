@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.music.requester;
@@ -21,7 +21,9 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.music.GuildMusicManager;
 import net.kodehawa.mantarobot.commands.music.utils.AudioCmdUtils;
 import net.kodehawa.mantarobot.data.I18n;
@@ -49,6 +51,7 @@ public class AudioLoader implements AudioLoadResultHandler {
     private final GuildMusicManager musicManager;
     private final boolean skipSelection;
     private final I18n language;
+    private int failureCount = 0;
 
     public AudioLoader(GuildMusicManager musicManager, GuildMessageReceivedEvent event, boolean skipSelection, boolean insertFirst) {
         this.musicManager = musicManager;
@@ -65,12 +68,13 @@ public class AudioLoader implements AudioLoadResultHandler {
 
     @Override
     public void playlistLoaded(AudioPlaylist playlist) {
+        final var member = event.getMember();
         if (playlist.isSearchResult()) {
             if (!skipSelection) {
                 onSearch(playlist);
             } else {
                 loadSingle(playlist.getTracks().get(0), false,
-                        db.getGuild(event.getGuild()), db.getUser(event.getMember())
+                        db.getGuild(event.getGuild()), db.getUser(member)
                 );
             }
 
@@ -80,7 +84,7 @@ public class AudioLoader implements AudioLoadResultHandler {
         try {
             var count = 0;
             var dbGuild = db.getGuild(event.getGuild());
-            var user = db.getUser(event.getMember());
+            var user = db.getUser(member);
             var guildData = dbGuild.getData();
 
             for (var track : playlist.getTracks()) {
@@ -110,7 +114,7 @@ public class AudioLoader implements AudioLoadResultHandler {
             }
 
             event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.loaded_playlist"),
-                    EmoteReference.CORRECT, count, playlist.getName(),
+                    EmoteReference.SATELLITE, count, playlist.getName(),
                     Utils.formatDuration(
                             playlist.getTracks()
                                     .stream()
@@ -127,18 +131,21 @@ public class AudioLoader implements AudioLoadResultHandler {
         event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.no_matches"), EmoteReference.ERROR).queue();
     }
 
-
     @Override
     public void loadFailed(FriendlyException exception) {
-        if (!exception.severity.equals(FriendlyException.Severity.FAULT)) {
-            event.getChannel().sendMessage(
-                    String.format(language.get("commands.music_general.loader.error_fetching"),
-                            EmoteReference.ERROR, exception.getMessage()
-                    )
+        if (failureCount == 0) {
+            if (exception.getMessage() == null) {
+                event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.unknown_error_loading"), EmoteReference.ERROR).queue();
+            }
+
+            event.getChannel().sendMessageFormat(
+                    language.get("commands.music_general.loader.error_loading"), EmoteReference.ERROR, exception.getMessage()
             ).queue();
-        } else {
-            Metrics.TRACK_EVENTS.labels("tracks_failed").inc();
         }
+
+        Metrics.TRACK_EVENTS.labels("tracks_failed").inc();
+        exception.printStackTrace();
+        failureCount++;
     }
 
     private void loadSingle(AudioTrack audioTrack, boolean silent, DBGuild dbGuild, DBUser dbUser) {
@@ -151,18 +158,19 @@ public class AudioLoader implements AudioLoadResultHandler {
         final var title = trackInfo.title;
         final var length = trackInfo.length;
 
-        var queueLimit = guildData.getMusicQueueSizeLimit() == null || guildData.getMusicQueueSizeLimit() < 1 ?
-                MAX_QUEUE_LENGTH : guildData.getMusicQueueSizeLimit();
+        long queueLimit = MAX_QUEUE_LENGTH;
+        if (guildData.getMusicQueueSizeLimit() != null && guildData.getMusicQueueSizeLimit() > 1) {
+            queueLimit = guildData.getMusicQueueSizeLimit();
+        }
 
         var fqSize = guildData.getMaxFairQueue();
         ConcurrentLinkedDeque<AudioTrack> queue = trackScheduler.getQueue();
 
         if (queue.size() > queueLimit && !dbUser.isPremium() && !dbGuild.isPremium()) {
             if (!silent) {
-                event.getChannel().sendMessageFormat(
-                        language.get("commands.music_general.loader.over_queue_limit"),
+                event.getChannel().sendMessageFormat(language.get("commands.music_general.loader.over_queue_limit"),
                         EmoteReference.WARNING, title, queueLimit
-                ).queue(message -> message.delete().queueAfter(30, TimeUnit.SECONDS));
+                ).queue();
             }
             return;
         }
@@ -211,7 +219,20 @@ public class AudioLoader implements AudioLoadResultHandler {
     }
 
     private void onSearch(AudioPlaylist playlist) {
-        var list = playlist.getTracks();
+        final var list = playlist.getTracks();
+        
+        if (!event.getGuild().getSelfMember().hasPermission(event.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+            event.getChannel().sendMessageFormat(language.get("commands.music_general.missing_embed_permissions"), EmoteReference.ERROR).queue();
+
+            // Destroy connection if there's nothing playing
+            final var trackScheduler = musicManager.getTrackScheduler();
+            if (trackScheduler.getQueue().isEmpty() && trackScheduler.getCurrentTrack() == null) {
+                MantaroBot.getInstance().getAudioManager().resetMusicManagerFor(event.getGuild().getId());
+            }
+
+            return;
+        }
+
         DiscordUtils.selectList(event, list.subList(0, Math.min(5, list.size())),
                 track -> String.format(
                         "%s**[%s](%s)** (%s)",

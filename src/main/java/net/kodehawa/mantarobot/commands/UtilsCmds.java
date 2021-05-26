@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -41,17 +41,16 @@ import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import java.awt.Color;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -59,40 +58,8 @@ import java.util.stream.Collectors;
 
 @Module
 public class UtilsCmds {
-    private static final Logger log = LoggerFactory.getLogger(UtilsCmds.class);
-    private static final Pattern timePattern = Pattern.compile(" -time [(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
-    private static final Random random = new Random();
-
-    @Subscribe
-    public void choose(CommandRegistry registry) {
-        registry.register("choose", new SimpleCommand(CommandCategory.UTILS) {
-            @Override
-            public void call(Context ctx, String content, String[] args) {
-                if (args.length < 1) {
-                    ctx.sendLocalized("commands.choose.nothing_to", EmoteReference.ERROR);
-                    return;
-                }
-
-                var send = Utils.DISCORD_INVITE.matcher(args[random.nextInt(args.length)]).replaceAll("-inv link-");
-                send = Utils.DISCORD_INVITE_2.matcher(send).replaceAll("-inv link-");
-                ctx.sendStrippedLocalized("commands.choose.success", EmoteReference.EYES, send);
-            }
-
-            @Override
-            public String[] splitArgs(String content) {
-                return StringUtils.advancedSplitArgs(content, -1);
-            }
-
-            @Override
-            public HelpContent help() {
-                return new HelpContent.Builder()
-                        .setDescription("Choose between 2 or more things.")
-                        .setUsage("`~>choose <parameters>`")
-                        .addParameter("parameters", "The parameters. Example `pat hello \"go watch the movies\"`.")
-                        .build();
-            }
-        });
-    }
+    private static final Pattern rawTimePattern = Pattern.compile("^[(\\d)((?d|?h|(?m|(?s)]+$");
+    private static final Pattern timePattern = Pattern.compile("-time [(\\d+)((?:h(?:our(?:s)?)?)|(?:m(?:in(?:ute(?:s)?)?)?)|(?:s(?:ec(?:ond(?:s)?)?)?))]+");
 
     @Subscribe
     public void remindme(CommandRegistry registry) {
@@ -103,20 +70,35 @@ public class UtilsCmds {
                     @Override
                     protected void call(Context ctx, I18nContext languageContext, String content) {
                         var optionalArguments = ctx.getOptionalArguments();
+                        var args = ctx.getArguments();
+                        long time = 0L;
 
-                        if (!optionalArguments.containsKey("time")) {
+                        if (args.length == 0) {
                             ctx.sendLocalized("commands.remindme.no_time", EmoteReference.ERROR);
                             return;
                         }
 
-                        if (optionalArguments.get("time") == null) {
+                        final var maybeTime = args[0];
+                        final var matchTime = rawTimePattern.matcher(maybeTime).matches();
+                        if (matchTime) {
+                            content = content.replaceFirst(maybeTime, "").trim();
+                            time = Utils.parseTime(maybeTime);
+                        }
+
+                        // Old format compatiblity.
+                        if (!matchTime) {
+                            if (optionalArguments.get("time") != null) {
+                                time = Utils.parseTime(optionalArguments.get("time"));
+                            }
+                        }
+
+                        if (time == 0) {
                             ctx.sendLocalized("commands.remindme.no_time", EmoteReference.ERROR);
                             return;
                         }
 
-                        var toRemind = timePattern.matcher(content).replaceAll("");
+                        var toRemind = timePattern.matcher(content).replaceAll("").trim();
                         var user = ctx.getUser();
-                        var time = Utils.parseTime(optionalArguments.get("time"));
                         var dbUser = ctx.getDBUser();
                         var rems = getReminders(dbUser.getData().getReminders());
 
@@ -136,8 +118,15 @@ public class UtilsCmds {
                             return;
                         }
 
-                        var displayRemind = Utils.DISCORD_INVITE.matcher(toRemind).replaceAll("discord invite link");
-                        displayRemind = Utils.DISCORD_INVITE_2.matcher(displayRemind).replaceAll("discord invite link");
+                        var displayRemind = toRemind
+                                .replaceAll(Utils.DISCORD_INVITE.pattern(), "discord invite link")
+                                .replaceAll(Utils.DISCORD_INVITE_2.pattern(), "discord invite link")
+                                .replaceAll(Utils.HTTP_URL.pattern(), "url")
+                                .trim();
+
+                        if (displayRemind.isEmpty()) {
+                            displayRemind = "something";
+                        }
 
                         ctx.sendStrippedLocalized("commands.remindme.success", EmoteReference.CORRECT, ctx.getUser().getName(),
                                 ctx.getUser().getDiscriminator(), displayRemind, Utils.formatDuration(time));
@@ -158,12 +147,15 @@ public class UtilsCmds {
             public HelpContent help() {
                 return new HelpContent.Builder()
                         .setDescription("Reminds you of something.")
-                        .setUsage("`~>remindme <reminder> <-time>`\n" +
+                        .setUsage("`~>remindme <time> <reminder>`\n" +
                                 "Check subcommands for more. Append the subcommand after the main command.")
+                        .addParameter("time",
+                              """
+                              How much time until I remind you of it. Time is in this format: 1h20m (1 hour and 20m). 
+                              You can use h, m and s (hour, minute, second). 
+                              """
+                        )
                         .addParameter("reminder", "What to remind you of.")
-                        .addParameter("-time",
-                                "How much time until I remind you of it. Time is in this format: 1h20m (1 hour and 20m). " +
-                                        "You can use h, m and s (hour, minute, second)")
                         .build();
             }
         });
@@ -177,7 +169,9 @@ public class UtilsCmds {
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
                 var reminders = ctx.getDBUser().getData().getReminders();
-                var rms = getReminders(reminders);
+                var rms = getReminders(reminders).stream()
+                        .sorted(Comparator.comparingLong(ReminderObject::getScheduledAtMillis))
+                        .collect(Collectors.toList());
 
                 if (rms.isEmpty()) {
                     ctx.sendLocalized("commands.remindme.no_reminders", EmoteReference.ERROR);
@@ -187,11 +181,17 @@ public class UtilsCmds {
                 var builder = new StringBuilder();
                 var i = new AtomicInteger();
                 for (var rems : rms) {
-                    builder.append("**").append(i.incrementAndGet()).append(".-**").append("R: *").append(rems.getReminder()).append("*, Due in: **")
-                            .append(Utils.formatDuration(rems.getTime() - System.currentTimeMillis())).append("**").append("\n");
+                    builder.append("**").append(i.incrementAndGet()).append(".-**")
+                            .append("Content: *")
+                            .append(rems.getReminder())
+                            .append("*, Due in: **")
+                            .append(Utils.formatDuration(rems.getTime() - System.currentTimeMillis()))
+                            .append("**").append("\n");
                 }
 
-                var toSend = new MessageBuilder().append(builder.toString()).buildAll(MessageBuilder.SplitPolicy.NEWLINE);
+                var toSend = new MessageBuilder().append(builder.toString())
+                        .buildAll(MessageBuilder.SplitPolicy.NEWLINE);
+
                 toSend.forEach(ctx::send);
             }
         });
@@ -237,6 +237,9 @@ public class UtilsCmds {
                 }
             }
         });
+
+        registry.registerAlias("remindme", "remind");
+        registry.registerAlias("remindme", "reminder");
     }
 
     private List<ReminderObject> getReminders(List<String> reminders) {
@@ -292,11 +295,15 @@ public class UtilsCmds {
                     return;
                 }
 
-                ctx.sendLocalized("commands.time.success",
-                        EmoteReference.CLOCK,
-                        Utils.formatDate(LocalDateTime.now(Utils.timezoneToZoneID(timezone)), userData.getLang()),
-                        timezone
-                );
+                var dateformat = "";
+                try {
+                    dateformat = Utils.formatDate(LocalDateTime.now(Utils.timezoneToZoneID(timezone)), userData.getLang());
+                } catch (DateTimeException e) {
+                    ctx.sendLocalized("commands.time.invalid_timezone", EmoteReference.ERROR);
+                    return;
+                }
+
+                ctx.sendLocalized("commands.time.success", EmoteReference.CLOCK, dateformat, timezone);
             }
 
             @Override
@@ -364,8 +371,12 @@ public class UtilsCmds {
                         .setThumbnail("https://i.imgur.com/PbXqLrS.png")
                         .setDescription(languageContext.get("general.definition") + " " + (definitionNumber + 1))
                         .setColor(Color.GREEN)
-                        .addField(languageContext.get("general.definition"), StringUtils.limit(definition, 1000), false)
-                        .addField(languageContext.get("general.example"), StringUtils.limit(urbanData.getExample(), 800), false)
+                        .addField(EmoteReference.PENCIL.toHeaderString() + languageContext.get("general.definition"),
+                                StringUtils.limit(definition, 1000), false
+                        )
+                        .addField(EmoteReference.ZAP.toHeaderString() + languageContext.get("general.example"),
+                                StringUtils.limit(urbanData.getExample(), 800), false
+                        )
                         .addField(":thumbsup:", urbanData.thumbs_up, true)
                         .addField(":thumbsdown:", urbanData.thumbs_down, true)
                         .setFooter(languageContext.get("commands.urban.footer"), null)
@@ -437,6 +448,8 @@ public class UtilsCmds {
                 .addSubCommand("items", (ctx, s) ->
                         ctx.send(EmoteReference.OK + "**For a list of items, please visit:**" +
                                 " https://github.com/Mantaro/MantaroBot/wiki/Item-Documentation"))
+                .addSubCommand("overview", (ctx, s) ->
+                        ctx.send(EmoteReference.OK + "**For a feature overview, check:** https://mantaro.site/features.html"))
                 .addSubCommand("birthday", (ctx, s) ->
                         ctx.send(EmoteReference.OK + "**For a guide on the birthday system, please visit:**" +
                                 " https://github.com/Mantaro/MantaroBot/wiki/Birthday-101"))

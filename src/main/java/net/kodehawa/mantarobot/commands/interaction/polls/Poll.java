@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
- *  
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
+ *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.interaction.polls;
@@ -32,7 +32,7 @@ import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -115,7 +115,9 @@ public class Poll extends Lobby {
                     .collect(Collectors.joining("\n"));
 
             if (toShow.length() > 1014) {
-                toShow = String.format(languageContext.get("commands.poll.too_long"), Utils.paste(toShow));
+                getChannel().sendMessageFormat(languageContext.get("commands.poll.too_long"), EmoteReference.ERROR).queue();
+                getRunningPolls().remove(getChannel().getId());
+                return;
             }
 
             var user = ctx.getAuthor();
@@ -123,7 +125,9 @@ public class Poll extends Lobby {
             var builder = new EmbedBuilder().setAuthor(String.format(languageContext.get("commands.poll.header"),
                     data.getRanPolls(), user.getName()), null, user.getAvatarUrl())
                     .setDescription(String.format(languageContext.get("commands.poll.success"), name))
-                    .addField(languageContext.get("general.options"), "```md\n" + toShow + "```", false)
+                    .addField(EmoteReference.PENCIL.toHeaderString() + languageContext.get("general.options"),
+                            "```md\n" + toShow + "```", false
+                    )
                     .setColor(Color.CYAN)
                     .setThumbnail("https://i.imgur.com/7TITtHb.png")
                     .setFooter(String.format(languageContext.get("commands.poll.time"), Utils.formatDuration(timeout)), user.getAvatarUrl());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,14 +11,13 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.core.CommandRegistry;
@@ -28,7 +27,6 @@ import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandPermission;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
 import net.kodehawa.mantarobot.options.core.Option;
@@ -41,7 +39,6 @@ import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static net.kodehawa.mantarobot.utils.Utils.mapConfigObjects;
 
@@ -74,7 +71,6 @@ public class OptsCmd {
 
                     var dividedMessages = DiscordUtils.divideString(builder);
                     List<String> messages = new LinkedList<>();
-
                     for (var msgs : dividedMessages) {
                         messages.add(String.format(languageContext.get("commands.opts.list.header"),
                                 ctx.hasReactionPerms() ? languageContext.get("general.text_menu") + " " :
@@ -114,7 +110,7 @@ public class OptsCmd {
                                         .setAuthor(option.getOptionName(), null, ctx.getAuthor().getEffectiveAvatarUrl())
                                         .setDescription(option.getDescription())
                                         .setThumbnail("https://i.imgur.com/lFTJSE4.png")
-                                        .addField("Type", option.getType().toString(), false);
+                                        .addField(EmoteReference.PENCIL.toHeaderString() + "Type", option.getType().toString(), false);
 
                                 ctx.send(builder.build());
                             } catch (IndexOutOfBoundsException ignored) { }
@@ -122,10 +118,7 @@ public class OptsCmd {
                         }
                     }
 
-                    ctx.getChannel().sendMessageFormat(
-                            languageContext.get("commands.opts.option_not_found"), EmoteReference.ERROR
-                    ).queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
-
+                    ctx.sendLocalized("commands.opts.option_not_found", EmoteReference.ERROR);
                     return;
                 }
 
@@ -136,11 +129,11 @@ public class OptsCmd {
                     }
 
                     name.append(str);
-                    var option = Option.getOptionMap().get(name.toString());
+                    var lookup = name.toString().replace("\n", "");
+                    var option = Option.getOptionMap().get(lookup);
 
                     if (option != null) {
-                        var callable = Option.getOptionMap().get(name.toString()).getEventConsumer();
-
+                        var callable = option.getEventConsumer();
                         try {
                             String[] a;
                             if (++i < args.length) {
@@ -149,14 +142,8 @@ public class OptsCmd {
                                 a = StringUtils.EMPTY_ARRAY;
                             }
 
-                            callable.accept(ctx.getEvent(), a,
-                                    new I18nContext(
-                                            MantaroData.db().getGuild(ctx.getGuild()).getData(), MantaroData.db().getUser(ctx.getAuthor().getId()).getData()
-                                    )
-                            );
-
+                            callable.accept(ctx, a);
                             var player = MantaroData.db().getPlayer(ctx.getAuthor());
-
                             if (player.getData().addBadgeIfAbsent(Badge.DID_THIS_WORK)) {
                                 player.saveUpdating();
                             }
@@ -179,39 +166,43 @@ public class OptsCmd {
                         .build();
             }
         }).addOption("check:data", new Option("Data check.",
-                "Checks the data values you have set on this server. **THIS IS NOT USER-FRIENDLY**. If you wanna send this to the support server, use -print at the end.", OptionType.GENERAL)
-                .setActionLang((event, args, lang) -> {
-                    var dbGuild = MantaroData.db().getGuild(event.getGuild());
+                "Checks the data values you have set on this server. **THIS IS NOT USER-FRIENDLY**. " +
+                            "If you wanna send this to the support server, use -print at the end.", OptionType.GENERAL
+                ).setAction((ctx, args) -> {
+                    var dbGuild = ctx.getDBGuild();
                     var guildData = dbGuild.getData();
+                    var lang = ctx.getLanguageContext();
 
-                    //Map as follows: name, value
-                    //This filters out unused configs.
+                    // Map as follows: name, value
+                    // This filters out unused configs.
                     var fieldMap = mapConfigObjects(guildData);
-
                     if (fieldMap == null) {
-                        event.getChannel().sendMessage(String.format(lang.get("options.check_data.retrieve_failure"), EmoteReference.ERROR)).queue();
+                        ctx.sendLocalized("options.check_data.retrieve_failure", EmoteReference.ERROR);
                         return;
                     }
 
+                    final var guild = ctx.getGuild();
                     var opts = StringUtils.parseArguments(args);
-                    if (opts.containsKey("print")) {
+                    if (opts.containsKey("print") || opts.containsKey("paste")) {
                         var builder = new StringBuilder();
                         for (var entry : fieldMap.entrySet()) {
                             builder.append("* ").append(entry.getKey()).append(": ").append(entry.getValue().getRight()).append("\n");
                         }
 
-                        event.getChannel().sendMessage("Send this: " + Utils.paste(builder.toString())).queue();
+                        ctx.sendFormat("Send this: %s", Utils.paste(builder.toString()));
                         return;
                     }
 
                     var embedBuilder = new EmbedBuilder();
-                    embedBuilder.setAuthor("Option Debug", null, event.getAuthor().getEffectiveAvatarUrl())
-                            .setDescription(String.format(lang.get("options.check_data.header") + lang.get("options.check_data.terminology"),
-                                    event.getGuild().getName())
-                            ).setThumbnail(event.getGuild().getIconUrl())
+                    embedBuilder.setAuthor("Option Debug", null, ctx.getAuthor().getEffectiveAvatarUrl())
+                            .setDescription(
+                                    String.format(lang.get("options.check_data.header") + lang.get("options.check_data.terminology"),
+                                    guild.getName())
+                            )
+                            .setThumbnail(guild.getIconUrl())
                             .setFooter(lang.get("options.check_data.footer"), null);
-                    List<MessageEmbed.Field> fields = new LinkedList<>();
 
+                    List<MessageEmbed.Field> fields = new LinkedList<>();
                     for (var e : fieldMap.entrySet()) {
                         fields.add(new MessageEmbed.Field(EmoteReference.BLUE_SMALL_MARKER + e.getKey() + ":\n" + e.getValue().getLeft() + "",
                                 e.getValue() == null ? lang.get("options.check_data.null_set") : String.valueOf(e.getValue().getRight()),
@@ -220,20 +211,19 @@ public class OptsCmd {
                     }
 
                     var splitFields = DiscordUtils.divideFields(6, fields);
-                    boolean hasReactionPerms = event.getGuild().getSelfMember().hasPermission(event.getChannel(), Permission.MESSAGE_ADD_REACTION);
-
-                    if (hasReactionPerms) {
-                        DiscordUtils.list(event, 200, false, embedBuilder, splitFields);
+                    if (ctx.hasReactionPerms()) {
+                        DiscordUtils.list(ctx.getEvent(), 200, false, embedBuilder, splitFields);
                     }
                     else {
-                        DiscordUtils.listText(event, 200, false, embedBuilder, splitFields);
+                        DiscordUtils.listText(ctx.getEvent(), 200, false, embedBuilder, splitFields);
                     }
                 }).setShortDescription("Checks the data values you have set on this server.")
         ).addOption("reset:all", new Option("Options reset.",
-                "Resets all options set on this server.", OptionType.GENERAL).setActionLang((event, lang) -> {
+                "Resets all options set on this server.", OptionType.GENERAL).setAction((ctx) -> {
                     //Temporary stuff.
-                    var dbGuild = MantaroData.db().getGuild(event.getGuild());
-                    var temp = MantaroData.db().getGuild(event.getGuild()).getData();
+                    var dbGuild = ctx.getDBGuild();
+                    // New object?
+                    var temp = ctx.getDBGuild().getData();
 
                     //The persistent data we wish to maintain.
                     var premiumKey = temp.getPremiumKey();
@@ -241,6 +231,9 @@ public class OptsCmd {
                     var ranPolls = temp.getQuoteLastId();
                     var gameTimeoutExpectedAt = temp.getGameTimeoutExpectedAt();
                     var cases = temp.getCases();
+                    var allowedBirthdays = temp.getAllowedBirthdays();
+                    var notified = temp.isNotifiedFromBirthdayChange();
+                    var greetReceived = temp.hasReceivedGreet();
 
                     //Assign everything all over again
                     var newDbGuild = DBGuild.of(dbGuild.getId(), dbGuild.getPremiumUntil());
@@ -251,10 +244,13 @@ public class OptsCmd {
                     newTmp.setCases(cases);
                     newTmp.setPremiumKey(premiumKey);
                     newTmp.setQuoteLastId(quoteLastId);
+                    newTmp.setAllowedBirthdays(allowedBirthdays);
+                    newTmp.setNotifiedFromBirthdayChange(notified);
+                    newTmp.setHasReceivedGreet(greetReceived);
 
                     newDbGuild.saveAsync();
 
-                    event.getChannel().sendMessage(String.format(lang.get("options.reset_all.success"), EmoteReference.CORRECT)).queue();
+                    ctx.sendLocalized("options.reset_all.success", EmoteReference.CORRECT);
                 })
         );
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,13 +11,14 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.kodehawa.lib.imageboards.DefaultImageBoards;
 import net.kodehawa.lib.imageboards.ImageBoard;
 import net.kodehawa.lib.imageboards.entities.impl.*;
@@ -219,6 +220,11 @@ public class ImageCmds {
         cr.register("konachan", new SimpleCommand(CommandCategory.IMAGE) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
+                if (!ctx.getChannel().isNSFW()) {
+                    ctx.sendLocalized("commands.imageboard.konachan_nsfw_notice", EmoteReference.ERROR);
+                    return;
+                }
+
                 sendImage(ctx, konachan, false, "konachan", args);
             }
 
@@ -248,6 +254,11 @@ public class ImageCmds {
         cr.register("safebooru", new SimpleCommand(CommandCategory.IMAGE) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
+                if (!ctx.getChannel().isNSFW()) {
+                    ctx.sendLocalized("commands.imageboard.konachan_nsfw_notice", EmoteReference.ERROR);
+                    return;
+                }
+
                 sendImage(ctx, safebooru, false, "safebooru", args);
             }
 
@@ -272,6 +283,11 @@ public class ImageCmds {
         cr.register("danbooru", new SimpleCommand(CommandCategory.IMAGE) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
+                if (!ctx.getChannel().isNSFW()) {
+                    ctx.sendLocalized("commands.imageboard.konachan_nsfw_notice", EmoteReference.ERROR);
+                    return;
+                }
+
                 sendImage(ctx, danbooru, false, "danbooru", args);
             }
 
@@ -302,6 +318,7 @@ public class ImageCmds {
         cr.register("rule34", new SimpleCommand(CommandCategory.IMAGE) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
+                // This is nsfw-only, so its restricted to nsfw channels aswell, just not with a special message.
                 sendImage(ctx, rule34, true, "rule34", args);
             }
 
@@ -399,6 +416,11 @@ public class ImageCmds {
 
     private void sendImage(Context ctx, ImageBoard<?> image,
                            boolean nsfwOnly, String name, String[] args) {
+        if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+            ctx.sendLocalized("general.missing_embed_permissions");
+            return;
+        }
+
         var firstArg = args.length == 0 ? "" : args[0];
         if (firstArg.isEmpty()) {
             getImage(image, ImageRequestType.RANDOM, nsfwOnly, name, args, ctx);

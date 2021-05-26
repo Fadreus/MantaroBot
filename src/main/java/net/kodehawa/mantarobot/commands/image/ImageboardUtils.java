@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,14 +11,13 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.image;
 
 import com.google.common.collect.ImmutableMap;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.kodehawa.lib.imageboards.DefaultImageBoards;
 import net.kodehawa.lib.imageboards.ImageBoard;
 import net.kodehawa.lib.imageboards.entities.BoardImage;
@@ -27,8 +26,8 @@ import net.kodehawa.mantarobot.commands.currency.TextChannelGround;
 import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
-import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.db.entities.DBGuild;
+import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
 import java.awt.Color;
@@ -185,8 +184,8 @@ public class ImageboardUtils {
         // Format the tags output so it's actually human-readable.
         final var imageTags = String.join(", ", tags);
         imageEmbed(
-                ctx.getLanguageContext(), image.getURL(), String.valueOf(image.getWidth()),
-                String.valueOf(image.getHeight()), imageTags, image.getRating(), imageboard, ctx.getChannel()
+                ctx, image.getURL(), String.valueOf(image.getWidth()),
+                String.valueOf(image.getHeight()), imageTags, image.getRating(), imageboard
         );
 
         if (image.getRating().equals(Rating.EXPLICIT) && r.nextBoolean()) {
@@ -217,7 +216,9 @@ public class ImageboardUtils {
     // List of tags to exclude from *safe* searches
     // This isn't exactly safe wdym
     private final static List<String> excludedSafeTags = List.of(
-            "underwear", "bikini", "ass", "wet", "see_through"
+            "underwear", "bikini", "ass", "wet", "see_through",
+            // Not quite a bad tag, just filter it out for R34
+            "video"
     );
 
     private static boolean containsSafeExcludedTags(List<String> tags) {
@@ -240,34 +241,43 @@ public class ImageboardUtils {
             // very nsfl tags
             "dismemberment", "death", "decapitation", "guro", "eye_socket", "necrophilia",
             "rape", "gangrape", "gore", "gross", "bruise", "asphyxiation", "scat",
-            "strangling", "torture"
+            "strangling", "torture",
+            // Not quite a bad tag, just filter it out for R34
+            "video"
     );
 
     private static boolean containsExcludedTags(List<String> tags) {
         return tags.stream().anyMatch(excludedTags::contains);
     }
 
-    private static void imageEmbed(I18nContext languageContext, String url, String width, String height,
-                                   String tags, Rating rating, String imageboard, TextChannel channel) {
+    private static void imageEmbed(Context ctx, String url, String width, String height,
+                                   String tags, Rating rating, String imageboard) {
+        var languageContext = ctx.getLanguageContext();
         var builder = new EmbedBuilder()
-                .setAuthor(languageContext.get("commands.imageboard.found_image"), url, null)
+                .setAuthor(languageContext.get("commands.imageboard.found_image"), url, ctx.getAuthor().getEffectiveAvatarUrl())
                 .setImage(url)
                 .setColor(Color.PINK)
-                .setDescription(String.format(languageContext.get("commands.imageboard.description_image"),
-                        rating.getLongName(), imageboard)
+                .addField(EmoteReference.ZAP.toHeaderString() + languageContext.get("commands.imageboard.source"),
+                        Utils.capitalize(imageboard), false
                 )
-                .addField(languageContext.get("commands.imageboard.width"), width, true)
-                .addField(languageContext.get("commands.imageboard.height"), height, true)
-                .addField(languageContext.get("commands.imageboard.tags"),
+                .addField(EmoteReference.DIAMOND.toHeaderString() + languageContext.get("commands.imageboard.rating"),
+                        Utils.capitalize(rating.getLongName()), true
+                )
+                .addField(EmoteReference.WIDTH.toHeaderString() + languageContext.get("commands.imageboard.width"),
+                        width + " px", true
+                )
+                .addField(EmoteReference.HEIGHT.toHeaderString() + languageContext.get("commands.imageboard.height"),
+                        height + " px", true
+                )
+                .addField(EmoteReference.PENCIL.toHeaderString() + languageContext.get("commands.imageboard.tags"),
                         "`" + (tags == null ? "None" : tags) + "`", false
                 )
-                .setFooter(
-                        languageContext.get("commands.imageboard.load_notice") +
+                .setFooter(languageContext.get("commands.imageboard.load_notice") +
                                 (imageboard.equals("rule34") ? " " + languageContext.get("commands.imageboard.rule34_notice") : ""),
                         null
                 );
 
-        channel.sendMessage(builder.build()).queue();
+        ctx.send(builder.build());
     }
 
     // This is so random is a valid rating.

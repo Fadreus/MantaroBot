@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -67,8 +67,7 @@ public class MoneyCmds {
             public void call(Context ctx, String content, String[] args) {
                 final var languageContext = ctx.getLanguageContext();
 
-                //155
-                //Args: Check -check for duration
+                // Args: Check -check for duration
                 if (args.length > 0 && ctx.getMentionedUsers().isEmpty() && args[0].equalsIgnoreCase("-check")) {
                     long rl = rateLimiter.getRemaniningCooldown(ctx.getAuthor());
 
@@ -89,7 +88,7 @@ public class MoneyCmds {
                 final var authorDBUser = ctx.getDBUser();
                 final var authorUserData = authorDBUser.getData();
 
-                if (authorPlayer.isLocked()){
+                if (authorPlayer.isLocked()) {
                     ctx.sendLocalized("commands.daily.errors.own_locked");
                     return;
                 }
@@ -98,7 +97,7 @@ public class MoneyCmds {
                 User otherUser = null;
 
                 boolean targetOther = !mentionedUsers.isEmpty();
-                if (targetOther){
+                if (targetOther) {
                     otherUser = mentionedUsers.get(0);
                     // Bot check mentioned authorDBUser
                     if (otherUser.isBot()){
@@ -117,20 +116,25 @@ public class MoneyCmds {
                         return;
                     }
 
+                    if (ctx.isUserBlacklisted(otherUser.getId())) {
+                        ctx.sendLocalized("commands.transfer.blacklisted_transfer", EmoteReference.ERROR);
+                        return;
+                    }
+
                     // Why this is here I have no clue;;;
                     dailyMoney += r.nextInt(90);
 
                     var mentionedDBUser = ctx.getDBUser(otherUser.getId());
                     var mentionedUserData = mentionedDBUser.getData();
 
-                    //Marriage bonus
+                    // Marriage bonus
                     var marriage = authorUserData.getMarriage();
                     if (marriage != null && otherUser.getId().equals(marriage.getOtherPlayer(ctx.getAuthor().getId())) &&
                             playerOtherUser.getInventory().containsItem(ItemReference.RING)) {
                         dailyMoney += Math.max(10, r.nextInt(100));
                     }
 
-                    //Mutual waifu status.
+                    // Mutual waifu status.
                     if (authorUserData.getWaifus().containsKey(otherUser.getId()) && mentionedUserData.getWaifus().containsKey(author.getId())) {
                         dailyMoney +=Math.max(5, r.nextInt(100));
                     }
@@ -138,14 +142,14 @@ public class MoneyCmds {
                     toAddMoneyTo = UnifiedPlayer.of(otherUser, ctx.getConfig().getCurrentSeason());
 
 
-                } else{
+                } else {
                     // This is here so you dont overwrite yourself....
                     authorPlayer = toAddMoneyTo.getPlayer();
                     authorPlayerData = authorPlayer.getData();
                 }
 
                 // Check for rate limit
-                if (!RatelimitUtils.ratelimit(rateLimiter, ctx, false))
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx, languageContext.get("commands.daily.ratelimit_message"), false))
                     return;
 
                 List<String> returnMessage = new ArrayList<>();
@@ -155,38 +159,41 @@ public class MoneyCmds {
                 long currentDailyOffset = DAILY_VALID_PERIOD_MILLIS - (currentTime - authorPlayerData.getLastDailyAt()) ;
 
                 long streak = authorPlayerData.getDailyStreak();
-
+                var removedWatch = false;
                 // Not expired?
                 if (currentDailyOffset + amountStreaksavers * DAILY_VALID_PERIOD_MILLIS >= 0) {
                     streak++;
                     if (targetOther)
-                        returnMessage.add(languageContext.withRoot("commands","daily.streak.given.up").formatted(streak));
+                        returnMessage.add(languageContext.get("commands.daily.streak.given.up").formatted(streak));
                     else
-                        returnMessage.add(languageContext.withRoot("commands","daily.streak.up").formatted(streak));
+                        returnMessage.add(languageContext.get("commands.daily.streak.up").formatted(streak));
                     if (currentDailyOffset < 0){
                         int streakSaversUsed = -1 * (int) Math.floor((double) currentDailyOffset / (double) DAILY_VALID_PERIOD_MILLIS);
                         authorPlayer.getInventory().process(new ItemStack(ItemReference.MAGIC_WATCH, streakSaversUsed * -1));
-                        returnMessage.add(languageContext.withRoot("commands", "daily.streak.watch_used").formatted(
+                        returnMessage.add(languageContext.get("commands.daily.streak.watch_used").formatted(
                                 streakSaversUsed, streakSaversUsed + 1,
                                 amountStreaksavers - streakSaversUsed)
                         );
-                    }
 
-                } else{
+                        removedWatch = true;
+                    }
+                } else {
                     if (streak == 0) {
-                        returnMessage.add(languageContext.withRoot("commands", "daily.streak.first_time"));
+                        returnMessage.add(languageContext.get("commands.daily.streak.first_time"));
                     } else {
                         if (amountStreaksavers > 0){
                             returnMessage.add(
-                                    languageContext.withRoot("commands", "daily.streak.lost_streak.watch").formatted(streak)
+                                    languageContext.get("commands.daily.streak.lost_streak.watch").formatted(streak)
                             );
 
                             authorPlayer.getInventory().process(
                                     new ItemStack(ItemReference.MAGIC_WATCH, authorPlayer.getInventory().getAmount(ItemReference.MAGIC_WATCH) * -1)
                             );
 
-                        } else{
-                            returnMessage.add(languageContext.withRoot("commands", "daily.streak.lost_streak.normal").formatted(streak));
+                            removedWatch = true;
+
+                        } else {
+                            returnMessage.add(languageContext.get("commands.daily.streak.lost_streak.normal").formatted(streak));
                         }
                     }
                     streak = 1;
@@ -227,14 +234,11 @@ public class MoneyCmds {
                     }
 
                     if (targetOther) {
-                        returnMessage.add(
-                                languageContext.withRoot("commands", "daily.streak.given.bonus").formatted(otherUser.getName(), bonus)
-                        );
+                        returnMessage.add(languageContext.get("commands.daily.streak.given.bonus").formatted(otherUser.getName(), bonus));
                     } else {
-                        returnMessage.add(
-                                languageContext.withRoot("commands", "daily.streak.bonus").formatted(bonus)
-                        );
+                        returnMessage.add(languageContext.get("commands.daily.streak.bonus").formatted(bonus));
                     }
+
                     dailyMoney += bonus;
                 }
 
@@ -262,16 +266,21 @@ public class MoneyCmds {
                 }
 
                 toAddMoneyTo.addMoney(dailyMoney);
-                toAddMoneyTo.saveUpdating();
-
+                if (removedWatch) {
+                    toAddMoneyTo.save();
+                } else {
+                    // We can sort of avoid doing a full save here.
+                    // Since updating the fields is just fine unless we're removing something from a Map.
+                    // It's still annoying.
+                    toAddMoneyTo.saveUpdating();
+                }
 
                 // Build Message
                 var toSend = new StringBuilder((targetOther ?
-                        languageContext.withRoot("commands", "daily.given_credits")
+                        languageContext.get("commands.daily.given_credits")
                                 .formatted(EmoteReference.CORRECT, dailyMoney, otherUser.getName()) :
-                        languageContext.withRoot("commands", "daily.credits").formatted(
-                                EmoteReference.CORRECT, dailyMoney)) +
-                        "\n"
+                        languageContext.get("commands.daily.credits")
+                                .formatted(EmoteReference.CORRECT, dailyMoney)) + "\n"
                 );
 
                 for (var string : returnMessage) {
@@ -330,7 +339,7 @@ public class MoneyCmds {
                     return;
                 }
 
-                if (!RatelimitUtils.ratelimit(rateLimiter, ctx, false)) {
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
                     return;
                 }
 
@@ -410,7 +419,6 @@ public class MoneyCmds {
                     }
                 }
 
-
                 unifiedPlayer.saveUpdating();
             }
 
@@ -436,7 +444,7 @@ public class MoneyCmds {
 
                 // Values on lambdas should be final or effectively final part 9999.
                 final var finalContent = content;
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var user = ctx.getAuthor();
                     boolean isExternal = false;
 
@@ -465,11 +473,27 @@ public class MoneyCmds {
                         player.saveUpdating();
                     }
 
-                    ctx.send(EmoteReference.DIAMOND + (isExternal ?
-                            languageContext.withRoot("commands", "balance.external_balance").formatted(user.getName(), balance) :
-                            languageContext.withRoot("commands", "balance.own_balance").formatted(balance, extra))
+                    if (balance < 300 && playerData.getExperience() < 3400 && !playerData.isNewPlayerNotice()) {
+                        extra += (extra.isEmpty() ? "" : "\n") + languageContext.get("commands.balance.new_player");
+                        playerData.setNewPlayerNotice(true);
+                        player.saveUpdating();
+                    }
+
+                    var message = String.format(
+                            Utils.getLocaleFromLanguage(ctx.getLanguageContext()),
+                            languageContext.withRoot("commands", "balance.own_balance"),
+                            balance, extra
                     );
 
+                    if (isExternal) {
+                        message = String.format(
+                                Utils.getLocaleFromLanguage(ctx.getLanguageContext()),
+                                languageContext.withRoot("commands", "balance.external_balance"),
+                                user.getName(), balance
+                        );
+                    }
+
+                    ctx.send(EmoteReference.CREDITCARD + message);
                 });
             }
 

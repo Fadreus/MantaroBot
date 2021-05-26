@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@ package net.kodehawa.mantarobot.commands.currency.item;
 import net.kodehawa.mantarobot.commands.currency.item.special.Broken;
 import net.kodehawa.mantarobot.commands.currency.item.special.Potion;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
+import net.kodehawa.mantarobot.commands.currency.item.special.helpers.attributes.Tiered;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Axe;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.FishRod;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Pickaxe;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
@@ -37,6 +41,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -45,7 +50,7 @@ import java.util.stream.Stream;
 
 public class ItemHelper {
     private static final Logger log = LoggerFactory.getLogger(ItemHelper.class);
-    private static final Random random = new Random();
+    private static final SecureRandom random = new SecureRandom();
     private static final IncreasingRateLimiter lootCrateRatelimiter = new IncreasingRateLimiter.Builder()
             .limit(1)
             .spamTolerance(2)
@@ -69,9 +74,13 @@ public class ItemHelper {
             if (!playerInventory.containsItem(ItemReference.MOP))
                 return false;
 
-            if (dbUser.getData().getDustLevel() > 5) {
+            if (userData.getDustLevel() >= 5) {
                 playerData.setTimesMopped(playerData.getTimesMopped() + 1);
                 ctx.sendLocalized("general.misc_item_usage.mop", EmoteReference.DUST);
+
+                if (userData.getDustLevel() == 100) {
+                    playerData.addBadgeIfAbsent(Badge.DUSTY);
+                }
 
                 playerInventory.process(new ItemStack(ItemReference.MOP, -1));
                 userData.setDustLevel(0);
@@ -233,17 +242,26 @@ public class ItemHelper {
         toAdd.forEach(item -> ita.add(new ItemStack(item, 1)));
 
         PlayerData data = player.getData();
-        if ((type == ItemType.LootboxType.MINE || type == ItemType.LootboxType.MINE_PREMIUM) &&
-                toAdd.contains(ItemReference.GEM5_PICKAXE) && toAdd.contains(ItemReference.SPARKLE_PICKAXE)) {
+        if ((type == ItemType.LootboxType.MINE || type == ItemType.LootboxType.MINE_PREMIUM) && toAdd.contains(ItemReference.SPARKLE_PICKAXE)) {
             data.addBadgeIfAbsent(Badge.DESTINY_REACHES);
         }
 
-        if ((type == ItemType.LootboxType.FISH || type == ItemType.LootboxType.FISH_PREMIUM) &&
-                toAdd.contains(ItemReference.SHARK)) {
+        if ((type == ItemType.LootboxType.FISH || type == ItemType.LootboxType.FISH_PREMIUM) && toAdd.contains(ItemReference.SHARK)) {
             data.addBadgeIfAbsent(Badge.TOO_BIG);
         }
 
-        boolean overflow = seasonal ? seasonPlayer.getInventory().merge(ita) : player.getInventory().merge(ita);
+        var toShow = ItemStack.reduce(ita);
+        // Tools must only drop one, if any.
+        toShow = toShow.stream().map(stack -> {
+            var item = stack.getItem();
+            if (stack.getAmount() > 1 && ((item instanceof Pickaxe) || (item instanceof FishRod) || (item instanceof Axe))) {
+                return new ItemStack(item, 1);
+            }
+
+            return stack;
+        }).collect(Collectors.toList());
+
+        boolean overflow = seasonal ? seasonPlayer.getInventory().merge(toShow) : player.getInventory().merge(toShow);
 
         if (seasonal) {
             seasonPlayer.getInventory().process(new ItemStack(ItemReference.LOOT_CRATE_KEY, -1));
@@ -254,36 +272,50 @@ public class ItemHelper {
         }
 
         data.setCratesOpened(data.getCratesOpened() + 1);
-        player.saveAsync();
+        player.save();
 
         if (seasonal) {
-            seasonPlayer.saveAsync();
+            seasonPlayer.save();
         }
 
         I18nContext lang = ctx.getLanguageContext();
 
-        var toShow = ItemStack.reduce(ita);
+        var show = toShow.stream()
+                .map(itemStack -> "x%,d \u2009%s".formatted(itemStack.getAmount(), itemStack.getItem().toDisplayString()))
+                .collect(Collectors.joining(", "));
+
+        var extra = "";
+        if (overflow) {
+            extra = ". " + lang.get("general.misc_item_usage.crate.overflow");
+        }
+
+        var high = toShow.stream()
+                .filter(stack -> stack.getItem() instanceof Tiered)
+                .filter(stack -> ((Tiered) stack.getItem()).getTier() >= 4)
+                .map(stack -> "%s \u2009(%d \u2b50)".formatted(stack.getItem().getEmoji(), ((Tiered) stack.getItem()).getTier()))
+                .collect(Collectors.joining(", "));
+        if (high.length() >= 1) {
+            extra = ".\n\n" + lang.get("general.misc_item_usage.crate.success_high").formatted(EmoteReference.POPPER, high);
+        }
 
         ctx.sendFormat(lang.get("general.misc_item_usage.crate.success"),
-                typeEmote.getDiscordNotation() + " ",
-                toShow.stream()
-                        .map(itemStack -> "x%,d %s".formatted(itemStack.getAmount(), itemStack.getItem().toDisplayString()))
-                        .collect(Collectors.joining(", ")),
-                overflow ? ". " + lang.get("general.misc_item_usage.crate.overflow") : "");
+                typeEmote.getDiscordNotation() + " ", show, extra);
     }
 
     @SuppressWarnings("fallthrough")
     private static List<Item> selectItems(int amount, ItemType.LootboxType type) {
-        List<Item> common = handleItemDrop(i -> i.getItemType() == ItemType.COMMON);
+        List<Item> common = handleItemDrop(i -> i.getItemType() == ItemType.COMMON, true);
         List<Item> rare = handleItemDrop(i -> i.getItemType() == ItemType.RARE);
         List<Item> premium = handleItemDrop(i -> i.getItemType() == ItemType.PREMIUM);
 
         List<Item> mine = handleItemDrop(i ->
-                i.getItemType() == ItemType.MINE ||
-                i.getItemType() == ItemType.CAST_OBTAINABLE
+                (i.getItemType() == ItemType.MINE ||
+                i.getItemType() == ItemType.CAST_OBTAINABLE ||
+                i.getItemType() == ItemType.MINE_PICK) && i != ItemReference.ROCK, true
         );
 
-        List<Item> fish = handleItemDrop(i -> i.getItemType() == ItemType.FISHING);
+        List<Item> fish = handleItemDrop(i -> i.getItemType() == ItemType.FISHING ||  i.getItemType() == ItemType.FISHROD, true);
+        List<Item> chop = handleItemDrop(i -> i.getItemType() == ItemType.CHOP_DROP ||  i.getItemType() == ItemType.CHOP_AXE, true);
 
         List<Item> premiumMine = handleItemDrop(i ->
                 i.getItemType() == ItemType.CAST_MINE ||
@@ -301,8 +333,13 @@ public class ItemHelper {
                 i.getItemType() == ItemType.FISHING_RARE
         );
 
-        RandomCollection<Item> items = new RandomCollection<>();
+        List<Item> premiumChop = handleItemDrop(i ->
+                i.getItemType() == ItemType.CHOP_DROP ||
+                        i.getItemType() == ItemType.CHOP_AXE ||
+                        i.getItemType() == ItemType.CHOP_RARE_AXE
+        );
 
+        RandomCollection<Item> items = new RandomCollection<>();
         switch (type) {
             case PREMIUM:
                 premium.forEach(i -> items.add(2, i));
@@ -311,6 +348,9 @@ public class ItemHelper {
             case COMMON:
                 common.forEach(i -> items.add(20, i));
                 break; //fallthrough intended until here.
+            case CHOP_PREMIUM:
+                premiumChop.forEach(i -> items.add(8, i));
+                break;
             case FISH_PREMIUM:
                 premiumFish.forEach(i -> items.add(8, i));
                 break;
@@ -322,6 +362,9 @@ public class ItemHelper {
                 break;
             case FISH:
                 fish.forEach(i -> items.add(8, i));
+                break;
+            case CHOP:
+                chop.forEach(i -> items.add(8, i));
         }
 
         List<Item> list = new ArrayList<>(amount);
@@ -333,13 +376,40 @@ public class ItemHelper {
     }
 
     private static List<Item> handleItemDrop(Predicate<Item> predicate) {
+        return handleItemDrop(predicate, false);
+    }
+
+
+    private static List<Item> handleItemDrop(Predicate<Item> predicate, boolean normal) {
         List<Item> all = Arrays.stream(ItemReference.ALL)
                 .filter(i -> i.isBuyable() || i.isSellable())
                 .collect(Collectors.toList());
 
         return all.stream()
                 .filter(predicate)
-                .filter(item -> item.value <= 340 || random.nextBoolean())
+                .filter(item -> {
+                    // Keep in mind the chances here aren't absolute for any means,
+                    // and it depends on the RandomCollection created on selectItems
+                    if (normal) {
+                        if ((item instanceof Tiered && ((Tiered) item).getTier() >= 5)) {
+                            return random.nextFloat() <= 0.02f; // 2% for 5* +
+                        }
+
+                        if ((item instanceof Tiered && ((Tiered) item).getTier() >= 3) || item.getValue() >= 100) {
+                            return random.nextFloat() <= 0.05f;  // 5% for 3 and 4*
+                        }
+                    } else {
+                        if ((item instanceof Tiered && ((Tiered) item).getTier() >= 5)) {
+                            return random.nextFloat() <= 0.10f; // 10% for 5* +
+                        }
+
+                        if ((item instanceof Tiered && ((Tiered) item).getTier() >= 3) || item.getValue() >= 300) {
+                            return random.nextFloat() <= 0.40f; // 40% for 3* +
+                        }
+                    }
+
+                    return true;
+                })
                 .sorted(Comparator.comparingLong(i -> i.value))
                 .collect(Collectors.toList());
     }
@@ -431,12 +501,18 @@ public class ItemHelper {
 
             var broken = "";
             var brokenItem = getBrokenItemFrom(item);
-            if (brokenItem != null && random.nextInt(100) >= 20) {
+            var successBroken = false;
+            if (brokenItem != null && (item.getValue() > 10000 || random.nextInt(100) >= 20)) {
                 broken = "\n" + String.format(languageContext.get("commands.mine.broken_drop"),
                         EmoteReference.HEART, brokenItem.getEmoji(), brokenItem.getName()
                 );
 
                 playerInventory.process(new ItemStack(brokenItem, 1));
+                successBroken = true;
+            }
+
+            if (!successBroken && brokenItem != null) {
+                broken = "\n" + String.format(languageContext.get("commands.mine.broken_drop_miss"), EmoteReference.SAD);
             }
 
             var toReplace = languageContext.get("commands.mine.item_broke");
@@ -449,11 +525,16 @@ public class ItemHelper {
             if (isSeasonal) {
                 seasonPlayer.save();
             } else {
+                player.getData().addBadgeIfAbsent(Badge.ITEM_BREAKER);
                 player.saveUpdating();
                 // We remove something from a HashMap here, and somehow
                 // removing it from a HashMap will need a full replace (why?)
                 user.save();
             }
+
+            var stats = ctx.getPlayerStats();
+            stats.incrementToolsBroken();
+            stats.saveUpdating();
 
             //is broken
             return Pair.of(true, Pair.of(player, user));
@@ -461,12 +542,47 @@ public class ItemHelper {
             if (isSeasonal) {
                 seasonPlayer.saveUpdating();
             } else {
+                if (item == ItemReference.HELLFIRE_PICK)
+                    player.getData().addBadgeIfAbsent(Badge.HOT_MINER);
+                if (item == ItemReference.HELLFIRE_ROD)
+                    player.getData().addBadgeIfAbsent(Badge.HOT_FISHER);
+                if (item == ItemReference.HELLFIRE_AXE)
+                    player.getData().addBadgeIfAbsent(Badge.HOT_CHOPPER);
+
                 player.saveUpdating();
                 user.saveUpdating();
             }
 
             //is not broken
             return Pair.of(false, Pair.of(player, user));
+        }
+    }
+
+    public static void handleItemDurability(Item item, Context ctx, Player player, DBUser dbUser,
+                                      SeasonPlayer seasonPlayer, String i18n, boolean isSeasonal) {
+        var breakage = handleDurability(ctx, item, player, dbUser, seasonPlayer, isSeasonal);
+        if (!breakage.getKey()) {
+            return;
+        }
+
+        if (isSeasonal) {
+            return;
+        }
+
+        //We need to get this again since reusing the old ones will cause :fire:
+        var finalPlayer = breakage.getValue().getKey();
+        var finalUser = breakage.getValue().getValue();
+        var inventory = finalPlayer.getInventory();
+        var userData = finalUser.getData();
+
+        if (userData.isAutoEquip() && inventory.containsItem(item)) {
+            userData.getEquippedItems().equipItem(item);
+            inventory.process(new ItemStack(item, -1));
+
+            finalPlayer.save();
+            finalUser.save();
+
+            ctx.sendLocalized(i18n, EmoteReference.CORRECT, item.getName());
         }
     }
 }

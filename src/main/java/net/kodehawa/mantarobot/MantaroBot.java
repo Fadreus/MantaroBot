@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,11 +11,12 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lavalink.client.io.LavalinkLoadBalancer;
 import lavalink.client.io.LessAnnoyingJdaLavalink;
@@ -166,36 +167,7 @@ public class MantaroBot {
         log.info("Finished loading basic components. Current status: {}", MantaroCore.getLoadState());
         MantaroData.config().save();
         ImageBoard.setUserAgent(MantaroInfo.USER_AGENT);
-
-        // Handle the removal of mutes.
-        ScheduledExecutorService muteExecutor = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("Mantaro Mute Task").build()
-        );
-
-        muteExecutor.scheduleAtFixedRate(MuteTask::handle, 0, 1, TimeUnit.MINUTES);
-
-        // Handle the delivery of reminders, assuming this is the master node.
-        if (isMasterNode()) {
-            ScheduledExecutorService reminderExecutor = Executors.newSingleThreadScheduledExecutor(
-                    new ThreadFactoryBuilder().setNameFormat("Mantaro Reminder Handler").build()
-            );
-
-            reminderExecutor.scheduleAtFixedRate(ReminderTask::handle, 0, 30, TimeUnit.SECONDS);
-        }
-
-        // Yes, this is needed.
-        ScheduledExecutorService ratelimitMapExecutor = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("Mantaro Ratelimit Clear").build()
-        );
-
-        ratelimitMapExecutor.scheduleAtFixedRate(RatelimitUtils.ratelimitedUsers::clear, 0, 24, TimeUnit.HOURS);
-
-        // Handle posting statistics.
-        ScheduledExecutorService postExecutor = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("Mantaro Statistics Posting").build()
-        );
-
-        postExecutor.scheduleAtFixedRate(() -> postStats(getShardManager()), 10, 5, TimeUnit.MINUTES);
+        this.startExecutors();
 
         // This is basically done because Andesite doesn't destroy players on shutdown
         // when using LL compat. This causes players to not work on next startup.
@@ -252,6 +224,7 @@ public class MantaroBot {
         return getShardManager().getShardById(id);
     }
 
+    // -- This bunch are basically almost always eval'd, so they're unused
     public void restartShard(int shardId) {
         getShardManager().restart(shardId);
     }
@@ -270,6 +243,18 @@ public class MantaroBot {
         return (int) ((guildId >> 22) % getShardManager().getShardsTotal());
     }
 
+    public void enableDebugCommands() {
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("net.kodehawa.mantarobot.core"))
+                .setLevel(Level.DEBUG);
+    }
+
+    public void disableDebugCommands() {
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("net.kodehawa.mantarobot.core"))
+                .setLevel(Level.INFO);
+    }
+
+    // -- Until here
+
     // You would ask, doesn't ShardManager#getShardsTotal do that? Absolutely not. It's screwed. Fucked. I dunno why.
     // DefaultShardManager overrides it, nvm, ouch.
     public int getManagedShards() {
@@ -280,6 +265,35 @@ public class MantaroBot {
         return IntStream.range(0, getManagedShards())
                 .mapToObj(this::getShard)
                 .collect(Collectors.toList());
+    }
+
+    private void startExecutors() {
+        log.info("Starting executors...");
+        // Handle the delivery of reminders, assuming this is the master node (Node 0).
+        if (isMasterNode()) {
+            ScheduledExecutorService reminderExecutor = Executors.newSingleThreadScheduledExecutor(
+                    new ThreadFactoryBuilder().setNameFormat("Mantaro Reminder Handler").build()
+            );
+            reminderExecutor.scheduleAtFixedRate(ReminderTask::handle, 0, 30, TimeUnit.SECONDS);
+        }
+
+        // Handle the removal of mutes.
+        ScheduledExecutorService muteExecutor = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("Mantaro Mute Task").build()
+        );
+        muteExecutor.scheduleAtFixedRate(MuteTask::handle, 0, 1, TimeUnit.MINUTES);
+
+        // Yes, this is needed.
+        ScheduledExecutorService ratelimitMapExecutor = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("Mantaro Ratelimit Clear").build()
+        );
+        ratelimitMapExecutor.scheduleAtFixedRate(RatelimitUtils.ratelimitedUsers::clear, 0, 24, TimeUnit.HOURS);
+
+        // Handle posting statistics.
+        ScheduledExecutorService postExecutor = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("Mantaro Statistics Posting").build()
+        );
+        postExecutor.scheduleAtFixedRate(() -> postStats(getShardManager()), 10, 20, TimeUnit.MINUTES);
     }
 
     public void startCheckingBirthdays() {
@@ -345,10 +359,6 @@ public class MantaroBot {
                 );
             }
         }
-    }
-
-    public void forceRestartShardFromGuild(String guildId) {
-        restartShard(getShardGuild(guildId).getShardInfo().getShardId());
     }
 
     public MantaroAudioManager getAudioManager() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.music.utils;
@@ -52,15 +52,20 @@ public class AudioCmdUtils {
     private static final String icon = "https://i.imgur.com/FWKIR7N.png";
 
     public static void embedForQueue(GuildMessageReceivedEvent event, GuildMusicManager musicManager, I18nContext lang) {
-        final var trackScheduler = musicManager.getTrackScheduler();
-        final var toSend = getQueueList(trackScheduler.getQueue());
         final var guild = event.getGuild();
-        final var musicPlayer = trackScheduler.getMusicPlayer();
-        final var playingTrack = musicPlayer.getPlayingTrack();
         final var selfMember = guild.getSelfMember();
         final var channel = event.getChannel();
 
-        // This used to be a ternary, but it wasn't too readable, to say the least.
+        if (!selfMember.hasPermission(channel, Permission.MESSAGE_EMBED_LINKS)) {
+            channel.sendMessageFormat(lang.get("commands.music_general.queue.no_embed"), EmoteReference.ERROR).queue();
+            return;
+        }
+
+        final var trackScheduler = musicManager.getTrackScheduler();
+        final var toSend = getQueueList(trackScheduler.getQueue());
+        final var musicPlayer = trackScheduler.getMusicPlayer();
+        final var playingTrack = musicPlayer.getPlayingTrack();
+
         var nowPlaying = "";
         if (playingTrack == null) {
             nowPlaying = lang.get("commands.music_general.queue.no_track_found_np");
@@ -82,19 +87,25 @@ public class AudioCmdUtils {
 
         if (toSend.isEmpty()) {
             channel.sendMessage(new EmbedBuilder()
-                    .setAuthor(String.format(lang.get("commands.music_general.queue.header"), guild.getName()),
-                            null, guild.getIconUrl())
+                    .setAuthor(
+                            String.format(lang.get("commands.music_general.queue.header"), guild.getName()),
+                            null, guild.getIconUrl()
+                    )
                     .setColor(Color.CYAN)
-                    .setDescription(lang.get("commands.music_general.queue.nothing_playing") +
-                            "\n\n" + lang.get("commands.music_general.queue.nothing_playing_2"))
-                    .addField(lang.get("commands.music_general.queue.np"), nowPlaying, false)
+                    .setDescription(
+                            lang.get("commands.music_general.queue.nothing_playing") + "\n\n" +
+                            lang.get("commands.music_general.queue.nothing_playing_2")
+                    )
+                    .addField(EmoteReference.SATELLITE.toHeaderString() + lang.get("commands.music_general.queue.np"), nowPlaying, false)
                     .setThumbnail(icon).build()
             ).queue();
 
             return;
         }
 
-        var length = trackScheduler.getQueue().stream().mapToLong(value -> value.getInfo().length).sum();
+        var length = trackScheduler.getQueue().stream()
+                .filter(track -> track.getDuration() != Long.MAX_VALUE)
+                .mapToLong(value -> value.getInfo().length).sum();
         var voiceChannel = selfMember.getVoiceState().getChannel();
         var builder = new EmbedBuilder()
                 .setAuthor(String.format(lang.get("commands.music_general.queue.header"),
@@ -115,7 +126,7 @@ public class AudioCmdUtils {
 
             // Instructions in case there's no reaction perms.
             if (!hasReactionPerms) {
-                builder.addField(lang.get("commands.music_general.queue.header_field"),
+                builder.addField(EmoteReference.PENCIL.toHeaderString() + lang.get("commands.music_general.queue.header_field"),
                         lang.get("commands.music_general.queue.header_noreact"),
                         false
                 );
@@ -125,23 +136,24 @@ public class AudioCmdUtils {
             // Description is then added on DiscordUtils.list/listText, as we have to
             // split it.
             return builder.setThumbnail(icon)
-                    .addField(lang.get("commands.music_general.queue.np"), np, false)
-                    .addField(lang.get("commands.music_general.queue.total_queue_time"),
+                    .addField(EmoteReference.SATELLITE.toHeaderString() + lang.get("commands.music_general.queue.np"), np, false)
+                    .addField(EmoteReference.CLOCK.toHeaderString() + lang.get("commands.music_general.queue.total_queue_time"),
                             Utils.formatDuration(length),
                             false
                     )
-                    .addField(lang.get("commands.music_general.queue.total_size"),
+                    .addField(EmoteReference.STAR.toHeaderString() + lang.get("commands.music_general.queue.total_size"),
                             String.format("%d %s",
-                                    trackScheduler.getQueue().size(), lang.get("commands.music_general.queue.songs")
+                                    trackScheduler.getQueue().size(),
+                                    lang.get("commands.music_general.queue.songs")
                             ),
                             true
                     )
-                    .addField(lang.get("commands.music_general.queue.togglers"),
+                    .addField(EmoteReference.SLIDER.toHeaderString() + lang.get("commands.music_general.queue.togglers"),
                         String.format("`%s / %s`", trackScheduler.getRepeatMode() == null ? "false" :
                              trackScheduler.getRepeatMode(), musicPlayer.isPaused()),
                             true
                     )
-                    .addField(lang.get("commands.music_general.queue.playing_in"),
+                    .addField(EmoteReference.MEGA.toHeaderString() + lang.get("commands.music_general.queue.playing_in"),
                             voiceChannel == null ? lang.get("commands.music_general.queue.no_channel") : voiceChannel.getName(),
                             true
                     )
@@ -180,7 +192,7 @@ public class AudioCmdUtils {
             joinVoiceChannel(link, userChannel);
             textChannel.sendMessageFormat(
                     lang.get("commands.music_general.connect.success"),
-                    EmoteReference.CORRECT, userChannel.getName()
+                    EmoteReference.MEGA, userChannel.getName()
             ).queue();
 
             return completedFuture(null);
@@ -209,7 +221,7 @@ public class AudioCmdUtils {
         final var selfMember = guild.getSelfMember();
         final var guildData = MantaroData.db().getGuild(guild).getData();
 
-        //I can't see you in any VC here?
+        // I can't see you in any VC here?
         if (voiceChannel == null) {
             textChannel.sendMessageFormat(
                     lang.get("commands.music_general.connect.user_no_vc"),
@@ -219,7 +231,7 @@ public class AudioCmdUtils {
             return completedFuture(false);
         }
 
-        //Can't connect to this channel
+        // Can't connect to this channel
         if (!selfMember.hasPermission(voiceChannel, Permission.VOICE_CONNECT)) {
             textChannel.sendMessageFormat(
                     lang.get("commands.music_general.connect.missing_permissions_connect"),
@@ -229,7 +241,7 @@ public class AudioCmdUtils {
             return completedFuture(false);
         }
 
-        //Can't speak on this channel
+        // Can't speak on this channel
         if (!selfMember.hasPermission(voiceChannel, Permission.VOICE_SPEAK)) {
             textChannel.sendMessageFormat(
                     lang.get("commands.music_general.connect.missing_permission_speak"),
@@ -239,21 +251,20 @@ public class AudioCmdUtils {
             return completedFuture(false);
         }
 
-        //Set the custom guild music channel from the db value
+        // Set the custom guild music channel from the db value
         VoiceChannel guildMusicChannel = null;
         if (guildData.getMusicChannel() != null) {
             guildMusicChannel = guild.getVoiceChannelById(guildData.getMusicChannel());
         }
 
-        //This is where we call LL.
         final var link = MantaroBot.getInstance().getAudioManager().getMusicManager(guild).getLavaLink();
         final var lastChannel = link.getLastChannel();
         final var linkState = link.getState();
 
-        //Cursed lavalink issues tracker.
+        // Cursed lavalink issues tracker.
         var cursed = false;
         if (guildMusicChannel != null) {
-            //If the channel is not the set one, reject this connect.
+            // If the channel is not the set one, reject this connect.
             if (!voiceChannel.equals(guildMusicChannel)) {
                 textChannel.sendMessageFormat(
                         lang.get("commands.music_general.connect.channel_locked"),
@@ -263,29 +274,23 @@ public class AudioCmdUtils {
                 return completedFuture(false);
             }
 
-            //If the link is not currently connected or connecting, accept connection and call openAudioConnection
+            // If the link is not currently connected or connecting, accept connection and call openAudioConnection
             if (linkState != Link.State.CONNECTED && linkState != Link.State.CONNECTING) {
-                log.debug(
-                        "Connected to channel {}. Reason: Link is not CONNECTED or CONNECTING " +
-                        "and we requested a connection from connectToVoiceChannel (custom music channel)",
-                        voiceChannel.getId()
-                );
-
                 return openAudioConnection(event, link, voiceChannel, lang)
                         .thenApply(__ -> true);
             }
 
-            //Nothing to connect to, but pass true so we can load the song (for example, it's already connected)
+            // Nothing to connect to, but pass true so we can load the song (for example, it's already connected)
             return completedFuture(true);
         }
 
-        //Assume last channel it's the one it was attempting to connect to? (on the one below this too)
-        //If the link is CONNECTED and the lastChannel is not the one it's already connected to, reject connection
+        // Assume last channel it's the one it was attempting to connect to? (on the one below this too)
+        // If the link is CONNECTED and the lastChannel is not the one it's already connected to, reject connection
         if (linkState == Link.State.CONNECTED && lastChannel != null && !lastChannel.equals(voiceChannel.getId())) {
             var vc = guild.getVoiceChannelById(lastChannel);
 
-            //Workaround for a bug in lavalink that gives us Link.State.CONNECTED and a channel that doesn't exist anymore.
-            //This is a little cursed.
+            // Workaround for a bug in lavalink that gives us Link.State.CONNECTED and a channel that doesn't exist anymore.
+            // This is a little cursed.
             if (vc != null) {
                 textChannel.sendMessageFormat(
                         lang.get("commands.music_general.connect.already_connected"),
@@ -298,12 +303,12 @@ public class AudioCmdUtils {
             }
         }
 
-        //If the link is CONNECTING and the lastChannel is not the one it's already connected to, reject connection
+        // If the link is CONNECTING and the lastChannel is not the one it's already connected to, reject connection
         if (linkState == Link.State.CONNECTING && lastChannel != null && !lastChannel.equals(voiceChannel.getId())) {
             var vc = guild.getVoiceChannelById(lastChannel);
 
-            //Workaround for a bug in lavalink that gives us Link.State.CONNECTING and a channel that doesn't exist anymore.
-            //This is a little cursed.
+            // Workaround for a bug in lavalink that gives us Link.State.CONNECTING and a channel that doesn't exist anymore.
+            // This is a little cursed.
             if (vc != null) {
                 textChannel.sendMessageFormat(
                         lang.get("commands.music_general.connect.attempting_to_connect"),
@@ -316,13 +321,8 @@ public class AudioCmdUtils {
             }
         }
 
-        //If the link is not currently connected or connecting, accept connection and call openAudioConnection
+        // If the link is not currently connected or connecting, accept connection and call openAudioConnection
         if ((linkState != Link.State.CONNECTED && linkState != Link.State.CONNECTING) || cursed) {
-            log.debug("Connected to voice channel {}. " +
-                    "Reason: Link is not CONNECTED or CONNECTING and we requested a connection from connectToVoiceChannel",
-                    voiceChannel.getId()
-            );
-
             if (cursed) {
                 log.debug("We seemed to hit a Lavalink/JDA bug? Null voice channel, but {} state.", linkState);
             }
@@ -330,7 +330,7 @@ public class AudioCmdUtils {
             return openAudioConnection(event, link, voiceChannel, lang).thenApply(__ -> true);
         }
 
-        //Nothing to connect to, but pass true so we can load the song (for example, it's already connected)
+        // Nothing to connect to, but pass true so we can load the song (for example, it's already connected)
         return completedFuture(true);
     }
 

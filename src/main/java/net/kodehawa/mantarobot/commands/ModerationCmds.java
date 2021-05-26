@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -27,8 +27,8 @@ import net.kodehawa.mantarobot.core.modules.commands.SimpleCommand;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
-import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.StringUtils;
+import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import org.slf4j.Logger;
@@ -89,7 +89,7 @@ public class ModerationCmds {
 
                 //If one of them is in a higher hierarchy than the bot, cannot ban.
                 if (!selfMember.canInteract(member)) {
-                    ctx.sendLocalized("commands.softban.self_hierarchy_conflict", EmoteReference.ERROR);
+                    ctx.sendLocalized("commands.softban.self_hierarchy_conflict", EmoteReference.ERROR, user.getName());
                     return;
                 }
 
@@ -113,8 +113,7 @@ public class ModerationCmds {
                             dbGuild.saveAsync();
 
                             ctx.sendLocalized("commands.softban.success", EmoteReference.ZAP, languageContext.get("general.mod_quotes"), user.getName());
-                            guild.unban(user).reason(finalReason).queue(aVoid -> {
-                            }, error -> {
+                            guild.unban(user).reason(finalReason).queue(__ -> { }, error -> {
                                 if (error instanceof PermissionException) {
                                     ctx.sendLocalized("commands.softban.error", EmoteReference.ERROR,
                                             user.getName(), ((PermissionException) error).getPermission()
@@ -130,8 +129,7 @@ public class ModerationCmds {
 
                             ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, dbGuild.getData().getCases());
                             TextChannelGround.of(ctx.getEvent()).dropItemWithChance(2, 2);
-                        },
-                        error -> {
+                        }, error -> {
                             if (error instanceof PermissionException) {
                                 ctx.sendLocalized("commands.softban.error", EmoteReference.ERROR,
                                         user.getName(), ((PermissionException) error).getPermission()
@@ -222,7 +220,7 @@ public class ModerationCmds {
                         return;
                     }
 
-                    final var db = MantaroData.db().getGuild(ctx.getGuild());
+                    final var db = ctx.getDBGuild();
 
                     // DM's before success, because it might be the "c"ast mutual guild.
                     user.openPrivateChannel().queue(privateChannel -> {
@@ -311,7 +309,7 @@ public class ModerationCmds {
                 final var finalReason = "Kicked by %#s: %s".formatted(ctx.getAuthor(), reason);
                 var memberRaw = args[0];
 
-                ctx.findMember(memberRaw, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(memberRaw, members -> {
                     var member = CustomFinderUtil.findMember(memberRaw, members, ctx);
                     if (member == null)
                         return;
@@ -334,8 +332,7 @@ public class ModerationCmds {
                         return;
                     }
 
-                    final var db = MantaroData.db().getGuild(ctx.getGuild());
-
+                    final var db = ctx.getDBGuild();
                     if (!user.isBot()) {
                         user.openPrivateChannel()
                                 .flatMap(privateChannel ->
@@ -343,7 +340,8 @@ public class ModerationCmds {
                                                 EmoteReference.MEGA,
                                                 ctx.getAuthor().getAsTag(),
                                                 finalReason,
-                                                ctx.getGuild().getName()))
+                                                ctx.getGuild().getName())
+                                        )
                                 ).queue();
                     }
 
@@ -355,8 +353,7 @@ public class ModerationCmds {
                                 ctx.sendLocalized("commands.kick.success", EmoteReference.ZAP, ctx.getLanguageContext().get("general.mod_quotes"), user.getName());
                                 ModLog.log(ctx.getMember(), user, finalReason, ctx.getChannel().getName(), ModLog.ModAction.KICK, db.getData().getCases());
                                 TextChannelGround.of(ctx.getEvent()).dropItemWithChance(2, 2);
-                            },
-                            error -> {
+                            }, error -> {
                                 if (error instanceof PermissionException) {
                                     ctx.sendLocalized("commands.kick.error", EmoteReference.ERROR, user.getName(),
                                             ((PermissionException) error).getPermission().getName()

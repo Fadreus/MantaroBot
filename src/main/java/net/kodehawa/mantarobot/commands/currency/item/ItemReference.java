@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,12 +11,20 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.currency.item;
 
 import net.kodehawa.mantarobot.commands.currency.item.special.*;
+import net.kodehawa.mantarobot.commands.currency.item.special.gems.CastedGem;
+import net.kodehawa.mantarobot.commands.currency.item.special.gems.Gem;
+import net.kodehawa.mantarobot.commands.currency.item.special.gems.Sparkle;
+import net.kodehawa.mantarobot.commands.currency.item.special.helpers.attributes.GemType;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Axe;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.FishRod;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Pickaxe;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Wrench;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 
 public class ItemReference {
@@ -33,7 +41,7 @@ public class ItemReference {
             CHICKEN, MILK_2, DOG_FOOD, CAT_FOOD, HAMSTER_FOOD, WOOD, AXE, COMET_AXE, STAR_AXE, SPARKLE_AXE, HELLFIRE_AXE, MOON_AXE,
             MOON_PICK, MOON_ROD, HELLFIRE_PICK, HELLFIRE_ROD, PET_HOUSE, LEAVES, APPLE, PEAR, CHERRY_BLOSSOM, ROCK, BROKEN_MOON_PICK,
             BROKEN_MOON_ROD, BROKEN_COMET_AXE, BROKEN_STAR_AXE, BROKEN_SPARKLE_AXE, BROKEN_MOON_AXE, BROKEN_HELLFIRE_PICK,
-            BROKEN_HELLFIRE_AXE, BROKEN_HELLFIRE_ROD;
+            BROKEN_HELLFIRE_AXE, BROKEN_HELLFIRE_ROD, CHOP_CRATE, CHOP_PREMIUM_CRATE;
 
     public static final Item[] ALL = {
             HEADPHONES = new Item(ItemType.COLLECTABLE, "\uD83C\uDFA7",
@@ -87,13 +95,13 @@ public class ItemReference {
                     100, true
             ),
 
-            BROM_PICKAXE = new Pickaxe(ItemType.MINE_PICK, 0.19f, "\u26cf",
+            BROM_PICKAXE = new Pickaxe(ItemType.MINE_PICK, "\u26cf",
                     "Brom's Pickaxe", "items.pick", "items.description.pick",
-                    100, true, 40, 0
+                    100, true, 40, 0, 1, "items.explanation.pick"
             ),
 
             MILK = new Item(ItemType.COMMON, EmoteReference.POTION1.getUnicode(),
-                    "Milk", "items.milk", "items.description.milk",
+                    "Glass of Milk", "items.milk", "items.description.milk",
                     25, true
             ),
 
@@ -102,7 +110,7 @@ public class ItemReference {
                     25, true
             ),
 
-            LEWD_MAGAZINE = new Item(ItemType.COMMON, EmoteReference.MAGAZINE.getUnicode(),
+            LEWD_MAGAZINE = new Item(ItemType.COLLECTABLE, EmoteReference.MAGAZINE.getUnicode(),
                     "Lewd Magazine",
                     "items.lewd", "items.description.lewd",
                     25, true
@@ -205,7 +213,7 @@ public class ItemReference {
                     (ctx, season) -> ItemHelper.openLootCrate(ctx, ItemType.LootboxType.RARE, 33, EmoteReference.LOOT_CRATE, 3, season)
             ),
 
-            STAR_2 = new Item(ItemType.COMMON, EmoteReference.STAR.getUnicode(), "Consolation Prize",
+            STAR_2 = new Item(ItemType.COLLECTABLE, EmoteReference.STAR.getUnicode(), "Consolation Prize",
                     "items.prize_2", "items.description.prize_2",
                     500, true, false, true
             ),
@@ -242,25 +250,25 @@ public class ItemReference {
                     20, true
             ),
 
-            POTION_HASTE = new Potion(ItemType.POTION, 2, "\uD83C\uDF76",
+            POTION_HASTE = new Potion(ItemType.POTION, 4, "\uD83C\uDF76",
                     "Haste Potion", "items.haste", "items.description.haste",
                     490, true
             ),
 
-            POTION_CLEAN = new Item(ItemType.POTION, "\uD83C\uDF7C",
+            POTION_CLEAN = new Item(ItemType.POTION, "\uD83E\uDD64",
                     "Milky Potion", "items.milky", "items.description.milky",
                     50, true
             ),
 
-            POTION_STAMINA = new Potion(ItemType.POTION, 3, "\uD83C\uDFFA",
+            POTION_STAMINA = new Potion(ItemType.POTION, 4, "\uD83C\uDFFA",
                     "Energy Beverage", "items.energy", "items.description.energy",
                     450, true
             ),
 
             FISHING_ROD = new FishRod(ItemType.FISHROD, 3, 1, 25,
                     "\uD83C\uDFA3",
-                    "Fishing Rod", "Rod", "items.rod", "items.description.rod",
-                    65, true,
+                    "Fishing Rod", "Rod", "items.rod", "items.description.rod", "items.explanation.rod",
+                    1, 65, true,
                     "", 40, 0
             ),
 
@@ -279,28 +287,28 @@ public class ItemReference {
                     15, false
             ),
 
-            COMET_GEM = new Item(ItemType.CAST_OBTAINABLE, "\u2604",
-                    "Comet Gem", "items.comet_gem", "items.description.comet_gem",
-                    40,
+            COMET_GEM = new CastedGem("\u2604", "Comet Gem",
+                    "items.comet_gem", "items.description.comet_gem",
+                    60, 3,
                     true, false,
                     "3;1", 51, 24
             ),
 
-            STAR_GEM = new Item(ItemType.CAST_OBTAINABLE, "\ud83c\udf1f",
-                    "Star Gem", "items.star_gem", "items.description.star_gem",
-                    60,
+            STAR_GEM = new CastedGem("\ud83c\udf1f", "Star Gem",
+                    "items.star_gem", "items.description.star_gem",
+                    100, 4,
                     true, false,
                     "4;1", 51, 25
             ),
 
-            COBWEB = new Item(ItemType.MINE, "\uD83D\uDD78",
-                    "Cobweb", "items.cobweb", "items.description.cobweb",
-                    10, false
+            COBWEB = new Gem(GemType.UTILITY, "\uD83D\uDD78",
+                    "Cobweb", "items.cobweb",
+                    "items.description.cobweb", 10, 2
             ),
 
-            GEM_FRAGMENT = new Item(ItemType.MINE, "\uD83D\uDCAB",
-                    "Gem Fragment", "items.fragment", "items.description.fragment",
-                    50, false
+            GEM_FRAGMENT = new Gem(GemType.GEM, "\uD83D\uDCAB",
+                    "Gem Fragment", "items.fragment",
+                    "items.description.fragment", 50, 3
             ),
 
             MOP = new Item(ItemType.INTERACTIVE, "\uD83E\uDDF9",
@@ -328,11 +336,12 @@ public class ItemReference {
                     15, true
             ),
 
-            DIAMOND_PICKAXE = new Pickaxe(ItemType.MINE_PICK, 0.16f,
+            DIAMOND_PICKAXE = new Pickaxe(ItemType.MINE_PICK,
                     1, 20, EmoteReference.DIAMOND_PICK.getDiscordNotation(),
                     "Diamond Pickaxe", "items.diamond_pick", "items.description.diamond_pick",
                     100, true, false,
-                    "1;3;7", 150, 40, 10, 18, 101
+                    "1;3;7", 150, 40, 2,
+                    "items.explanation.diamond_pick", 10, 18, 101
             ),
 
             TELEVISION = new Item(ItemType.COMMON, "\uD83D\uDCFA",
@@ -343,7 +352,8 @@ public class ItemReference {
             WRENCH = new Wrench(ItemType.WRENCH, 65, 1, 1.0d,
                     "\ud83d\udd27",
                     "Wrench", "items.wrench", "items.description.wrench",
-                    50, true
+                    "items.explanation.wrench",
+                    50, 35, 1, true
             ),
 
             MOTORCYCLE = new Item(ItemType.COMMON, "\uD83C\uDFCD",
@@ -351,18 +361,19 @@ public class ItemReference {
                     150, true
             ),
 
-            COMET_PICKAXE = new Pickaxe(ItemType.MINE_PICK, 0.13f,
+            COMET_PICKAXE = new Pickaxe(ItemType.MINE_PICK,
                     1, 10, EmoteReference.COMET_PICK.getDiscordNotation(),
                     "Comet Pickaxe", "items.comet_pick", "items.description.comet_pick",
                     290, true, false,
-                    "1;2;7", 180, 100, 10, 48, 101
+                    "1;2;7", 180, 100, 310, 3,
+                    "items.explanation.comet_pick", 10, 48, 101
             ),
 
-            STAR_PICKAXE = new Pickaxe(ItemType.MINE_PICK, 0.09f,
-                    1, 10, EmoteReference.STAR_PICK.getDiscordNotation(),
+            STAR_PICKAXE = new Pickaxe(ItemType.MINE_PICK, EmoteReference.STAR_PICK.getDiscordNotation(),
                     "Star Pickaxe", "items.star_pick", "items.description.star_pick",
-                    350, true, false,
-                    "1;2;7", 220, 100,10, 49, 101
+                    1, 10, 350, true, false, "1;2;7",
+                    220, 100, 3, 390, 300, 4,
+                    "items.explanation.star_pick", 10, 49, 101
             ),
 
             PIZZA = new Item(ItemType.COMMON, "\uD83C\uDF55",
@@ -414,32 +425,33 @@ public class ItemReference {
             COMET_ROD = new FishRod(ItemType.FISHROD, 6,
                     1, 15, EmoteReference.COMET_ROD.getDiscordNotation(),
                     "Comet Gem Rod", "Comet Rod", "items.comet_rod", "items.description.comet_rod",
-                    150,
+                    "items.explanation.comet_rod", 3, 150,
                     "1;2;3", 130, 44, 48, 101
             ),
 
             STAR_ROD = new FishRod(ItemType.FISHROD, 9,
                     1, 10, EmoteReference.STAR_ROD.getDiscordNotation(),
                     "Star Gem Rod", "Star Rod", "items.star_rod", "items.description.star_rod",
-                    250,
+                    "items.explanation.star_rod", 4, 250,
                     "1;2;3", 170, 44, 49, 101
             ),
 
             OLD_SPARKLE_ROD = new FishRod(ItemType.DEPRECATED, 3,
                     -1, -1, "\uD83C\uDFA3",
                     "Old Sparkly Rod", "general.deprecated", "general.deprecated",
-                    65,
+                    "general.deprecated", 1, 65,
                     "", 2
             ),
 
-            SPARKLE_PICKAXE = new Pickaxe(ItemType.MINE_RARE_PICK, 0.04f,
-                    3, 5, EmoteReference.SPARKLE_PICK.getDiscordNotation(),
+            SPARKLE_PICKAXE = new Pickaxe(ItemType.MINE_RARE_PICK, EmoteReference.SPARKLE_PICK.getDiscordNotation(),
                     "Sparkle Pickaxe", "items.sparkle_pick", "items.description.sparkle_pick",
-                    1200, true, false,
-                    "1;3;1;7", 450, 300, 10, 74, 18, 101
+                    3, 5, 1200,
+                    true, false, "1;3;1;7", 450, 300, 4,
+                    378, 300, 6,
+                    "items.explanation.sparkle_pick", 10, 74, 18, 101
             ),
 
-            SPARKLE_FRAGMENT = new Item(ItemType.MINE_RARE, "\u2728",
+            SPARKLE_FRAGMENT = new Sparkle("\u2728",
                     "Sparkle Fragment", "items.sparkle", "items.description.sparkle",
                     605, false
             ),
@@ -447,31 +459,33 @@ public class ItemReference {
             SPARKLE_ROD = new FishRod(ItemType.FISHROD_RARE, 14,
                     3, 4, EmoteReference.SPARKLE_ROD.getDiscordNotation(),
                     "Sparkle Rod", "items.sparkle_rod", "items.description.sparkle_rod",
-                    800,
+                    "items.explanation.sparkle_rod", 6, 800,
                     "1;2;1;3", 300, 44, 74, 18, 101
             ),
 
             SHELL = new Fish(ItemType.FISHING_RARE, 5, "\uD83D\uDC1A",
                     "Shell", "items.shell", "items.description.shell",
-                    1150, false
+                    800, false
             ),
 
             SHARK = new Fish(ItemType.FISHING_RARE, 10, "\uD83E\uDD88",
                     "Shark", "items.shark", "items.description.shark",
-                    500, false
+                    1000, false
             ),
 
             WRENCH_COMET = new Wrench(ItemType.WRENCH, 90,
                     3, 0.90d, EmoteReference.COMET_WRENCH.getDiscordNotation(),
                     "Comet Wrench", "items.star_wrench", "items.description.star_wrench",
-                    200, true, false,
+                    "items.explanation.comet_wrench",
+                    200, 80, 3,true, false,
                     "1;2;2", 59, 48, 83
             ),
 
             WRENCH_SPARKLE = new Wrench(ItemType.WRENCH, 96,
                     4, 0.65d, EmoteReference.SPARKLE_WRENCH.getDiscordNotation(),
                     "Sparkle Wrench", "items.sparkle_wrench", "items.description.sparkle_wrench",
-                    500, true, false,
+                    "items.explanation.sparkle_wrench",
+                    500, 160, 5,true, false,
                     "1;2;1;2;1", 59, 74, 18, 83, 84
             ),
 
@@ -490,15 +504,14 @@ public class ItemReference {
                     35, false
             ),
 
-            MOON_RUNES = new Item(ItemType.MINE, "\uD83C\uDF19",
-                    "Moon Runes", "items.moon", "items.description.moon",
-                    100, false
+            MOON_RUNES = new Gem(GemType.GEM, "\uD83C\uDF19",
+                    "Moon Runes", "items.moon",
+                    "items.description.moon", 100, 5
             ),
 
-            SNOWFLAKE = new Item(ItemType.MINE, "\u2744\uFE0F",
-                    "Snowflake", "items.flake", "items.description.flake",
-                    25, true, false,
-                    "1;1", 51, 50
+            SNOWFLAKE = new Gem(GemType.UTILITY, "\u2744\uFE0F",
+                    "Snowflake", "items.flake",
+                    "items.description.flake", 25, 2
             ),
 
             BROKEN_SPARKLE_PICK = new Broken(73, EmoteReference.BROKEN_SPARKLE_PICK.getDiscordNotation(),
@@ -562,7 +575,7 @@ public class ItemReference {
                     60, true
             ),
 
-            MILK_2 = new Food(Food.FoodType.CAT, 10, "\ud83e\udd5b",
+            MILK_2 = new Food(Food.FoodType.CAT, 10, "\uD83C\uDF7C",
                     "Milk Bottle", "items.milk_3", "items.description.milk_3",
                     40, true
             ),
@@ -587,71 +600,79 @@ public class ItemReference {
                     25, false
             ),
 
-            MOON_PICK = new Pickaxe(ItemType.MINE_RARE_PICK, 0.1f,
-                    2, 7, EmoteReference.MOON_PICK.getDiscordNotation(),
+            MOON_PICK = new Pickaxe(ItemType.MINE_RARE_PICK, EmoteReference.MOON_PICK.getDiscordNotation(),
                     "Moon Pickaxe", "items.moon_pick", "items.description.moon_pick",
-                    1000, true, false,
-                    "1;3;2;5;10", 320, 130,10, 83, 18, 76, 101
+                    2, 7, 1000, true, false,
+                    "1;3;2;5;10", 320, 140, 4,
+                    388, 290, 5,
+                    "items.explanation.moon_pick", 83, 18, 76, 101
             ),
 
-            HELLFIRE_PICK = new Pickaxe(ItemType.MINE_RARE_PICK_NODROP, 0.00001f,
-                    3, 1, EmoteReference.HELLFIRE_PICK.getDiscordNotation(),
+            HELLFIRE_PICK = new Pickaxe(ItemType.MINE_RARE_PICK_NODROP, EmoteReference.HELLFIRE_PICK.getDiscordNotation(),
                     "Hellfire Pickaxe", "items.hellfire_pick", "items.description.hellfire_pick",
-                    15000, true, false,
-                    "450;1;175;1;175;1;55;1;50;50", 3000, 1500, 18, 57, 48, 61, 49, 62, 74, 73, 101, 76
+                    4, 1, 15000, true, false,
+                    "450;1;175;1;175;1;55;1;50;50", 3000, 1500,
+                    10, 365, 260, 7, "items.explanation.hellfire_pick",
+                    18, 57, 48, 61, 49, 62, 74, 73, 101, 76
             ),
 
             AXE = new Axe(ItemType.CHOP_AXE, 0.19f, "\uD83E\uDE93",
-                    "Axe", "items.axe", "items.description.axe",
-                    100, true, 35, 0
+                    "Axe", "items.axe", "items.description.axe", "items.explanation.axe",
+                    1, 100, true, 35, 0
             ),
 
             COMET_AXE = new Axe(ItemType.CHOP_AXE, 0.13f,
                     1, 10, EmoteReference.COMET_AXE.getDiscordNotation(),
                     "Comet Axe", "items.comet_axe", "items.description.comet_axe",
-                    290, true, false,
+                    "items.explanation.comet_axe",
+                    3, 290, true, false,
                     "1;3;8", 170, 100, 104, 48, 101
             ),
 
             STAR_AXE = new Axe(ItemType.CHOP_AXE, 0.09f,
                     1, 10, EmoteReference.STAR_AXE.getDiscordNotation(),
                     "Star Axe", "items.star_axe", "items.description.star_axe",
-                    350, true, false,
+                    "items.explanation.star_axe",
+                    4, 350, true, false,
                     "1;3;7", 220, 100, 104, 49, 101
             ),
 
             SPARKLE_AXE = new Axe(ItemType.CHOP_RARE_AXE, 0.04f,
                     3, 5, EmoteReference.SPARKLE_AXE.getDiscordNotation(),
                     "Sparkle Axe", "items.sparkle_axe", "items.description.sparkle_axe",
-                    1200, true, false,
+                    "items.explanation.sparkle_axe",
+                    6, 1200, true, false,
                     "1;3;2;8", 500, 300, 104, 74, 18, 101
             ),
 
             MOON_AXE = new Axe(ItemType.CHOP_RARE_AXE, 0.1f,
                     2, 7, EmoteReference.MOON_AXE.getDiscordNotation(),
                     "Moon Axe", "items.moon_axe", "items.description.moon_axe",
-                    1000, true, false,
+                    "items.explanation.moon_axe",
+                    5, 1000, true, false,
                     "1;3;2;3;10", 350, 130, 104, 83, 18, 76, 101
             ),
 
             HELLFIRE_AXE = new Axe(ItemType.CHOP_RARE_AXE_NODROP, 0.00001f,
                     3, 1, EmoteReference.HELLFIRE_AXE.getDiscordNotation(),
                     "Hellfire Axe", "items.hellfire_axe", "items.description.hellfire_axe",
-                    15000, true, false,
+                    "items.explanation.hellfire_axe",
+                    7,15000, true, false,
                     "450;175;1;175;1;55;1;50;50", 3100, 900, 18, 48, 105, 49, 106, 74, 107, 101, 76
             ),
 
             MOON_ROD = new FishRod(ItemType.FISHROD_RARE, 12, 2,
                     4, EmoteReference.MOON_ROD.getDiscordNotation(),
                     "Moon Rod", "items.moon_rod", "items.description.moon_rod",
-                    800, "1;2;3;3", 200, 44, 83, 76, 101
+                    "items.explanation.moon_rod", 5, 800,
+                    "1;2;3;3", 200, 44, 83, 76, 101
             ),
 
-            HELLFIRE_ROD = new FishRod(ItemType.FISHROD_RARE_NODROP, 14,
+            HELLFIRE_ROD = new FishRod(ItemType.FISHROD_RARE_NODROP, 24,
                     3, 4, EmoteReference.HELLFIRE_ROD.getDiscordNotation(),
                     "Hellfire Rod", "items.hellfire_rod", "items.description.hellfire_rod",
-                    15000,
-                    "450;175;1;175;1;50;1;35;50", 2300, 18, 48, 70, 49, 71, 74, 75, 101, 76
+                    "items.explanation.hellfire_rod", 7, 15000,
+                    "450;175;1;175;1;50;1;35;50", 2500, 18, 48, 70, 49, 71, 74, 75, 101, 76
             ),
 
             LEAVES = new Item(ItemType.CHOP_DROP, "\ud83c\udf43",
@@ -673,9 +694,9 @@ public class ItemReference {
                     5, false
             ),
 
-            ROCK = new Item(ItemType.MINE, "\ud83e\udea8",
-                    "Rock", "items.rock", "items.description.rock",
-                    10, false
+            ROCK = new Gem(GemType.UTILITY, "\ud83e\udea8",
+                    "Rock", "items.rock",
+                    "items.description.rock", 10, 1
             ),
 
             BROKEN_MOON_PICK = new Broken(102, EmoteReference.BROKEN_MOON_PICK.getDiscordNotation(),
@@ -710,17 +731,31 @@ public class ItemReference {
 
             BROKEN_HELLFIRE_PICK = new Broken(103, EmoteReference.BROKEN_HELLFIRE_PICK.getDiscordNotation(),
                     "Broken Hellfire Pick", "items.broken_hellfire_pick", "items.description.broken_hellfire_pick",
-                    5000, "90,18;80,48;80,49;20,74;25,76;10,84;30,50"
+                    5000, "90,18;50,48;50,49;20,74;25,76;10,84;30,50"
             ),
 
             BROKEN_HELLFIRE_AXE = new Broken(109, EmoteReference.BROKEN_HELLFIRE_AXE.getDiscordNotation(),
                     "Broken Hellfire Axe", "items.broken_hellfire_axe", "items.description.broken_hellfire_axe",
-                    5000, "90,18;80,48;80,49;20,74;25,76;10,84;30,50"
+                    5000, "90,18;50,48;50,49;20,74;25,76;10,84;30,50"
             ),
 
             BROKEN_HELLFIRE_ROD = new Broken(111, EmoteReference.BROKEN_HELLFIRE_ROD.getDiscordNotation(),
                     "Broken Hellfire Rod", "items.broken_hellfire_rod", "items.description.broken_hellfire_rod",
-                    5000, "90,18;80,48;80,49;20,74;25,76;10,84;30,50"
+                    5000, "90,18;50,48;50,49;20,74;25,76;10,84;30,50"
             ),
+
+            CHOP_CRATE = new Item(ItemType.CRATE, EmoteReference.CHOP_CRATE.getDiscordNotation(),
+                    "Chop Crate", "items.chop_crate", "items.description.chop_crate",
+                    0, false, false, true,
+                    (ctx, season) ->
+                            ItemHelper.openLootCrate(ctx, ItemType.LootboxType.CHOP, 126, EmoteReference.CHOP_CRATE, 3, season)
+            ),
+
+            CHOP_PREMIUM_CRATE = new Item(ItemType.CRATE, EmoteReference.PREMIUM_CHOP_CRATE.getDiscordNotation(),
+                    "Chop Premium Crate", "items.chop_premium_crate", "items.description.chop_premium_crate",
+                    0, false, false, true,
+                    (ctx, season) ->
+                            ItemHelper.openLootCrate(ctx, ItemType.LootboxType.CHOP_PREMIUM, 127, EmoteReference.PREMIUM_CHOP_CRATE, 5, season)
+            )
     };
 }

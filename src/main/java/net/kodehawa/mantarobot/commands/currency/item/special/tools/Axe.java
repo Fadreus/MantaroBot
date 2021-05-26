@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,34 +11,37 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
-package net.kodehawa.mantarobot.commands.currency.item.special;
+package net.kodehawa.mantarobot.commands.currency.item.special.tools;
 
 import net.kodehawa.mantarobot.commands.currency.item.Item;
 import net.kodehawa.mantarobot.commands.currency.item.ItemType;
-import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
+import net.kodehawa.mantarobot.commands.currency.item.special.helpers.attributes.Attribute;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Castable;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Salvageable;
+import net.kodehawa.mantarobot.commands.currency.item.special.helpers.attributes.ItemUsage;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Axe extends Item implements Castable, Breakable, Salvageable {
+public class Axe extends Item implements Castable, Salvageable, Attribute {
     private final float chance;
     //Wrench level, basically.
     private final int castLevelRequired;
     private final int maximumCastAmount;
     private final int maxDurability;
     private final int moneyIncrease;
+    private final int rarity;
+    private final String explanation;
     private final List<Integer> salvageReturns;
 
     public Axe(ItemType type, float chance, int castLevelRequired, int maximumCastAmount,
                String emoji, String name, String translatedName,
-               String desc, long value, boolean sellable, boolean buyable,
+               String desc, String explanation, int rarity, long value, boolean sellable, boolean buyable,
                String recipe, int maxDurability, int moneyIncrease, int... recipeTypes) {
         super(type, emoji, name, translatedName, desc, value, sellable, buyable, recipe, recipeTypes);
         this.chance = chance;
@@ -47,10 +50,12 @@ public class Axe extends Item implements Castable, Breakable, Salvageable {
         this.maxDurability = maxDurability;
         this.moneyIncrease = moneyIncrease;
         this.salvageReturns = Arrays.stream(recipeTypes).filter(id -> id > 1).boxed().collect(Collectors.toList());
+        this.rarity = rarity;
+        this.explanation = explanation;
     }
 
     public Axe(ItemType type, float chance, String emoji, String name, String translatedName,
-               String desc, long value, boolean buyable, int maxDurability, int moneyIncrease) {
+               String desc, String explanation, int rarity, long value, boolean buyable, int maxDurability, int moneyIncrease) {
         super(type, emoji, name, translatedName, desc, value, true, buyable);
         this.chance = chance;
         this.castLevelRequired = -1;
@@ -58,6 +63,8 @@ public class Axe extends Item implements Castable, Breakable, Salvageable {
         this.maxDurability = maxDurability;
         this.moneyIncrease = moneyIncrease;
         this.salvageReturns = Collections.emptyList();
+        this.rarity = rarity;
+        this.explanation = explanation;
     }
 
     public int getMaxDurability() {
@@ -85,4 +92,28 @@ public class Axe extends Item implements Castable, Breakable, Salvageable {
         return salvageReturns;
     }
 
+    @Override
+    public int getTier() {
+        return rarity;
+    }
+
+    @Override
+    // TODO: Localize
+    public String buildAttributes() {
+        return """
+                **Wrench Tier (to craft):** %s
+                **Money Increase:** %,d - %,d credits
+                """.formatted(getTierStars(getCastLevelRequired()), (getMoneyIncrease() / 4), getMoneyIncrease()
+        );
+    }
+
+    @Override
+    public String getExplanation() {
+        return explanation;
+    }
+
+    @Override
+    public ItemUsage getType() {
+        return ItemUsage.CHOPPING;
+    }
 }

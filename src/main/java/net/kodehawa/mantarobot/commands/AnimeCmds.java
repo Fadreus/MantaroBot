@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -39,6 +39,8 @@ import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.awt.Color;
+import java.net.SocketTimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Module
@@ -67,12 +69,20 @@ public class AnimeCmds {
                         return;
                     }
 
-                    DiscordUtils.selectList(ctx.getEvent(), found.stream().limit(7).collect(Collectors.toList()),
-                            anime -> "%s[**%s** (%s)](%s)".formatted(
+                    Function<AnimeData, String> format = anime -> {
+                        if (anime.getAttributes().getTitles().getJa_jp() != null) {
+                            return "%s **[%s](%s)** (%s)".formatted(
                                     EmoteReference.BLUE_SMALL_MARKER,
-                                    anime.getAttributes().getCanonicalTitle(),
-                                    anime.getAttributes().getTitles().getJa_jp(), anime.getURL()
-                            ),
+                                    anime.getAttributes().getCanonicalTitle(), anime.getURL(),
+                                    anime.getAttributes().getTitles().getJa_jp());
+                        } else {
+                            return "%s **[%s](%s)**".formatted(
+                                    EmoteReference.BLUE_SMALL_MARKER,
+                                    anime.getAttributes().getCanonicalTitle(), anime.getURL());
+                        }
+                    };
+
+                    DiscordUtils.selectList(ctx.getEvent(), found.stream().limit(5).collect(Collectors.toList()), format,
                             s -> baseEmbed(ctx.getEvent(), languageContext.get("commands.anime.selection_start"))
                                     .setDescription(s)
                                     .setColor(Color.PINK)
@@ -86,6 +96,8 @@ public class AnimeCmds {
                 } catch (NullPointerException npe) {
                     npe.printStackTrace();
                     ctx.sendLocalized("commands.anime.malformed_result", EmoteReference.ERROR);
+                } catch (SocketTimeoutException timeout) {
+                    ctx.sendLocalized("commands.anime.timeout", EmoteReference.ERROR);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     ctx.sendLocalized("commands.anime.error", EmoteReference.ERROR, ex.getClass().getSimpleName());
@@ -128,13 +140,21 @@ public class AnimeCmds {
                         return;
                     }
 
-                    DiscordUtils.selectList(ctx.getEvent(), characters.stream().limit(7).collect(Collectors.toList()),
-                            character -> "%s[**%s** (%s)](%s)".formatted(
+                    Function<CharacterData, String> format = character -> {
+                        if (character.getAttributes().getNames().getJa_jp() == null) {
+                            return "%s **[%s](%s)**".formatted(
                                     EmoteReference.BLUE_SMALL_MARKER,
-                                    character.getAttributes().getName(),
-                                    character.getAttributes().getNames().getJa_jp(),
-                                    character.getURL()
-                            ), s -> baseEmbed(ctx.getEvent(), languageContext.get("commands.anime.information_footer"))
+                                    character.getAttributes().getName(), character.getURL());
+                        } else {
+                            return "%s **[%s](%s)** (%s)".formatted(
+                                    EmoteReference.BLUE_SMALL_MARKER,
+                                    character.getAttributes().getName(), character.getURL(),
+                                    character.getAttributes().getNames().getJa_jp());
+                        }
+                    };
+
+                    DiscordUtils.selectList(ctx.getEvent(), characters.stream().limit(5).collect(Collectors.toList()), format,
+                            s -> baseEmbed(ctx.getEvent(), languageContext.get("commands.anime.information_footer"))
                                     .setDescription(s)
                                     .setColor(Color.PINK)
                                     .setThumbnail("https://i.imgur.com/VwlGqdk.png")
@@ -147,7 +167,9 @@ public class AnimeCmds {
                 } catch (NullPointerException npe) {
                     npe.printStackTrace();
                     ctx.sendLocalized("commands.anime.malformed_result", EmoteReference.ERROR);
-                } catch (Exception ex) {
+                } catch (SocketTimeoutException timeout) {
+                    ctx.sendLocalized("commands.anime.timeout", EmoteReference.ERROR);
+                }catch (Exception ex) {
                     ctx.sendLocalized("commands.anime.error", EmoteReference.ERROR, ex.getClass().getSimpleName());
                 }
             }
@@ -188,29 +210,29 @@ public class AnimeCmds {
 
         final var player = MantaroData.db().getPlayer(event.getAuthor());
         final var badge = APIUtils.getHushBadge(title, Utils.HushType.ANIME);
-        if (badge != null) {
-            player.getData().addBadgeIfAbsent(badge);
+        if (badge != null && player.getData().addBadgeIfAbsent(badge)) {
             player.saveUpdating();
         }
 
         //Start building the embedded message.
         var embed = new EmbedBuilder();
         embed.setColor(Color.PINK)
-                .setAuthor(lang.get("commands.anime.information_header").formatted(title), null, imageUrl)
+                .setDescription(StringUtils.limit(animeDescription, 1400))
+                .setAuthor(lang.get("commands.anime.information_header").formatted(title), animeData.getURL(), imageUrl)
                 .setFooter(lang.get("commands.anime.information_notice"), event.getAuthor().getEffectiveAvatarUrl())
                 .setThumbnail(imageUrl)
-                .addField(lang.get("commands.anime.release_date"), releaseDate, true)
-                .addField(lang.get("commands.anime.end_date"),
-                        (endDate == null || endDate.equals("null") ? lang.get("commands.anime.airing") : endDate), true
+                .addField(EmoteReference.CALENDAR.toHeaderString() + lang.get("commands.anime.release_date"),
+                        releaseDate, true
                 )
-                .addField(lang.get("commands.anime.favorite_count"), favoriteCount, true)
-                .addField(lang.get("commands.anime.type"), animeType, true)
-                .addField(lang.get("commands.anime.episodes"), episodes, true)
-                .addField(lang.get("commands.anime.episode_duration"),
+                .addField(EmoteReference.CALENDAR2.toHeaderString() + lang.get("commands.anime.end_date"),
+                        (endDate == null || endDate.equals("null") ? lang.get("commands.anime.airing") : endDate),
+                        true
+                )
+                .addField(EmoteReference.STAR.toHeaderString() + lang.get("commands.anime.favorite_count"), favoriteCount, true)
+                .addField(EmoteReference.DEV.toHeaderString() + lang.get("commands.anime.type"), animeType, true)
+                .addField(EmoteReference.SATELLITE.toHeaderString() + lang.get("commands.anime.episodes"), episodes, true)
+                .addField(EmoteReference.CLOCK.toHeaderString() + lang.get("commands.anime.episode_duration"),
                         episodeDuration + " " + lang.get("commands.anime.minutes"), true
-                )
-                .addField(lang.get("commands.anime.description"),
-                        StringUtils.limit(animeDescription, 850), false
                 );
 
         event.getChannel().sendMessage(embed.build()).queue();
@@ -224,11 +246,10 @@ public class AnimeCmds {
             final var charName = attributes.getName();
             final var imageUrl = attributes.getImage().getOriginal();
 
-            final var characterDescription =
-                    StringEscapeUtils.unescapeHtml4(
-                            attributes.getDescription().replace("<br>", "\n")
-                                    .replaceAll("<.*?>", "")
-                    ); // This is silly.
+            final var characterDescription = StringEscapeUtils.unescapeHtml4(
+                    attributes.getDescription().replace("<br>", "\n")
+                            .replaceAll("<.*?>", "")
+            ); // This is silly.
 
             var charDescription = "";
             if (attributes.getDescription() == null || attributes.getDescription().isEmpty()) {
@@ -238,11 +259,9 @@ public class AnimeCmds {
             }
 
             var player = MantaroData.db().getPlayer(event.getAuthor());
-            var badge =
-                    APIUtils.getHushBadge(charName.replace(japName, "").trim(), Utils.HushType.CHARACTER);
+            var badge = APIUtils.getHushBadge(charName.replace(japName, "").trim(), Utils.HushType.CHARACTER);
 
-            if (badge != null) {
-                player.getData().addBadgeIfAbsent(badge);
+            if (badge != null && player.getData().addBadgeIfAbsent(badge)) {
                 player.saveUpdating();
             }
 
@@ -251,10 +270,10 @@ public class AnimeCmds {
                     .setThumbnail(imageUrl)
                     .setAuthor(
                             lang.get("commands.character.information_header").formatted(charName),
-                            null, imageUrl
+                            character.getURL(), imageUrl
                     )
-                    .addField(lang.get("commands.character.information"), charDescription, true)
-                    .setFooter(lang.get("commands.anime.information_notice"), null);
+                    .setDescription(StringUtils.limit(charDescription, 1400))
+                    .setFooter(lang.get("commands.anime.information_notice"), event.getAuthor().getEffectiveAvatarUrl());
 
             event.getChannel().sendMessage(embed.build()).queue(success -> {
             }, Throwable::printStackTrace);

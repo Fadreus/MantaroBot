@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.db.entities.helpers;
@@ -20,12 +20,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.kodehawa.mantarobot.commands.currency.item.PotionEffect;
+import net.kodehawa.mantarobot.commands.currency.pets.HousePet;
+import net.kodehawa.mantarobot.commands.currency.pets.PetChoice;
 import net.kodehawa.mantarobot.commands.currency.pets.global.Pet;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.currency.profile.ProfileComponent;
 import net.kodehawa.mantarobot.commands.currency.profile.inventory.InventorySortType;
 import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
+import net.kodehawa.mantarobot.db.entities.Marriage;
 import net.kodehawa.mantarobot.db.entities.helpers.quests.Quest;
 import net.kodehawa.mantarobot.db.entities.helpers.quests.QuestTracker;
 
@@ -74,6 +77,7 @@ public class PlayerData {
     private boolean resetWarning = false;
     private InventorySortType inventorySortType = InventorySortType.AMOUNT;
     private boolean hiddenLegacy = false;
+    private boolean newPlayerNotice = false;
 
     //lol?
     //this is needed so it actually works, even though it does absolutely nothing
@@ -81,7 +85,11 @@ public class PlayerData {
     private List<Pet> profilePets = new LinkedList<>();
 
     private long petSlots = 4;
+    // pet list, TODO add multiple pets
     private Map<String, Pet> pets = new HashMap<>();
+    private PetChoice petChoice = null;
+    // main pet
+    private HousePet pet;
 
     public PlayerData() { }
 
@@ -413,12 +421,49 @@ public class PlayerData {
         return hiddenLegacy;
     }
 
+    public boolean isNewPlayerNotice() {
+        return newPlayerNotice;
+    }
+
+    public void setNewPlayerNotice(boolean newPlayerNotice) {
+        this.newPlayerNotice = newPlayerNotice;
+    }
+
+    public void setPet(HousePet pet) {
+        this.pet = pet;
+    }
+
+    public HousePet getPet() {
+        return pet;
+    }
+
+    public PetChoice getPetChoice() {
+        return petChoice;
+    }
+
+    public void setPetChoice(PetChoice petChoice) {
+        this.petChoice = petChoice;
+    }
+
+    @JsonIgnore
+    public PetChoice getActiveChoice(Marriage marriage) {
+        if (getPetChoice() == null) {
+            if (marriage == null || marriage.getData().getPet() == null) {
+                return PetChoice.PERSONAL;
+            } else {
+                return PetChoice.MARRIAGE;
+            }
+        } else {
+            return getPetChoice();
+        }
+    }
+
     @JsonIgnore
     public boolean shouldSeeCampaign() {
         if (config.isPremiumBot())
             return false;
 
-        return System.currentTimeMillis() > (getLastSeenCampaign() + TimeUnit.DAYS.toMillis(1));
+        return System.currentTimeMillis() > (getLastSeenCampaign() + TimeUnit.HOURS.toMillis(12));
     }
 
     @JsonIgnore

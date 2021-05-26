@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.core.shard;
@@ -22,7 +22,6 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.core.MantaroEventManager;
 import net.kodehawa.mantarobot.core.listeners.entities.CachedMessage;
@@ -58,17 +57,18 @@ public class Shard {
 
     public Shard(int id) {
         this.id = id;
-        this.listener = new ListenerAdapter() {
-            @Override
-            public synchronized void onReady(@Nonnull ReadyEvent event) {
-                jda = event.getJDA();
-                if (statusChange != null) {
-                    statusChange.cancel(true);
+        this.listener = event -> {
+            if(event instanceof ReadyEvent) {
+                synchronized(this) {
+                    jda = event.getJDA();
+                    if (statusChange != null) {
+                        statusChange.cancel(true);
+                    }
+            
+                    statusChange = MantaroBot.getInstance()
+                            .getExecutorService()
+                            .scheduleAtFixedRate(Shard.this::changeStatus, 0, 3, TimeUnit.HOURS);
                 }
-
-                statusChange = MantaroBot.getInstance()
-                        .getExecutorService()
-                        .scheduleAtFixedRate(Shard.this::changeStatus, 0, 3, TimeUnit.HOURS);
             }
         };
     }

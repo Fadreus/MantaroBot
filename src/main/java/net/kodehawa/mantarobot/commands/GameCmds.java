@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,12 +11,13 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.game.Character;
 import net.kodehawa.mantarobot.commands.game.*;
@@ -49,6 +50,8 @@ import static net.kodehawa.mantarobot.utils.Utils.createLinkedList;
 @Module
 public class GameCmds {
     private final Map<String, Function<TriviaDifficulty, Game<?>>> games = new HashMap<>();
+    private final int MAX_GAME_AMOUNT = 8;
+    private final int MAX_GAME_AMOUNT_PREMIUM = 12;
 
     @Subscribe
     public void game(CommandRegistry cr) {
@@ -110,7 +113,14 @@ public class GameCmds {
             }
         }));
 
-        gameCommand.setPredicate(ctx -> RatelimitUtils.ratelimit(rateLimiter, ctx, null));
+        gameCommand.setPredicate(ctx -> {
+            if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                ctx.sendLocalized("general.missing_embed_permissions");
+                return false;
+            }
+
+            return RatelimitUtils.ratelimit(rateLimiter, ctx, null);
+        });
 
         //Sub-commands.
         gameCommand.addSubCommand("wins", new SubCommand() {
@@ -121,7 +131,7 @@ public class GameCmds {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                     if (member == null) {
                         return;
@@ -173,8 +183,10 @@ public class GameCmds {
                 var userData = ctx.getDBUser().getData();
                 var key = MantaroData.db().getPremiumKey(userData.getPremiumKey());
                 var premium = key != null && key.getDurationDays() > 1;
-                if (split.length > (premium ? 8 : 5)) {
-                    ctx.sendLocalized("commands.game.too_many_games", EmoteReference.ERROR);
+                if (split.length > (premium ? MAX_GAME_AMOUNT_PREMIUM : MAX_GAME_AMOUNT)) {
+                    ctx.sendLocalized(
+                            "commands.game.too_many_games", EmoteReference.ERROR, MAX_GAME_AMOUNT, MAX_GAME_AMOUNT_PREMIUM
+                    );
                     return;
                 }
 
@@ -247,8 +259,11 @@ public class GameCmds {
                     return;
                 }
 
-                if (number > 5) {
-                    ctx.sendLocalized("commands.game.multiple.too_many_games", EmoteReference.ERROR);
+                if (number > MAX_GAME_AMOUNT) {
+                    ctx.sendLocalized(
+                            "commands.game.too_many_games", EmoteReference.ERROR, MAX_GAME_AMOUNT, MAX_GAME_AMOUNT_PREMIUM
+                    );
+
                     return;
                 }
 
@@ -271,7 +286,7 @@ public class GameCmds {
                     gameList.add(g);
                 }
 
-                //No games queued?
+                // No games queued?
                 if (gameList.isEmpty()) {
                     ctx.sendLocalized("commands.game.multiple.invalid", EmoteReference.ERROR);
                     return;
@@ -302,6 +317,11 @@ public class GameCmds {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
+                    return;
+                }
+
+                if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                    ctx.sendLocalized("general.missing_embed_permissions");
                     return;
                 }
 
@@ -402,6 +422,7 @@ public class GameCmds {
 
             if (dbGuild.getData().getGameTimeoutExpectedAt() != null &&
                     (Long.parseLong(dbGuild.getData().getGameTimeoutExpectedAt()) < System.currentTimeMillis())) {
+                GameLobby.LOBBYS.remove(ctx.getChannel().getIdLong()); // remove old lobby if dropped
                 ctx.sendLocalized("commands.game.game_timeout_drop", EmoteReference.ERROR);
                 return false;
             } else {

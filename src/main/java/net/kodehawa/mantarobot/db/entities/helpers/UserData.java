@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.db.entities.helpers;
@@ -64,6 +64,8 @@ public class UserData {
     private boolean privateTag = false; //just explicitly setting it to false to make sure people know it's the default.
 
     private boolean autoEquip = false;
+
+    private boolean actionsDisabled = false;
 
     public UserData() {  }
 
@@ -244,5 +246,13 @@ public class UserData {
 
     public void setAutoEquip(boolean autoEquip) {
         this.autoEquip = autoEquip;
+    }
+
+    public boolean isActionsDisabled() {
+        return actionsDisabled;
+    }
+
+    public void setActionsDisabled(boolean actionsDisabled) {
+        this.actionsDisabled = actionsDisabled;
     }
 }

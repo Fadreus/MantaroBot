@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.core;
@@ -20,6 +20,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.GenericEvent;
@@ -45,6 +46,7 @@ import net.kodehawa.mantarobot.core.listeners.operations.InteractiveOperations;
 import net.kodehawa.mantarobot.core.listeners.operations.ReactionOperations;
 import net.kodehawa.mantarobot.core.modules.Module;
 import net.kodehawa.mantarobot.core.shard.Shard;
+import net.kodehawa.mantarobot.core.shard.discord.BotGateway;
 import net.kodehawa.mantarobot.core.shard.jda.BucketedController;
 import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
@@ -52,6 +54,7 @@ import net.kodehawa.mantarobot.log.LogUtils;
 import net.kodehawa.mantarobot.options.annotations.Option;
 import net.kodehawa.mantarobot.options.event.OptionRegistryEvent;
 import net.kodehawa.mantarobot.utils.Utils;
+import net.kodehawa.mantarobot.utils.data.JsonDataManager;
 import net.kodehawa.mantarobot.utils.exporters.Metrics;
 import net.kodehawa.mantarobot.utils.external.BotListPost;
 import okhttp3.Request;
@@ -61,6 +64,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.security.auth.login.LoginException;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.*;
@@ -194,6 +198,11 @@ public class MantaroCore {
                     GatewayIntent.GUILD_VOICE_STATES, // Receive voice states, needed so Member#getVoiceState doesn't return null.
             };
 
+            var disabledIntents = EnumSet.of(
+                    CacheFlag.ACTIVITY, CacheFlag.EMOTE, CacheFlag.CLIENT_STATUS,
+                    CacheFlag.ROLE_TAGS, CacheFlag.ONLINE_STATUS
+            );
+
             log.info("Using intents {}", Arrays.stream(toEnable)
                     .map(Enum::name)
                     .collect(Collectors.joining(", "))
@@ -220,8 +229,7 @@ public class MantaroCore {
                     // Don't spam on mass-prune.
                     .setBulkDeleteSplittingEnabled(false)
                     .setVoiceDispatchInterceptor(MantaroBot.getInstance().getLavaLink().getVoiceInterceptor())
-                    // We technically don't need it, as we don't ask for either GUILD_PRESENCES nor GUILD_EMOJIS anymore.
-                    .disableCache(EnumSet.of(CacheFlag.ACTIVITY, CacheFlag.EMOTE, CacheFlag.CLIENT_STATUS))
+                    .disableCache(disabledIntents)
                     .setActivity(Activity.playing("Hold on to your seatbelts!"));
             
             /* only create eviction strategies that will get used */
@@ -273,9 +281,6 @@ public class MantaroCore {
                     latchCount = shardCount;
                 }
     
-                // We need to use latchCount instead of shardCount
-                // latchCount is the number of shards on this process
-                // shardCount is the total number of shards in all processes
                 var gatewayThreads = Math.max(1, latchCount / 16);
                 var rateLimitThreads = Math.max(2, latchCount * 5 / 4);
 
@@ -402,6 +407,22 @@ public class MantaroCore {
 
     public EventBus getShardEventBus() {
         return this.shardEventBus;
+    }
+
+    public BotGateway getGateway(JDA jda) throws IOException {
+        var call = Utils.httpClient.newCall(new Request.Builder()
+                .url("https://discordapp.com/api/gateway/bot")
+                .header("Authorization", jda.getToken())
+                .build()
+        ).execute();
+
+        final var body = call.body();
+        if (body == null) {
+            return null;
+        }
+
+        var json = body.string();
+        return JsonDataManager.fromJson(json, BotGateway.class);
     }
 
     private void startPostLoadProcedure(long elapsed) {

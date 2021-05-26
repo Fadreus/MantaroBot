@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.currency.Waifu;
@@ -35,9 +35,7 @@ import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
-import net.kodehawa.mantarobot.db.entities.DBUser;
 import net.kodehawa.mantarobot.db.entities.Player;
-import net.kodehawa.mantarobot.db.entities.helpers.UserData;
 import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
@@ -49,7 +47,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Module
@@ -92,23 +89,29 @@ public class WaifuCmd {
                         // the MP game boost will go up by 20% and giving your daily to that waifu will increase the amount of money that your
                         // waifu will receive.
 
-                        Map<String, String> opts = ctx.getOptionalArguments();
-
-                        //Default call will bring out the waifu list.
-                        DBUser dbUser = ctx.getDBUser();
-                        UserData userData = dbUser.getData();
-                        Player player = ctx.getPlayer();
+                        final var opts = ctx.getOptionalArguments();
+                        // Default call will bring out the waifu list.
+                        final var dbUser = ctx.getDBUser();
+                        final var userData = dbUser.getData();
+                        final var player = ctx.getPlayer();
 
                         if (player.getData().isWaifuout()) {
                             ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                             return;
                         }
 
-                        String description = userData.getWaifus().isEmpty() ?
+                        if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                            ctx.sendLocalized("general.missing_embed_permissions");
+                            return;
+                        }
+
+                        final var description = userData.getWaifus().isEmpty() ?
                                 languageContext.get("commands.waifu.waifu_header") + "\n" + languageContext.get("commands.waifu.no_waifu") :
                                 languageContext.get("commands.waifu.waifu_header");
 
-                        EmbedBuilder waifusEmbed = new EmbedBuilder()
+
+
+                        final var waifusEmbed = new EmbedBuilder()
                                 .setAuthor(languageContext.get("commands.waifu.header"), null, ctx.getAuthor().getEffectiveAvatarUrl())
                                 .setThumbnail("https://i.imgur.com/2JlMtCe.png")
                                 .setColor(Color.CYAN)
@@ -124,10 +127,10 @@ public class WaifuCmd {
                             return;
                         }
 
-                        boolean id = opts.containsKey("id");
-                        java.util.List<String> toRemove = new ArrayList<>();
-
+                        final var id = opts.containsKey("id");
+                        List<String> toRemove = new ArrayList<>();
                         List<MessageEmbed.Field> fields = new LinkedList<>();
+
                         for (String waifu : userData.getWaifus().keySet()) {
                             //This fixes the issue of cross-node waifus not appearing.
                             User user = ctx.retrieveUserById(waifu);
@@ -150,7 +153,7 @@ public class WaifuCmd {
                                                 (!userData.isPrivateTag() ? "#" + user.getDiscriminator() : ""),
                                         (id ? languageContext.get("commands.waifu.id") + " " + user.getId() + "\n" : "") +
                                                 languageContext.get("commands.waifu.value_format") + " " +
-                                                calculateWaifuValue(user).getFinalValue() + " " +
+                                                waifuClaimed.getData().getWaifuCachedValue() + " " +
                                                 languageContext.get("commands.waifu.credits_format") + "\n" +
                                                 languageContext.get("commands.waifu.value_b_format") + " " + userData.getWaifus().get(waifu) +
                                                 languageContext.get("commands.waifu.credits_format"), false)
@@ -158,7 +161,7 @@ public class WaifuCmd {
                             }
                         }
 
-                        var toSend = languageContext.get("commands.waifu.description_header").formatted(userData.getWaifuSlots()) + description;
+                        final var toSend = languageContext.get("commands.waifu.description_header").formatted(userData.getWaifuSlots()) + description;
                         DiscordUtils.sendPaginatedEmbed(ctx, waifusEmbed, DiscordUtils.divideFields(4, fields), toSend);
 
                         if (!toRemove.isEmpty()) {
@@ -187,7 +190,7 @@ public class WaifuCmd {
         });
 
         cr.registerAlias("waifu", "waifus");
-        waifu.setPredicate(ctx -> RatelimitUtils.ratelimit(rl, ctx, null, false));
+        waifu.setPredicate(ctx -> RatelimitUtils.ratelimit(rl, ctx, false));
 
         waifu.addSubCommand("optout", new SubCommand() {
             @Override
@@ -197,20 +200,19 @@ public class WaifuCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                ctx.sendLocalized("commands.waifu.optout.warning", EmoteReference.WARNING);
-                Player player = ctx.getPlayer();
+                final var player = ctx.getPlayer();
                 if (player.getData().isWaifuout()) {
                     ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                     return;
                 }
 
+                ctx.sendLocalized("commands.waifu.optout.warning", EmoteReference.WARNING);
                 InteractiveOperations.create(ctx.getChannel(), ctx.getAuthor().getIdLong(), 60, e -> {
                     if (!e.getAuthor().getId().equals(ctx.getAuthor().getId())) {
                         return Operation.IGNORED;
                     }
 
-                    String c = e.getMessage().getContentRaw();
-
+                    final var c = e.getMessage().getContentRaw();
                     if (c.equalsIgnoreCase("Yes, I want to opt out of the waifu system completely and irreversibly")) {
                         player.getData().setWaifuout(true);
                         ctx.sendLocalized("commands.waifu.optout.success", EmoteReference.CORRECT);
@@ -234,24 +236,39 @@ public class WaifuCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                Player player = ctx.getPlayer();
-                if (player.getData().isWaifuout()) {
+                final var player = ctx.getPlayer();
+                final var playerData = player.getData();
+
+                if (playerData.isWaifuout()) {
                     ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                     return;
                 }
 
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
-                    Member member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
+                if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                    ctx.sendLocalized("general.missing_embed_permissions");
+                    return;
+                }
+
+                ctx.findMember(content, members -> {
+                    final var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                     if (member == null)
                         return;
 
-                    User toLookup = member.getUser();
+                    final var toLookup = member.getUser();
                     if (toLookup.isBot()) {
                         ctx.sendLocalized("commands.waifu.bot", EmoteReference.ERROR);
                         return;
                     }
 
-                    Waifu waifuStats = calculateWaifuValue(toLookup);
+                    final var waifuClaimed = ctx.getPlayer(toLookup);
+                    if (waifuClaimed.getData().isWaifuout()) {
+                        ctx.sendLocalized("commands.waifu.optout.lookup_notice", EmoteReference.ERROR);
+                        return;
+                    }
+
+                    final var waifuStats = calculateWaifuValue(waifuClaimed, toLookup);
+                    final var finalValue = waifuStats.getFinalValue();
+
                     EmbedBuilder statsBuilder = new EmbedBuilder()
                             .setThumbnail(toLookup.getEffectiveAvatarUrl())
                             .setAuthor(toLookup == ctx.getAuthor() ?
@@ -266,10 +283,10 @@ public class WaifuCmd {
                                     waifuStats.getExperienceValue(),
                                     waifuStats.getClaimValue(),
                                     waifuStats.getReputationMultiplier())
-                            ).addField(languageContext.get("commands.waifu.stats.performance"),
-                                    EmoteReference.ZAP.toString() + waifuStats.getPerformance() + "wp", true
-                            ).addField(languageContext.get("commands.waifu.stats.value"), EmoteReference.BUY +
-                                            languageContext.get("commands.waifu.stats.credits").formatted(waifuStats.getFinalValue()),
+                            ).addField(EmoteReference.ZAP.toHeaderString() + languageContext.get("commands.waifu.stats.performance"),
+                                    waifuStats.getPerformance() + "wp", true
+                            ).addField(EmoteReference.MONEY.toHeaderString() + languageContext.get("commands.waifu.stats.value"),
+                                            languageContext.get("commands.waifu.stats.credits").formatted(finalValue),
                                     false
                             ).setFooter(languageContext.get("commands.waifu.notice"), null);
 
@@ -286,7 +303,7 @@ public class WaifuCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                Player player = ctx.getPlayer();
+                final var player = ctx.getPlayer();
                 if (player.getData().isWaifuout()) {
                     ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                     return;
@@ -297,8 +314,7 @@ public class WaifuCmd {
                     return;
                 }
 
-                User toLookup = ctx.getMentionedUsers().get(0);
-
+                final var toLookup = ctx.getMentionedUsers().get(0);
                 if (toLookup.isBot()) {
                     ctx.sendLocalized("commands.waifu.bot", EmoteReference.ERROR);
                     return;
@@ -319,9 +335,8 @@ public class WaifuCmd {
                     return;
                 }
 
-
                 //Waifu object declaration.
-                final Waifu waifuToClaim = calculateWaifuValue(toLookup);
+                final Waifu waifuToClaim = calculateWaifuValue(claimedPlayer, toLookup);
                 final long waifuFinalValue = waifuToClaim.getFinalValue();
 
                 //Checks.
@@ -368,18 +383,20 @@ public class WaifuCmd {
                 claimerUserData.getWaifus().put(toLookup.getId(), waifuFinalValue);
                 claimedUserData.setTimesClaimed(claimedUserData.getTimesClaimed() + 1);
 
+                boolean badgesAdded = false;
                 //Add badges
-                if (claimedUserData.getWaifus().containsKey(ctx.getAuthor().getId()) || claimerUserData.getWaifus().containsKey(toLookup.getId())) {
+                if (claimedUserData.getWaifus().containsKey(ctx.getAuthor().getId()) && claimerUserData.getWaifus().containsKey(toLookup.getId())) {
                     claimerPlayerData.addBadgeIfAbsent(Badge.MUTUAL);
-                    claimedPlayerData.addBadgeIfAbsent(Badge.MUTUAL);
+                    badgesAdded = claimedPlayerData.addBadgeIfAbsent(Badge.MUTUAL);
                 }
 
                 claimerPlayerData.addBadgeIfAbsent(Badge.WAIFU_CLAIMER);
-                claimedPlayerData.addBadgeIfAbsent(Badge.CLAIMED);
+                if (badgesAdded || claimedPlayerData.addBadgeIfAbsent(Badge.CLAIMED)) {
+                    claimedPlayer.saveAsync();
+                }
 
                 //Massive saving operation owo.
                 claimerPlayer.saveAsync();
-                claimedPlayer.saveAsync();
                 claimedUser.saveAsync();
                 claimerUser.saveAsync();
 
@@ -398,10 +415,10 @@ public class WaifuCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                Map<String, String> t = ctx.getOptionalArguments();
-                content = Utils.replaceArguments(t, content, "unknown");
-                boolean isId = content.matches("\\d{16,20}");
-                Player player = ctx.getPlayer();
+                final var optionalArguments = ctx.getOptionalArguments();
+                content = Utils.replaceArguments(optionalArguments, content, "unknown");
+                final var isId = content.matches("\\d{16,20}");
+                final var player = ctx.getPlayer();
                 if (player.getData().isWaifuout()) {
                     ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                     return;
@@ -413,18 +430,18 @@ public class WaifuCmd {
                 }
 
                 // This is hacky as heck, but assures us we get an empty result on id lookup.
-                var lookup = isId ? "" : content;
+                final var lookup = isId ? "" : content;
                 // Lambdas strike again.
-                var finalContent = content;
-                ctx.findMember(lookup, ctx.getMessage()).onSuccess(members -> {
+                final var finalContent = content;
+                ctx.findMember(lookup, members -> {
                     // This is hacky again, but search *will* fail if we pass a empty list to this method.
-                    Member member = isId ? null : CustomFinderUtil.findMember(lookup, members, ctx);
+                    final var member = isId ? null : CustomFinderUtil.findMember(lookup, members, ctx);
                     if (member == null && !isId) {
                         return;
                     }
 
-                    User toLookup = isId ? ctx.retrieveUserById(finalContent) : member.getUser();
-                    boolean isUnknown = isId && t.containsKey("unknown") && toLookup == null;
+                    final var toLookup = isId ? ctx.retrieveUserById(finalContent) : member.getUser();
+                    final var isUnknown = isId && optionalArguments.containsKey("unknown") && toLookup == null;
                     if (toLookup == null && !isUnknown) {
                         ctx.sendLocalized("commands.waifu.unclaim.not_found", EmoteReference.ERROR);
                         return;
@@ -436,20 +453,20 @@ public class WaifuCmd {
                         return;
                     }
 
-                    String userId = isUnknown ? finalContent : toLookup.getId();
-                    String name = isUnknown ? "Unknown User" : toLookup.getName();
-                    final DBUser claimerUser = ctx.getDBUser();
-                    final UserData data = claimerUser.getData();
-
-                    Long value = data.getWaifus().get(userId);
+                    final var userId = isUnknown ? finalContent : toLookup.getId();
+                    final var name = isUnknown ? "Unknown User" : toLookup.getName();
+                    final var claimerUser = ctx.getDBUser();
+                    final var data = claimerUser.getData();
+                    final var value = data.getWaifus().get(userId);
 
                     if (value == null) {
                         ctx.sendLocalized("commands.waifu.not_claimed", EmoteReference.ERROR);
                         return;
                     }
 
-                    var currentValue = calculateWaifuValue(toLookup).getFinalValue();
-                    long valuePayment = (long) (currentValue * 0.15);
+                    final var claimedPlayer = ctx.getPlayer(toLookup);
+                    final var currentValue = calculateWaifuValue(claimedPlayer, toLookup).getFinalValue();
+                    final var valuePayment = (long) (currentValue * 0.15);
 
                     //Send confirmation message.
                     ctx.sendLocalized("commands.waifu.unclaim.confirmation", EmoteReference.MEGA, name, valuePayment, EmoteReference.STOPWATCH);
@@ -460,23 +477,23 @@ public class WaifuCmd {
                         }
 
                         //Replace prefix because people seem to think you have to add the prefix before saying yes.
-                        String c = ie.getMessage().getContentRaw();
-                        for (String s : ctx.getConfig().prefix) {
-                            if (c.toLowerCase().startsWith(s)) {
-                                c = c.substring(s.length());
+                        var ctn = ie.getMessage().getContentRaw();
+                        for (var s : ctx.getConfig().prefix) {
+                            if (ctn.toLowerCase().startsWith(s)) {
+                                ctn = ctn.substring(s.length());
                             }
                         }
 
-                        String guildCustomPrefix = ctx.getDBGuild().getData().getGuildCustomPrefix();
-                        if (guildCustomPrefix != null && !guildCustomPrefix.isEmpty() && c.toLowerCase().startsWith(guildCustomPrefix)) {
-                            c = c.substring(guildCustomPrefix.length());
+                        final var guildCustomPrefix = ctx.getDBGuild().getData().getGuildCustomPrefix();
+                        if (guildCustomPrefix != null && !guildCustomPrefix.isEmpty() && ctn.toLowerCase().startsWith(guildCustomPrefix)) {
+                            ctn = ctn.substring(guildCustomPrefix.length());
                         }
                         //End of prefix replacing.
 
-                        if (c.equalsIgnoreCase("yes")) {
-                            Player p = ctx.getPlayer();
-                            final DBUser user = ctx.getDBUser();
-                            final UserData userData = user.getData();
+                        if (ctn.equalsIgnoreCase("yes")) {
+                            final var p = ctx.getPlayer();
+                            final var user = ctx.getDBUser();
+                            final var userData = user.getData();
 
                             if (p.getCurrentMoney() < valuePayment) {
                                 ctx.sendLocalized("commands.waifu.unclaim.not_enough_money", EmoteReference.ERROR);
@@ -495,7 +512,7 @@ public class WaifuCmd {
 
                             ctx.sendLocalized("commands.waifu.unclaim.success", EmoteReference.CORRECT, name, valuePayment);
                             return Operation.COMPLETED;
-                        } else if (c.equalsIgnoreCase("no")) {
+                        } else if (ctn.equalsIgnoreCase("no")) {
                             ctx.sendLocalized("commands.waifu.unclaim.scrapped", EmoteReference.CORRECT);
                             return Operation.COMPLETED;
                         }
@@ -514,21 +531,19 @@ public class WaifuCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                int baseValue = 3000;
-
-                DBUser user = ctx.getDBUser();
-                Player player = ctx.getPlayer();
-                final UserData userData = user.getData();
+                final var baseValue = 3000;
+                final var user = ctx.getDBUser();
+                final var player = ctx.getPlayer();
+                final var userData = user.getData();
 
                 if (player.getData().isWaifuout()) {
                     ctx.sendLocalized("commands.waifu.optout.notice", EmoteReference.ERROR);
                     return;
                 }
 
-                int currentSlots = userData.getWaifuSlots();
-                int baseMultiplier = (currentSlots / 3) + 1;
-                int finalValue = baseValue * baseMultiplier;
-
+                final var currentSlots = userData.getWaifuSlots();
+                final var baseMultiplier = (currentSlots / 3) + 1;
+                final var finalValue = baseValue * baseMultiplier;
                 if (player.isLocked()) {
                     ctx.sendLocalized("commands.waifu.buyslot.locked", EmoteReference.ERROR);
                     return;
@@ -556,28 +571,27 @@ public class WaifuCmd {
         });
     }
 
-    static Waifu calculateWaifuValue(final User user) {
+    static Waifu calculateWaifuValue(final Player player, final User user) {
         final var db = MantaroData.db();
-        var waifuPlayer = db.getPlayer(user);
-        var waifuPlayerData = waifuPlayer.getData();
-        var waifuUserData = db.getUser(user).getData();
+        final var waifuPlayerData = player.getData();
+        final var waifuUserData = db.getUser(user).getData();
 
         var waifuValue = WAIFU_BASE_VALUE;
         long performance;
-        // For every 135000 money owned, it increases by 7% base value (base: 1300)
+        // For every 135,000 money owned, it increases by 7% base value (base: 1300)
         // For every 3 badges, it increases by 17% base value.
-        // For every 2780 experience, the value increases by 18% of the base value.
+        // For every 2,780 experience, the value increases by 18% of the base value.
         // After all those calculations are complete,
         // the value then is calculated using final * (reputation scale / 10) where reputation scale goes up by 1 every 10 reputation points.
         // For every 3 waifu claims, the final value increases by 5% of the base value.
         // Maximum waifu value is Integer.MAX_VALUE.
 
         //Money calculation.
-        long moneyValue = Math.round(Math.max(1, (int) (waifuPlayer.getCurrentMoney() / 135000)) * calculatePercentage(6));
+        long moneyValue = Math.round(Math.max(1, (int) (player.getCurrentMoney() / 135000)) * calculatePercentage(6));
         //Badge calculation.
         long badgeValue = Math.round(Math.max(1, (waifuPlayerData.getBadges().size() / 3)) * calculatePercentage(17));
         //Experience calculator.
-        long experienceValue = Math.round(Math.max(1, (int) (waifuPlayer.getData().getExperience() / 2780)) * calculatePercentage(18));
+        long experienceValue = Math.round(Math.max(1, (int) (player.getData().getExperience() / 2780)) * calculatePercentage(18));
         //Claim calculator.
         long claimValue = Math.round(Math.max(1, (waifuUserData.getTimesClaimed() / 3)) * calculatePercentage(5));
 
@@ -587,20 +601,21 @@ public class WaifuCmd {
         // what is this lol
         // After all those calculations are complete, the value then is calculated using final *
         // (reputation scale / 20) where reputation scale goes up by 1 every 10 reputation points.
-        // At 6000 reputation points, the waifu value gets multiplied by 1.1. This is the maximum amount it can be multiplied to.
-        // to implement later: Reputation scaling is capped at 3.9k. Then at 6.5k the multiplier is applied.
-        var reputation = waifuPlayer.getReputation();
-        var reputationScaling = (reputation / 4.5) / 30;
+        // At 6,500 reputation points, the waifu value gets multiplied by 1.1. This is the maximum amount it can be multiplied to.
+        // to implement later: Reputation scaling is capped at 5k. Then at 6.5k the multiplier is applied.
+        var reputation = player.getReputation();
+        var reputationScale = reputation;
+        if (reputation > 5000) {
+            reputationScale = 5000L;
+        }
+
+        var reputationScaling = (reputationScale / 4.5) / 30;
         var finalValue = (long) (
-                Math.min (
-                        Integer.MAX_VALUE,
-                        (waifuValue * (reputationScaling > 1 ? reputationScaling : 1) * (reputation > 6500 ? 1.1 : 1))
-                )
+                Math.min(Integer.MAX_VALUE, (waifuValue * (reputationScaling > 1 ? reputationScaling : 1) * (reputation > 6500 ? 1.1 : 1)))
         );
 
         var divide = (int) (moneyValue / 1300);
-        performance = ((waifuValue - (WAIFU_BASE_VALUE + 450)) + (long)
-                ((reputationScaling > 1 ? reputationScaling : 1) * 1.2)) / (divide > 1 ? divide : 3);
+        performance = ((waifuValue - (WAIFU_BASE_VALUE + 450)) + (long) ((reputationScaling > 1 ? reputationScaling : 1) * 1.2)) / (divide > 1 ? divide : 3);
 
         //possible?
         if (performance < 0) {
@@ -611,7 +626,7 @@ public class WaifuCmd {
         return new Waifu(moneyValue, badgeValue, experienceValue, reputationScaling, claimValue, finalValue, performance);
     }
 
-    //Yes, I had to do it, fuck.
+    // Yes, I had to do it, fuck.
     private static long calculatePercentage(long percentage) {
         return (percentage * WAIFU_BASE_VALUE) / 100;
     }

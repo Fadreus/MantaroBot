@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,13 +11,14 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
 import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
@@ -49,6 +50,7 @@ import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
 import java.awt.Color;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -63,6 +65,15 @@ public class MarryCmd {
 
     @Subscribe
     public void marry(CommandRegistry cr) {
+        final IncreasingRateLimiter rateLimiter = new IncreasingRateLimiter.Builder()
+                .limit(1)
+                .cooldown(10, TimeUnit.MINUTES)
+                .maxCooldown(40, TimeUnit.MINUTES)
+                .randomIncrement(false)
+                .pool(MantaroData.getDefaultJedisPool())
+                .prefix("marry")
+                .build();
+
         ITreeCommand marryCommand = cr.register("marry", new TreeCommand(CommandCategory.CURRENCY) {
             @Override
             public Command defaultTrigger(Context ctx, String mainCommand, String commandName) {
@@ -133,6 +144,10 @@ public class MarryCmd {
                             return;
                         }
 
+                        // Check for rate limit
+                        if (!RatelimitUtils.ratelimit(rateLimiter, ctx, ctx.getLanguageContext().get("commands.marry.ratelimit_message"), false))
+                            return;
+
                         // Send confirmation message.
                         ctx.sendLocalized("commands.marry.confirmation", EmoteReference.MEGA,
                                 proposedToUser.getName(), ctx.getAuthor().getName(), EmoteReference.STOPWATCH
@@ -199,7 +214,6 @@ public class MarryCmd {
                                     proposedToPlayerInventory.process(new ItemStack(ItemReference.RING, 1));
                                 }
 
-
                                 final long marriageCreationMillis = Instant.now().toEpochMilli();
                                 // Onto the UUID we need to encode userId + timestamp of
                                 // the proposing player and the proposed to player after the acceptance is done.
@@ -247,8 +261,9 @@ public class MarryCmd {
 
                                 // Well, we have a badge for this too. Consolation prize I guess.
                                 final Player proposingPlayer = ctx.getPlayer(proposingUser);
-                                proposingPlayer.getData().addBadgeIfAbsent(Badge.DENIED);
-                                proposingPlayer.saveUpdating();
+                                if (proposingPlayer.getData().addBadgeIfAbsent(Badge.DENIED)) {
+                                    proposingPlayer.saveUpdating();
+                                }
                                 return Operation.COMPLETED;
                             }
 
@@ -428,8 +443,8 @@ public class MarryCmd {
                     return;
                 }
 
-                var finalContent = content;
-                ctx.sendLocalized("commands.marry.buyhouse.confirm", EmoteReference.WARNING, housePrice, content);
+                var finalContent = Utils.HTTP_URL.matcher(content).replaceAll("-url-");
+                ctx.sendLocalized("commands.marry.buyhouse.confirm", EmoteReference.WARNING, housePrice, finalContent);
                 InteractiveOperations.create(ctx.getChannel(), ctx.getAuthor().getIdLong(), 30, (e) -> {
                     if (!e.getAuthor().equals(ctx.getAuthor()))
                         return Operation.IGNORED;
@@ -513,7 +528,7 @@ public class MarryCmd {
                     return;
                 }
 
-                var finalContent = content;
+                var finalContent = Utils.HTTP_URL.matcher(content).replaceAll("-url-");
                 ctx.sendLocalized("commands.marry.buycar.confirm", EmoteReference.WARNING, carPrice, content);
                 InteractiveOperations.create(ctx.getChannel(), ctx.getAuthor().getIdLong(), 30, (e) -> {
                     if (!e.getAuthor().equals(ctx.getAuthor()))
@@ -618,6 +633,11 @@ public class MarryCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
+                if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                    ctx.sendLocalized("general.missing_embed_permissions");
+                    return;
+                }
+
                 final var author = ctx.getAuthor();
                 final var dbUser = ctx.getDBUser();
                 final var dbUserData = dbUser.getData();
@@ -640,7 +660,7 @@ public class MarryCmd {
                 //Get the current love letter.
                 var loveLetter = data.getLoveLetter();
                 if (loveLetter == null || loveLetter.isEmpty()) {
-                    loveLetter = "None.";
+                    loveLetter = languageContext.get("general.none");
                 }
 
                 final var marriedDBUser = ctx.getDBUser(marriedTo);
@@ -648,6 +668,7 @@ public class MarryCmd {
                 final var eitherHasWaifus = !(dbUserData.getWaifus().isEmpty() && marriedDBUser.getData().getWaifus().isEmpty());
                 final var marriedToName = dbUserData.isPrivateTag() ? marriedTo.getName() : marriedTo.getAsTag();
                 final var authorName = dbUserData.isPrivateTag() ? author.getName() : author.getAsTag();
+                final var daysMarried = TimeUnit.of(ChronoUnit.MILLIS).toDays(System.currentTimeMillis() - data.getMarriageCreationMillis());
 
                 EmbedBuilder embedBuilder = new EmbedBuilder()
                         .setThumbnail(author.getEffectiveAvatarUrl())
@@ -655,33 +676,46 @@ public class MarryCmd {
                         .setColor(ctx.getMember().getColor() == null ? Color.PINK : ctx.getMember().getColor())
                         .setDescription(languageContext.get("commands.marry.status.description_format").formatted(
                                 EmoteReference.HEART, authorName, marriedToName)
-                        ).addField(languageContext.get("commands.marry.status.date"), dateFormat, false)
-                        .addField(languageContext.get("commands.marry.status.love_letter"), loveLetter, false)
-                        .addField(languageContext.get("commands.marry.status.waifus"), String.valueOf(eitherHasWaifus), false)
+                        )
+                        .addField(EmoteReference.CALENDAR2.toHeaderString() + languageContext.get("commands.marry.status.date"),
+                                dateFormat, false)
+                        .addField(EmoteReference.CLOCK.toHeaderString() + languageContext.get("commands.marry.status.age"),
+                                daysMarried + " " + languageContext.get("general.days"), false
+                        )
+                        .addField(EmoteReference.LOVE_LETTER.toHeaderString() + languageContext.get("commands.marry.status.love_letter"),
+                                loveLetter, false
+                        )
+                        .addField(EmoteReference.ZAP.toHeaderString() + languageContext.get("commands.marry.status.waifus"),
+                                String.valueOf(eitherHasWaifus), false
+                        )
                         .setFooter("Marriage ID: " + currentMarriage.getId(), author.getEffectiveAvatarUrl());
 
                 if (data.hasHouse()) {
                     var houseName = data.getHouseName().replace("\n", "").trim();
-                    embedBuilder.addField(languageContext.get("commands.marry.status.house"), houseName, true);
+                    embedBuilder.addField(EmoteReference.HOUSE.toHeaderString() + languageContext.get("commands.marry.status.house"),
+                            houseName, true
+                    );
                 }
 
                 if (data.hasCar()) {
                     var carName = data.getCarName().replace("\n", "").trim();
-                    embedBuilder.addField(languageContext.get("commands.marry.status.car"), carName, true);
+                    embedBuilder.addField(EmoteReference.CAR.toHeaderString() + languageContext.get("commands.marry.status.car"),
+                            carName, true
+                    );
                 }
 
                 if (data.getPet() != null) {
                     var pet = data.getPet();
                     var petType = data.getPet().getType();
 
-                    embedBuilder.addField(languageContext.get("commands.marry.status.pet"),
-                            pet.getName() + " (" + petType.getEmoji() + petType.getName() + ")", false
+                    embedBuilder.addField(EmoteReference.PET_HOUSE.toHeaderString() + languageContext.get("commands.marry.status.pet"),
+                            pet.getName() + " (" + petType.getName() + ")", false
                     );
                 }
 
                 ctx.send(embedBuilder.build());
             }
-        });
+        }).createSubCommandAlias("status", "stats");
 
         cr.registerAlias("marry", "marriage");
     }

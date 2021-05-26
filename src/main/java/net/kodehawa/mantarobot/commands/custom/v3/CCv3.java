@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.custom.v3;
@@ -343,7 +343,7 @@ public class CCv3 {
 
     public static void process(String prefix, Context ctx, Node ast, boolean preview) {
         InterpreterContext context = new InterpreterContext(new DynamicModifiers()
-                .mapEvent(prefix, "event", ctx.getEvent()), DEFAULT_OPERATIONS, ctx);
+                .mapEvent(prefix, "event", ctx), DEFAULT_OPERATIONS, ctx);
 
         String result = ast.accept(new InterpreterVisitor(), context);
         EmbedJSON embed = context.get("embed");

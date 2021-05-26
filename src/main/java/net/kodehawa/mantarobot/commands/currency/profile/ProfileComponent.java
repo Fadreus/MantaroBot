@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.currency.profile;
@@ -20,10 +20,13 @@ import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.MantaroBot;
 import net.kodehawa.mantarobot.commands.currency.item.Item;
 import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
+import net.kodehawa.mantarobot.commands.currency.pets.HousePet;
+import net.kodehawa.mantarobot.commands.currency.pets.PetChoice;
 import net.kodehawa.mantarobot.commands.currency.seasons.SeasonPlayer;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.db.entities.DBUser;
+import net.kodehawa.mantarobot.db.entities.Marriage;
 import net.kodehawa.mantarobot.db.entities.Player;
 import net.kodehawa.mantarobot.db.entities.helpers.PlayerData;
 import net.kodehawa.mantarobot.utils.Utils;
@@ -86,7 +89,7 @@ public enum ProfileComponent {
     }, true, false),
     MARRIAGE(EmoteReference.HEART, i18nContext -> i18nContext.get("commands.profile.married"), (holder, i18nContext) -> {
         var userData = holder.getDbUser().getData();
-        var currentMarriage = userData.getMarriage();
+        var currentMarriage = holder.getMarriage();
         User marriedTo = null;
 
         //Expecting save to work in PlayerCmds, not here, just handle this here.
@@ -126,20 +129,35 @@ public enum ProfileComponent {
     BADGES(EmoteReference.HEART, i18nContext -> i18nContext.get("commands.profile.badges"), (holder, i18nContext) -> {
         final var badges = holder.getBadges();
         if (badges.isEmpty()) {
-            return i18nContext.get("general.dust");
+            return i18nContext.get("commands.profile.no_badges");
         }
 
-        var displayBadges = badges
-                .stream()
+        return badges.stream()
                 .limit(5)
                 .map(Badge::getUnicode)
                 .collect(Collectors.joining(" \u2009\u2009"));
-
-        if (displayBadges.isEmpty()) {
-            return i18nContext.get("commands.profile.no_badges");
-        } else {
-            return displayBadges;
+    }, true, false),
+    PET(EmoteReference.DOG, i18nContext -> i18nContext.get("commands.profile.pet.header"), (holder, i18nContext) -> {
+        final var playerData = holder.getPlayer().getData();
+        final var petType = playerData.getActiveChoice(holder.getMarriage());
+        HousePet pet = null;
+        if (petType == PetChoice.MARRIAGE && holder.getMarriage() != null) {
+            pet = holder.getMarriage().getData().getPet();
         }
+
+        if (petType == PetChoice.PERSONAL) {
+            pet = playerData.getPet();
+        }
+
+        if (pet == null) {
+            return i18nContext.get("commands.profile.pet.none");
+        }
+
+        return "%s**%s** [%s: %,d, XP: %,d]"
+                .formatted(
+                        pet.getType().getEmoji(), pet.getName(),
+                        i18nContext.get("commands.profile.level"), pet.getLevel(), pet.getExperience()
+                );
     }, true, false),
     QUESTS(EmoteReference.PENCIL, i18nContext -> i18nContext.get("commands.profile.quests.header"), (holder, i18nContext) -> {
         var tracker = holder.getPlayer().getData().getQuests();
@@ -251,13 +269,15 @@ public enum ProfileComponent {
         private SeasonPlayer seasonalPlayer;
         private DBUser dbUser;
         private List<Badge> badges;
+        private Marriage marriage;
 
-        public Holder(User user, Player player, SeasonPlayer seasonalPlayer, DBUser dbUser, List<Badge> badges) {
+        public Holder(User user, Player player, SeasonPlayer seasonalPlayer, DBUser dbUser, Marriage marriage, List<Badge> badges) {
             this.user = user;
             this.player = player;
             this.seasonalPlayer = seasonalPlayer;
             this.dbUser = dbUser;
             this.badges = badges;
+            this.marriage = marriage;
         }
 
         public Holder() { }
@@ -304,6 +324,14 @@ public enum ProfileComponent {
 
         public void setBadges(List<Badge> badges) {
             this.badges = badges;
+        }
+
+        public Marriage getMarriage() {
+            return marriage;
+        }
+
+        public void setMarriage(Marriage marriage) {
+            this.marriage = marriage;
         }
     }
 }

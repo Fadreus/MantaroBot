@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.kodehawa.mantarobot.core.CommandRegistry;
 import net.kodehawa.mantarobot.core.command.processor.CommandProcessor;
 import net.kodehawa.mantarobot.core.modules.Module;
@@ -145,6 +146,11 @@ public class HelpCmd {
                     return;
                 }
 
+                if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                    ctx.sendLocalized("general.missing_embed_permissions");
+                    return;
+                }
+
                 var commandCategory = CommandCategory.lookupFromString(content);
 
                 if (content.isEmpty()) {
@@ -166,7 +172,6 @@ public class HelpCmd {
                     }
 
                     var help = command.help();
-
                     if (help == null || help.getDescription() == null) {
                         ctx.sendLocalized("commands.help.extended.no_help", EmoteReference.ERROR);
                         return;
@@ -197,20 +202,13 @@ public class HelpCmd {
                             ).setDescription(desc);
 
                     if (help.getUsage() != null) {
-                        builder.addField("Usage", help.getUsage(), false);
+                        builder.addField(EmoteReference.PENCIL.toHeaderString() + "Usage", help.getUsage(), false);
                     }
 
                     if (help.getParameters().size() > 0) {
-                        builder.addField("Parameters", help.getParameters().entrySet().stream()
+                        builder.addField(EmoteReference.SLIDER.toHeaderString() + "Parameters", help.getParameters().entrySet().stream()
                                         .map(entry -> "`%s` - *%s*".formatted(entry.getKey(), entry.getValue()))
                                         .collect(Collectors.joining("\n")), false
-                        );
-                    }
-
-                    if (help.isSeasonal()) {
-                        builder.addField("Seasonal",
-                                "This command allows the usage of the `-season` (or `-s`) argument.",
-                                false
                         );
                     }
 
@@ -251,8 +249,8 @@ public class HelpCmd {
                         }
 
                         if (stringBuilder.length() > 0) {
-                            builder.addField("Sub-commands",
-                                    "**Append the main command to use any of this.**\n" + stringBuilder,
+                            builder.addField(EmoteReference.ZAP.toHeaderString() + "Sub-commands",
+                                    "**Prepend the main command to use any of this.**\n" + stringBuilder,
                                     false
                             );
                         }
@@ -268,11 +266,11 @@ public class HelpCmd {
                                 .collect(Collectors.joining(" "));
 
                         if (!aliases.trim().isEmpty()) {
-                            builder.addField("Aliases", aliases, false);
+                            builder.addField(EmoteReference.FORK.toHeaderString() + "Aliases", aliases, false);
                         }
                     }
 
-                    builder.addField("Still lost?",
+                    builder.addField(EmoteReference.MAGAZINE.toHeaderString() + "Still lost?",
                             "[Check the wiki](https://wiki.mantaro.site) or " +
                                     "[get support here!](https://support.mantaro.site)",  false
                     ).setFooter("Thanks for using Mantaro!", ctx.getAuthor().getEffectiveAvatarUrl());

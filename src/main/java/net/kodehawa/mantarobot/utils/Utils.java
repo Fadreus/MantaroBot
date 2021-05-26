@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,13 +11,14 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.utils;
 
 import com.rethinkdb.net.Connection;
 import net.kodehawa.mantarobot.MantaroInfo;
+import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.Config;
 import net.kodehawa.mantarobot.data.MantaroData;
 import net.kodehawa.mantarobot.utils.annotations.ConfigName;
@@ -28,6 +29,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.commons.lang3.LocaleUtils;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +38,7 @@ import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
@@ -54,6 +53,8 @@ import static net.kodehawa.mantarobot.utils.commands.EmoteReference.BLUE_SMALL_M
 
 public class Utils {
     private static final Logger log = LoggerFactory.getLogger(Utils.class);
+    private static final char ACTIVE_BLOCK = '\u2588';
+    private static final char EMPTY_BLOCK = '\u200b';
 
     public static final OkHttpClient httpClient = new OkHttpClient();
     public static final Pattern mentionPattern = Pattern.compile("<(#|@|@&)?.[0-9]{17,21}>");
@@ -62,14 +63,13 @@ public class Utils {
     private final static String BLOCK_ACTIVE = "\uD83D\uDD18";
     private static final int TOTAL_BLOCKS = 10;
 
-    //The regex to filter discord invites.
-    public static final Pattern DISCORD_INVITE = Pattern.compile(
-            "(?:discord(?:(?:\\.|.?dot.?)gg|app(?:\\.|.?dot.?)com/invite)/(?<id>" +
-                    "([\\w]{10,16}|[a-zA-Z0-9]{4,8})))");
+    // The regex to filter discord invites.
+    public static final Pattern DISCORD_INVITE = Pattern.compile("(?:discord(?:(?:\\.|.?dot.?)gg|app(?:\\.|.?dot.?)com/invite)/(?<id>" + "([\\w]{10,16}|[a-zA-Z0-9]{4,8})))");
+    public static final Pattern DISCORD_INVITE_2 = Pattern.compile("(?:https?://)?discord((?:app)?(?:\\.|\\s*?dot\\s*?)com\\s?/\\s*invite\\s*/\\s*|(?:\\.|\\s*dot\\s*)(?:gg|me|io)\\s*/\\s*)([a-zA-Z0-9\\-_]+)");
+    public static final Pattern HTTP_URL = Pattern.compile("([a-zA-Z\\d]+://)?(\\w+:\\w+@)?([a-zA-Z\\d.-]+\\.[A-Za-z]{2,4})(:\\d+)?(/.*)?");
 
-    public static final Pattern DISCORD_INVITE_2 = Pattern.compile(
-            "(?:https?://)?discord((?:app)?(?:\\.|\\s*?dot\\s*?)com\\s?/\\s*invite\\s*/\\s*|(?:\\.|\\s*dot\\s*)(?:gg|me|io)\\s*/\\s*)([a-zA-Z0-9\\-_]+)"
-    );
+    // Formatting regex
+    public static final Pattern FORMAT_PATTERN = Pattern.compile("%\\d[$][,]?[a-zA-Z]");
 
     private static final char BACKTICK = '`';
     private static final char LEFT_TO_RIGHT_ISOLATE = '\u2066';
@@ -88,9 +88,7 @@ public class Utils {
             return s;
         }
 
-        return s.substring(0, 1)
-                .toUpperCase() + s.substring(1)
-                .toLowerCase();
+        return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
     }
 
     public static String formatDuration(long time) {
@@ -158,6 +156,10 @@ public class Utils {
         return amount + " " + baseName + "s";
     }
 
+    public static Locale getLocaleFromLanguage(I18nContext context) {
+        return getLocaleFromLanguage(context.getContextLanguage());
+    }
+
     public static Locale getLocaleFromLanguage(String language) {
         // No need to pass it to LocaleUtils if we pass nothing to this.
         if (language == null || language.isEmpty()) {
@@ -178,30 +180,46 @@ public class Utils {
     }
 
     public static String paste(String toSend) {
+        return paste(toSend, false);
+    }
+
+    public static String paste(String toSend, boolean expireLater) {
+        var expire = ZonedDateTime.now(ZoneOffset.UTC).plusHours(expireLater ? 48 : 1).format(DateTimeFormatter.ISO_INSTANT);
+        var jsonMessage = new JSONObject()
+                .put("name", "pasted_file_mantaro.txt")
+                .put("content", new JSONObject().put("format", "text").put("value", toSend));
+
+        var message = new JSONObject()
+                .put("name", "Mantaro Pasted Data")
+                .put("visibility", "unlisted")
+                .put("expires", expire)
+                .put("files", new JSONArray().put(jsonMessage));
+
+        var post = RequestBody.create(MediaType.parse("application/json"), message.toString());
+        var toPost = new Request.Builder()
+                .url("https://api.paste.gg/v1/pastes")
+                .header("User-Agent", MantaroInfo.USER_AGENT)
+                .header("Content-Type", "application/json")
+                .post(post)
+                .build();
+
         try {
-            var post = RequestBody.create(MediaType.parse("text/plain"), toSend);
-
-            var toPost = new Request.Builder()
-                    .url("https://hasteb.in/documents")
-                    .header("User-Agent", MantaroInfo.USER_AGENT)
-                    .header("Content-Type", "text/plain")
-                    .post(post)
-                    .build();
-
             try (var r = httpClient.newCall(toPost).execute()) {
-                return "https://hasteb.in/" + new JSONObject(r.body().string()).getString("key");
+                var body = r.body();
+                if (r.body() == null) {
+                    throw new IllegalArgumentException();
+                }
+
+                var string = r.body().string();
+                return "https://paste.gg/p/anonymous/%s"
+                        .formatted(new JSONObject(string).getJSONObject("result").getString("id"));
             }
         } catch (Exception e) {
-            return "cannot post data to hasteb.in";
+            log.error("Cannot post data to paste.gg", e);
+            return "cannot post data to paste.gg";
         }
     }
 
-    /**
-     * Same than above, but using OkHttp. Way easier tbh.
-     *
-     * @param url The URL to get the object from.
-     * @return The object as a parsed string.
-     */
     public static String httpRequest(String url) {
         try {
             var req = new Request.Builder()
@@ -326,6 +344,10 @@ public class Utils {
     }
 
     public static ZoneId timezoneToZoneID(final String timeZone) {
+        if (timeZone == null) {
+            return ZoneId.systemDefault();
+        }
+
         return TimeZone.getTimeZone(timeZone).toZoneId();
     }
 
@@ -377,8 +399,10 @@ public class Utils {
         return date.format(DateTimeFormatter.ofPattern("HH:mm:ss").withLocale(getLocaleFromLanguage(locale)));
     }
 
-    public static String formatHours(OffsetDateTime date) {
-        return formatHours(date, "en_US");
+    public static String formatHours(OffsetDateTime date, String zone, String locale) {
+        return date.format(DateTimeFormatter.ofPattern("HH:mm:ss")
+                .withZone(timezoneToZoneID(zone))
+                .withLocale(getLocaleFromLanguage(locale)));
     }
 
     public static String formatDate(long epoch, String lang) {
@@ -406,6 +430,17 @@ public class Utils {
         return list;
     }
 
+    public static String bar(long percent, long total) {
+        var activeBlocks = (int) ((float) percent / 100f * total);
+        var builder = new StringBuilder().append('`').append(EMPTY_BLOCK);
+
+        for (long i = 0; i < total; i++) {
+            builder.append(activeBlocks > i ? ACTIVE_BLOCK : ' ');
+        }
+
+        return builder.append(EMPTY_BLOCK).append('`').toString();
+    }
+
     /**
      * Fixes the direction of the rendering of the text inside `inline codeblocks` to
      * be always left to right.
@@ -418,12 +453,12 @@ public class Utils {
     @Nonnull
     @CheckReturnValue
     public static String fixInlineCodeblockDirection(@Nonnull String src) {
-        //if there's no right to left override, there's nothing to do
+        // if there's no right to left override, there's nothing to do
         if (!isRtl(src)) {
             return src;
         }
 
-        //no realloc unless we somehow have 5 codeblocks
+        // no realloc unless we somehow have 5 codeblocks
         var sb = new StringBuilder(src.length() + 8);
         var inside = false;
 
@@ -446,13 +481,19 @@ public class Utils {
     }
 
     private static boolean isRtl(String string) {
+        // Well why bother...
         if (string == null) {
             return false;
         }
 
+        // This is a workaround. Most translated strings will have %[number]$s or %[number]$,d, which happens to be LTR.
+        // This happened because using Notepad++ to translate RTL text works, but will insert LTR hints on latin letters, which fucked
+        // this detection hard as it returned LTR inmediatly on the first match (%). This will remove all Java formatting hints and
+        // trim the string to get a "clean" state. This will not interfere with the actual string and it's only used on detection.
+        string = FORMAT_PATTERN.matcher(string).replaceAll("").trim();
+
         for (int i = 0, n = string.length(); i < n; ++i) {
             var d = Character.getDirectionality(string.charAt(i));
-
             switch (d) {
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT:
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
@@ -527,18 +568,6 @@ public class Utils {
         var builder = new StringBuilder();
         for (var i = 0; i < TOTAL_BLOCKS; i++)
             builder.append(activeBlocks == i ? BLOCK_ACTIVE : BLOCK_INACTIVE);
-
-        return builder.append(BLOCK_INACTIVE).toString();
-    }
-
-    public static String getProgressBar(long now, long total, long blocks) {
-        var activeBlocks = (int) ((float) now / total * blocks);
-        var builder = new StringBuilder();
-
-        for (var i = 0; i < blocks; i++)
-            builder.append(
-                    activeBlocks == i ? BLOCK_ACTIVE : BLOCK_INACTIVE
-            );
 
         return builder.append(BLOCK_INACTIVE).toString();
     }

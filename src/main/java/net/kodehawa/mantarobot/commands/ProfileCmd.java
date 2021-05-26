@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,13 +11,14 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
 
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.kodehawa.mantarobot.MantaroBot;
@@ -38,7 +39,6 @@ import net.kodehawa.mantarobot.core.modules.commands.TreeCommand;
 import net.kodehawa.mantarobot.core.modules.commands.base.Command;
 import net.kodehawa.mantarobot.core.modules.commands.base.CommandCategory;
 import net.kodehawa.mantarobot.core.modules.commands.base.Context;
-import net.kodehawa.mantarobot.core.modules.commands.base.ITreeCommand;
 import net.kodehawa.mantarobot.core.modules.commands.help.HelpContent;
 import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.data.I18n;
@@ -50,6 +50,8 @@ import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
 import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
 import java.awt.Color;
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -69,7 +71,6 @@ public class ProfileCmd {
     // Discord makes it so multiple spaces get only rendered as one, but half-width spaces don't.
     // So therefore you get this cursed *thing* for formatting.
     private static final String SEPARATOR = "\u2009\u2009\u2009\u2009\u2009\u2009\u2009\u2009";
-    private static final String SEPARATOR_MID = "\u2009\u2009\u2009\u2009";
     private static final String SEPARATOR_ONE = "\u2009\u2009";
     private static final String SEPARATOR_HALF = "\u2009";
 
@@ -92,14 +93,14 @@ public class ProfileCmd {
 
         List<ProfileComponent> defaultOrder;
         if (config.isPremiumBot() || config.isSelfHost()) {
-            defaultOrder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+            defaultOrder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES, PET);
         } else {
-            defaultOrder = createLinkedList(HEADER, CREDITS, OLD_CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+            defaultOrder = createLinkedList(HEADER, CREDITS, OLD_CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES, PET);
         }
 
-        List<ProfileComponent> noOldOlder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES);
+        List<ProfileComponent> noOldOrder = createLinkedList(HEADER, CREDITS, LEVEL, REPUTATION, BIRTHDAY, MARRIAGE, INVENTORY, BADGES, PET);
 
-        ITreeCommand profileCommand = cr.register("profile", new TreeCommand(CommandCategory.CURRENCY) {
+        TreeCommand profileCommand = cr.register("profile", new TreeCommand(CommandCategory.CURRENCY) {
             @Override
             public Command defaultTrigger(Context ctx, String mainCommand, String commandName) {
                 return new SubCommand() {
@@ -108,10 +109,9 @@ public class ProfileCmd {
                         var optionalArguments = ctx.getOptionalArguments();
                         content = Utils.replaceArguments(optionalArguments, content, "season", "s").trim();
                         var isSeasonal = ctx.isSeasonal();
-
-
                         var finalContent = content;
-                        ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+
+                        ctx.findMember(content, members -> {
                             SeasonPlayer seasonalPlayer = null;
                             var userLooked = ctx.getAuthor();
                             var memberLooked = ctx.getMember();
@@ -139,13 +139,13 @@ public class ProfileCmd {
                             var inv = player.getInventory();
 
                             // Cache waifu value.
-                            playerData.setWaifuCachedValue(WaifuCmd.calculateWaifuValue(userLooked).getFinalValue());
+                            playerData.setWaifuCachedValue(WaifuCmd.calculateWaifuValue(player, userLooked).getFinalValue());
 
                             // start of badge assigning
                             var mh = MantaroBot.getInstance().getShardManager().getGuildById("213468583252983809");
                             var mhMember = mh == null ? null : ctx.retrieveMemberById(memberLooked.getUser().getId(), false);
 
-                            Badge.assignBadges(player, dbUser);
+                            Badge.assignBadges(player, player.getStats(), dbUser);
                             var christmasBadgeAssign = inv.asList()
                                     .stream()
                                     .map(ItemStack::getItem)
@@ -186,8 +186,9 @@ public class ProfileCmd {
                                 seasonalPlayer = ctx.getSeasonPlayer(userLooked);
                             }
 
-                            var ringHolder = player.getInventory().containsItem(ItemReference.RING) && userData.getMarriage() != null;
-                            var holder = new ProfileComponent.Holder(userLooked, player, seasonalPlayer, dbUser, badges);
+                            var marriage = ctx.getMarriage(userData);
+                            var ringHolder = player.getInventory().containsItem(ItemReference.RING) && marriage != null;
+                            var holder = new ProfileComponent.Holder(userLooked, player, seasonalPlayer, dbUser, marriage, badges);
                             var profileBuilder = new EmbedBuilder();
                             var description = languageContext.get("commands.profile.no_desc");
 
@@ -207,8 +208,9 @@ public class ProfileCmd {
 
                             var hasCustomOrder = dbUser.isPremium() && !playerData.getProfileComponents().isEmpty();
                             var usedOrder = hasCustomOrder ? playerData.getProfileComponents() : defaultOrder;
-                            if ((!config.isPremiumBot() && player.getOldMoney() < 5000 && !hasCustomOrder) || playerData.isHiddenLegacy()) {
-                                usedOrder = noOldOlder;
+                            if ((!config.isPremiumBot() && player.getOldMoney() < 5000 && !hasCustomOrder) ||
+                                    (playerData.isHiddenLegacy() && !hasCustomOrder)) {
+                                usedOrder = noOldOrder;
                             }
 
                             for (var component : usedOrder) {
@@ -218,9 +220,12 @@ public class ProfileCmd {
                             }
 
                             ctx.send(profileBuilder.build());
-                            player.saveUpdating();
-                        });
 
+                            // We don't need to update stats if someone else views your profile
+                            if (player.getUserId().equals(ctx.getAuthor().getId())) {
+                                player.saveUpdating();
+                            }
+                        });
                     }
                 };
             }
@@ -235,6 +240,39 @@ public class ProfileCmd {
                         .addParameter("@mention", "A user mention (ping)")
                         .setSeasonal(true)
                         .build();
+            }
+        });
+
+        profileCommand.setPredicate(ctx -> {
+            if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                ctx.sendLocalized("general.missing_embed_permissions");
+                return false;
+            }
+
+            return true;
+        });
+
+        profileCommand.addSubCommand("toggleaction", new SubCommand() {
+            @Override
+            public String description() {
+                return "Disables or enables action commands to be done to you.";
+            }
+
+            @Override
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                final var dbUser = ctx.getDBUser();
+                final var userData = dbUser.getData();
+                final var isDisabled = userData.isActionsDisabled();
+
+                if (isDisabled) {
+                    userData.setActionsDisabled(false);
+                    ctx.sendLocalized("commands.profile.toggleaction.enabled", EmoteReference.CORRECT);
+                } else {
+                    userData.setActionsDisabled(true);
+                    ctx.sendLocalized("commands.profile.toggleaction.disabled", EmoteReference.CORRECT);
+                }
+
+                dbUser.save();
             }
         });
 
@@ -285,8 +323,10 @@ public class ProfileCmd {
                 protected void call(Context ctx, I18nContext languageContext, String content) {
                     final var player = ctx.getPlayer();
                     final var data = player.getData();
-                    data.setHiddenLegacy(!data.isHiddenLegacy());
+                    var toSet = !data.isHiddenLegacy();
+                    data.setHiddenLegacy(toSet);
 
+                    player.saveUpdating();
                     ctx.sendLocalized("commands.profile.hidelegacy", EmoteReference.CORRECT, data.isHiddenLegacy());
                 }
             });
@@ -385,6 +425,11 @@ public class ProfileCmd {
                     timezone = content.toUpperCase().replace("UTC", "GMT");
                 }
 
+                // EST, EDT, etc...
+                if (timezone.length() == 3) {
+                    timezone = timezone.toUpperCase();
+                }
+
                 if (timezone.equalsIgnoreCase("reset")) {
                     dbUser.getData().setTimezone(null);
                     dbUser.saveAsync();
@@ -393,6 +438,13 @@ public class ProfileCmd {
                 }
 
                 if (!Utils.isValidTimeZone(timezone)) {
+                    ctx.sendLocalized("commands.profile.timezone.invalid", EmoteReference.ERROR);
+                    return;
+                }
+
+                try {
+                    Utils.formatDate(LocalDateTime.now(Utils.timezoneToZoneID(timezone)), dbUser.getData().getLang());
+                } catch (DateTimeException e) {
                     ctx.sendLocalized("commands.profile.timezone.invalid", EmoteReference.ERROR);
                     return;
                 }
@@ -411,7 +463,7 @@ public class ProfileCmd {
         profileCommand.addSubCommand("description", new SubCommand() {
             @Override
             public String description() {
-                return "Sets your profile description.";
+                return "Sets your profile description. Use `reset` to reset it.";
             }
 
             @Override
@@ -420,7 +472,7 @@ public class ProfileCmd {
                     return;
                 }
 
-                var args = content.split(" ");
+                var args = ctx.getArguments();
                 var player = ctx.getPlayer();
                 var dbUser = ctx.getDBUser();
 
@@ -429,10 +481,11 @@ public class ProfileCmd {
                     return;
                 }
 
-                if (args[0].equals("clear")) {
+                if (args[0].equals("clear") || args[0].equals("remove") || args[0].equals("reset")) {
                     player.getData().setDescription(null);
                     ctx.sendLocalized("commands.profile.description.clear_success", EmoteReference.CORRECT);
                     player.saveUpdating();
+                    return;
                 }
 
                 var split = SPLIT_PATTERN.split(content, 2);
@@ -463,8 +516,7 @@ public class ProfileCmd {
                 desc = Utils.DISCORD_INVITE_2.matcher(desc).replaceAll("-discord invite link-");
 
                 player.getData().setDescription(desc);
-
-                ctx.sendStrippedLocalized("commands.profile.description.success", EmoteReference.POPPER, desc);
+                ctx.sendStrippedLocalized("commands.profile.description.success", EmoteReference.POPPER);
 
                 player.getData().addBadgeIfAbsent(Badge.WRITER);
                 player.saveUpdating();
@@ -579,7 +631,7 @@ public class ProfileCmd {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                     if (member == null) {
                         return;
@@ -614,7 +666,6 @@ public class ProfileCmd {
                             (equippedItems.isEffectActive(PlayerEquipment.EquipmentType.BUFF, buff.getMaxUses())
                             || buffEffect.getAmountEquipped() > 1);
 
-
                     var potionEquipped = 0L;
                     var buffEquipped = 0L;
 
@@ -637,8 +688,8 @@ public class ProfileCmd {
                     var noPotion = potion == null || !isPotionActive;
                     var noBuff = buff == null || !isBuffActive;
 
-                    var equipment = parsePlayerEquipment(equippedItems);
-                    var seasonalEquipment = parsePlayerEquipment(seasonalEquippedItems);
+                    var equipment = parsePlayerEquipment(equippedItems, ctx.getLanguageContext());
+                    var seasonalEquipment = parsePlayerEquipment(seasonalEquippedItems, ctx.getLanguageContext());
 
                     //This whole thing is a massive mess, lmfao.
                     //This is definitely painful and goes on for 100 lines lol
@@ -726,7 +777,7 @@ public class ProfileCmd {
                             ),
 
                             prettyDisplay(languageContext.get("commands.profile.stats.dust"),
-                                    "%d".formatted(data.getDustLevel())
+                                    "%d%%".formatted(data.getDustLevel())
                             ),
 
                             prettyDisplay(languageContext.get("commands.profile.stats.reminders"),
@@ -826,14 +877,16 @@ public class ProfileCmd {
                 );
             }
         });
+
+        cr.registerAlias("profile", "me");
     }
 
-    public String parsePlayerEquipment(PlayerEquipment equipment) {
+    public static String parsePlayerEquipment(PlayerEquipment equipment, I18nContext languageContext) {
         var toolsEquipment = equipment.getEquipment();
         var separator = SEPARATOR + SEPARATOR_HALF + LIST_MARKER + SEPARATOR_HALF;
 
         if (toolsEquipment.isEmpty()) {
-            return separator + "None";
+            return separator + languageContext.get("general.none");
         }
 
         return toolsEquipment.entrySet().stream().map((entry) -> {

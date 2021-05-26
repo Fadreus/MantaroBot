@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
- *  
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
+ *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.currency.item;
@@ -19,10 +19,11 @@ package net.kodehawa.mantarobot.commands.currency.item;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.kodehawa.mantarobot.commands.currency.item.special.Axe;
-import net.kodehawa.mantarobot.commands.currency.item.special.FishRod;
-import net.kodehawa.mantarobot.commands.currency.item.special.Pickaxe;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Axe;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.FishRod;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Pickaxe;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
+import net.kodehawa.mantarobot.commands.currency.item.special.tools.Wrench;
 
 import java.beans.ConstructorProperties;
 import java.util.HashMap;
@@ -40,7 +41,7 @@ public class PlayerEquipment {
     public PlayerEquipment(@JsonProperty("equipment") Map<EquipmentType, Integer> equipment, @JsonProperty("effects") Map<EquipmentType, PotionEffect> effects, @JsonProperty("durability") Map<EquipmentType, Integer> durability) {
         this.equipment = equipment;
         this.effects = effects;
-        this.durability = durability == null ? new HashMap<>() : durability; //Workaround because some people will not have this property.
+        this.durability = durability == null ? new HashMap<>() : durability; // Workaround because some people will not have this property.
     }
 
     @JsonIgnore
@@ -153,6 +154,7 @@ public class PlayerEquipment {
         ROD(FishRod.class::isInstance, 0),
         PICK(Pickaxe.class::isInstance, 0),
         AXE(Axe.class::isInstance, 0),
+        WRENCH(Wrench.class::isInstance, 0),
         POTION(item -> item.getItemType() == ItemType.POTION, 1),
         BUFF(item -> item.getItemType() == ItemType.BUFF, 1);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -19,6 +19,7 @@ package net.kodehawa.mantarobot.commands;
 import com.google.common.eventbus.Subscribe;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kodehawa.mantarobot.commands.currency.item.*;
 import net.kodehawa.mantarobot.commands.currency.item.special.Potion;
@@ -40,6 +41,7 @@ import net.kodehawa.mantarobot.utils.commands.CustomFinderUtil;
 import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
 import net.kodehawa.mantarobot.utils.commands.ratelimit.IncreasingRateLimiter;
+import net.kodehawa.mantarobot.utils.commands.ratelimit.RatelimitUtils;
 
 import java.awt.Color;
 import java.util.*;
@@ -63,7 +65,7 @@ public class CurrencyCmds {
                 // Lambda memes lol
                 var finalContent = content;
 
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMemberDefault(finalContent, members, ctx, ctx.getMember());
                     if (member == null)
                         return;
@@ -89,7 +91,7 @@ public class CurrencyCmds {
                     if (arguments.containsKey("calculate") || arguments.containsKey("calc") || arguments.containsKey("c")) {
                         long all = playerInventory.asList().stream()
                                 .filter(item -> item.getItem().isSellable())
-                                .mapToLong(value -> (long) (value.getItem().getValue() * value.getAmount() * 0.9d))
+                                .mapToLong(value -> Math.round(value.getItem().getValue() * value.getAmount() * 0.9d))
                                 .sum();
 
                         ctx.sendLocalized("commands.inventory.calculate", EmoteReference.DIAMOND, member.getUser().getName(), all);
@@ -102,6 +104,11 @@ public class CurrencyCmds {
                     }
 
                     if (arguments.containsKey("info") || arguments.containsKey("full")) {
+                        if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                            ctx.sendLocalized("general.missing_embed_permissions");
+                            return;
+                        }
+
                         EmbedBuilder builder = baseEmbed(ctx,
                                 languageContext.get("commands.inventory.header").formatted(member.getEffectiveName()),
                                 member.getUser().getEffectiveAvatarUrl()
@@ -178,7 +185,7 @@ public class CurrencyCmds {
         cr.register("level", new SimpleCommand(CommandCategory.CURRENCY) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = ctx.getMember();
 
                     if (!content.isEmpty()) {
@@ -221,6 +228,8 @@ public class CurrencyCmds {
                         .build();
             }
         });
+
+        cr.registerAlias("level", "rank");
     }
 
     @Subscribe
@@ -239,8 +248,13 @@ public class CurrencyCmds {
                         .orElse(null);
 
                 //Open default crate if nothing's specified.
-                if (item == null || content.isEmpty()) {
+                if (content.isEmpty()) {
                     item = ItemReference.LOOT_CRATE;
+                }
+
+                if (item == null) {
+                    ctx.sendLocalized("commands.opencrate.nothing_found", EmoteReference.ERROR);
+                    return;
                 }
 
                 if (item.getItemType() != ItemType.CRATE) {
@@ -258,7 +272,7 @@ public class CurrencyCmds {
                 }
 
                 //Ratelimit handled here
-                //Check Items.openLootCrate for implementation details.
+                //Check ItemHelper.openLootCrate for implementation details.
                 item.getAction().test(ctx, isSeasonal);
             }
 
@@ -274,6 +288,8 @@ public class CurrencyCmds {
                         .build();
             }
         });
+
+        registry.registerAlias("opencrate", "crate");
     }
 
     @Subscribe
@@ -317,8 +333,15 @@ public class CurrencyCmds {
 
                 // Alternate between mine and fish crates instead of doing so at random, since at random
                 // it might seem like it only gives one sort of crate.
-                var crate = playerData.getLastCrateGiven() == ItemHelper.idOf(ItemReference.MINE_PREMIUM_CRATE) ?
-                        ItemReference.FISH_PREMIUM_CRATE : ItemReference.MINE_PREMIUM_CRATE;
+                var lastCrateGiven = playerData.getLastCrateGiven();
+                var crate = ItemReference.MINE_PREMIUM_CRATE;
+                if (lastCrateGiven == ItemHelper.idOf(ItemReference.MINE_PREMIUM_CRATE)) {
+                    crate = ItemReference.FISH_PREMIUM_CRATE;
+                }
+
+                if (lastCrateGiven == ItemHelper.idOf(ItemReference.FISH_PREMIUM_CRATE)) {
+                    crate = ItemReference.CHOP_PREMIUM_CRATE;
+                }
 
                 inventory.process(new ItemStack(crate, 1));
                 playerData.setLastCrateGiven(ItemHelper.idOf(crate));
@@ -407,12 +430,14 @@ public class CurrencyCmds {
                         )
                         .setUsage("`~>useitem <item> [-amount <number>]` - Uses the specified item")
                         .addParameter("item", "The item name or emoji. If the name contains spaces \"wrap it in quotes\"")
-                        .addParameterOptional("-amount", "The amount of items you want to use. Only works with potions/buffs.")
+                        .addParameterOptional("-amount", "The amount of items you want to use. Only works with potions/buffs. The maximum is 15.")
                         .build();
             }
         });
 
-        ui.addSubCommand("ls", new SubCommand() {
+        cr.registerAlias("useitem", "use");
+
+        ui.addSubCommand("list", new SubCommand() {
             @Override
             public String description() {
                 return "Lists all usable (interactive) items.";
@@ -426,42 +451,27 @@ public class CurrencyCmds {
                         i.getItemType() == ItemType.CRATE ||
                         i.getItemType() == ItemType.BUFF
                 ).collect(Collectors.toList());
-                var show = new StringBuilder();
-
-                show.append(EmoteReference.TALKING)
-                        .append(languageContext.get("commands.useitem.ls.desc"))
-                        .append("\n\n");
+                List<MessageEmbed.Field> fields = new LinkedList<>();
 
                 for (var item : interactiveItems) {
-                    show.append(EmoteReference.BLUE_SMALL_MARKER)
-                            .append(item.getEmoji())
-                            .append(" **")
-                            .append(item.getName())
-                            .append("**\n")
-                            .append("**")
-                            .append(languageContext.get("general.description"))
-                            .append(": **\u2009*")
-                            .append(languageContext.get(item.getDesc()))
-                            .append("*")
-                            .append("\n");
+                    fields.add(new MessageEmbed.Field(EmoteReference.BLUE_SMALL_MARKER + item.getEmoji() + "\u2009\u2009\u2009" + item.getName(),
+                            "**" + languageContext.get("general.description") + ":**\u2009 *" + languageContext.get(item.getDesc()) + "*",
+                            false
+                    ));
                 }
 
-                ctx.send(new EmbedBuilder()
-                        .setAuthor(languageContext.get("commands.useitem.ls.header"), null,
-                                ctx.getAuthor().getEffectiveAvatarUrl()
-                        )
-                        .setDescription(show.toString())
+                var builder = new EmbedBuilder()
+                        .setAuthor(languageContext.get("commands.useitem.ls.header"), null, ctx.getAuthor().getEffectiveAvatarUrl())
                         .setColor(Color.PINK)
-                        .setFooter(languageContext.get("general.requested_by")
-                                        .formatted(ctx.getMember().getEffectiveName()),
-                                null
-                        ).build()
-                );
+                        .setFooter(languageContext.get("general.requested_by").formatted(ctx.getMember().getEffectiveName()), null);
+
+                DiscordUtils.sendPaginatedEmbed(ctx, builder, DiscordUtils.divideFields(5, fields), languageContext.get("commands.useitem.ls.desc"));
             }
         });
 
-        ui.createSubCommandAlias("ls", "list");
-        ui.createSubCommandAlias("ls", "Is");
+        ui.createSubCommandAlias("list", "ls");
+        ui.createSubCommandAlias("list", "1s");
+        ui.createSubCommandAlias("list", "Is");
     }
 
     public static void applyPotionEffect(Context ctx, Item item, Player player, Map<String, String> arguments) {
@@ -568,5 +578,43 @@ public class CurrencyCmds {
         }
 
         item.getAction().test(ctx, false);
+    }
+
+    @Subscribe
+    public void tools(CommandRegistry cr) {
+        final var rateLimiter = new IncreasingRateLimiter.Builder()
+                .spamTolerance(1)
+                .limit(1)
+                .cooldown(3, TimeUnit.SECONDS)
+                .cooldownPenaltyIncrease(5, TimeUnit.SECONDS)
+                .maxCooldown(5, TimeUnit.MINUTES)
+                .pool(MantaroData.getDefaultJedisPool())
+                .prefix("tools")
+                .build();
+
+        cr.register("tools", new SimpleCommand(CommandCategory.CURRENCY) {
+            @Override
+            protected void call(Context ctx, String content, String[] args) {
+                if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
+                    return;
+                }
+
+                var dbUser = ctx.getDBUser();
+                var data = dbUser.getData();
+                var equippedItems = data.getEquippedItems();
+                // TODO: Make a common class for this instead of making static methods on unrelated classes, PLEASE
+                var equipment = ProfileCmd.parsePlayerEquipment(equippedItems, ctx.getLanguageContext());
+
+                // This is funny, but I really don't wanna repeat code ;-;
+                ctx.send(equipment.replaceAll("\u2009", "").trim());
+            }
+
+            @Override
+            public HelpContent help() {
+                return new HelpContent.Builder()
+                        .setDescription("Check the durability and status of your tools.")
+                        .build();
+            }
+        });
     }
 }

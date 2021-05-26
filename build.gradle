@@ -23,72 +23,72 @@ plugins {
     //Adds an Executable Manifest
     id 'application'
     //Creates FatJars
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     //Builds docker images
-    id 'com.palantir.docker' version '0.25.0'
+    id 'com.palantir.docker' version '0.26.0'
 }
 
 mainClassName = "net.kodehawa.mantarobot.MantaroBot"
-def ver = new Version(major: 6, minor: 0, revision: 10)
+def ver = new Version(major: 6, minor: 2, revision: 7)
 version ver.toString()
 
 sourceCompatibility = 15
 targetCompatibility = 15
 
 repositories {
-    mavenLocal()
-    jcenter()
     mavenCentral()
-    maven { url "https://dl.bintray.com/kodehawa/maven" }
-    maven { url 'https://dl.bintray.com/natanbc/maven' }
-    maven { url 'https://dl.bintray.com/sedmelluq/com.sedmelluq' }
+    maven {
+        name 'm2-dv8tion'
+        url 'https://m2.dv8tion.net/releases'
+    }
+
+    jcenter()
     maven { url 'https://jitpack.io' }
 }
 
 task generateLanguageList {
-    def out = new PrintStream(new FileOutputStream("src/main/resources/assets/languages/list.txt"))
-    new File("src/main/resources/assets/languages").listFiles().each {
-        if (it.getName().endsWith("json")) {
-            out.println(it.getName())
+    doLast {
+        def out = new PrintStream(new FileOutputStream(new File(project.rootDir, "src/main/resources/assets/languages/list.txt")))
+        new File(project.rootDir, "src/main/resources/assets/languages").listFiles().each {
+            if (it.getName().endsWith("json")) {
+                out.println(it.getName())
+            }
         }
-    }
 
-    out.close()
+        out.close()
+    }
 }
 
 dependencies {
     // Base
-    implementation 'net.dv8tion:JDA:4.2.0_222'
-    implementation 'club.minnced:discord-webhooks:0.5.3'
+    implementation 'net.dv8tion:JDA:4.2.1_265'
+    implementation 'club.minnced:discord-webhooks:0.5.7'
 
     // Music
-    implementation ('com.github.FredBoat:Lavalink-Client:eb26770e9b') {
+    implementation ('com.github.FredBoat:Lavalink-Client:fac5a3caf8') {
         exclude group: 'com.sedmelluq', module: 'lavaplayer'
     } // Lavalink-Client includes LP, but we specify it below, so we need to exclude it.
-    implementation 'com.sedmelluq:lavaplayer:1.3.63'
+    implementation 'com.sedmelluq:lavaplayer:1.3.76'
     implementation 'com.sedmelluq:lavaplayer-ext-youtube-rotator:0.2.3'
 
     // JSON
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.0'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
 
     // Core
-    implementation 'io.github.classgraph:classgraph:4.8.95'
+    implementation 'io.github.classgraph:classgraph:4.8.105'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
-    implementation 'com.google.guava:guava:30.1-jre'
+    implementation 'com.google.guava:guava:30.1.1-jre'
 
     // Database
     implementation 'com.rethinkdb:rethinkdb-driver:2.4.4'
-    implementation 'redis.clients:jedis:3.4.0'
+    implementation 'redis.clients:jedis:3.6.0'
 
     // Utilities
     implementation 'net.jodah:expiringmap:0.5.9'
-    implementation 'org.apache.commons:commons-lang3:3.11'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.apache.commons:commons-text:1.9'
-
-    // Internal deps (aka we made this ourselves)
-    implementation 'net.kodehawa:imageboard-api:2.4.4'
-    implementation 'com.github.natanbc:usage-tracker:0.1.1'
+    implementation 'com.github.Kodehawa:imageboard-api:1907d46a98'
 
     //Basically for FinderUtil
     implementation 'com.jagrosh:jda-utilities-commons:3.0.5'
@@ -99,7 +99,7 @@ dependencies {
     implementation 'io.prometheus:simpleclient_httpserver:0.9.0'
 
     //Unit tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
 }
 
 task copyFileToAssets(type: Copy) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.utils.commands;
@@ -81,7 +81,9 @@ public enum EmoteReference {
     ROSE(":rose:", "\uD83C\uDF39"),
     PARTY(":tada:", "\uD83C\uDF89"),
     STAR(":star:", "\u2b50"),
+    GLOWING_STAR(":star2:", "\uD83C\uDF1F"),
     HOUSE(":house:", "\uD83C\uDFE0"),
+    CAR(":red_car:", "\uD83D\uDE97"),
     MARKER(":large_orange_diamond:", "\uD83D\uDD36"),
     BLUE_SMALL_MARKER(":small_blue_diamond:", "\uD83D\uDD39"),
     DUST(":dash:", "\uD83D\uDCA8"),
@@ -92,10 +94,18 @@ public enum EmoteReference {
     DROPLET(":droplet:", "\uD83D\uDCA7"),
     DEV(":desktop:", "\uD83D\uDDA5"),
     ROCK(":rock:", "\uD83E\uDEA8"),
+    FORK(":fork_and_knife:", "\uD83C\uDF74"),
+    CALENDAR(":calendar:", "\uD83D\uDCC6"),
+    CALENDAR2(":calendar_spiral:", "\uD83D\uDDD3\uFE0F"),
+    SATELLITE(":satellite:", "\uD83D\uDCE1"),
+    SLIDER(":level_slider:", "\uD83C\uDF9A\uFE0F"),
+    WIDTH(":left_right_arrow:", "\u2194\uFE0F"),
+    HEIGHT(":arrow_up_down:", "\u2195\uFE0F"),
     //Custom emotes.
     LOOT_CRATE("<:lootbox:556992254749966346>", null),
     MINE_CRATE("<:mine_lootbox:556992254623875073>", null),
     FISH_CRATE("<:fish_lootbox:556992254770937876>", null),
+    CHOP_CRATE("<:chop_lootbox:811059224921767936>", null),
     DIAMOND_PICK("<:diamond_pick:492882142557372458>", null),
     STAR_PICK("<:star_pick:492882142993580038>", null),
     COMET_PICK("<:comet_pick:492882142788059146>", null),
@@ -105,6 +115,7 @@ public enum EmoteReference {
     SPARKLE_ROD("<:sparkle_rod:492882143505154048>", null),
     PREMIUM_MINE_CRATE("<:premium_mine_lootbox:556992254472880129>", null),
     PREMIUM_FISH_CRATE("<:premium_fish_lootbox:556992254724538417>", null),
+    PREMIUM_CHOP_CRATE("<:premium_chop_lootbox:811272089632768030>", null),
     SPARKLE_WRENCH("<:sparkle_wrench:551979816262434819>", null),
     COMET_WRENCH("<:comet_wrench:551979816174354443>", null),
     BROKEN_SPARKLE_PICK("<:broken_sparkle_pickaxe:553769632926924813>", null),
@@ -145,6 +156,10 @@ public enum EmoteReference {
     @Override
     public String toString() {
         return Optional.ofNullable(unicode).orElse(discordNotation) + " ";
+    }
+
+    public String toHeaderString() {
+        return this + "\u2009";
     }
 
     public String getDiscordNotation() {

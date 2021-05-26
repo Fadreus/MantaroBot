@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.core;
@@ -20,8 +20,6 @@ import com.google.common.base.Preconditions;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.kodehawa.mantarobot.commands.CustomCmds;
-import net.kodehawa.mantarobot.commands.info.stats.CategoryStatsManager;
-import net.kodehawa.mantarobot.commands.info.stats.CommandStatsManager;
 import net.kodehawa.mantarobot.core.command.CommandManager;
 import net.kodehawa.mantarobot.core.command.NewCommand;
 import net.kodehawa.mantarobot.core.command.NewContext;
@@ -53,12 +51,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class CommandRegistry {
+    private static final Logger commandLog = LoggerFactory.getLogger("command-log");
     private static final Logger log = LoggerFactory.getLogger(CommandRegistry.class);
 
     private final Map<String, Command> commands;
     private final Config config = MantaroData.config().get();
     private final CommandManager newCommands = new CommandManager();
-    private final RateLimiter rl = new RateLimiter(TimeUnit.MINUTES, 1);
+    private final RateLimiter rl = new RateLimiter(TimeUnit.HOURS, 1);
 
     public CommandRegistry(Map<String, Command> commands) {
         this.commands = Preconditions.checkNotNull(commands);
@@ -78,7 +77,7 @@ public class CommandRegistry {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public void process(GuildMessageReceivedEvent event, DBGuild dbGuild, String cmdName, String content, String prefix) {
+    public void process(GuildMessageReceivedEvent event, DBGuild dbGuild, String cmdName, String content, String prefix, boolean isMention) {
         final var managedDatabase = MantaroData.db();
         final var start = System.currentTimeMillis();
 
@@ -87,7 +86,7 @@ public class CommandRegistry {
 
         if (command == null) {
             // We will create a proper I18nContext once the custom command goes through, if it does. We don't need it otherwise.
-            CustomCmds.handle(prefix, cmdName, new Context(event, new I18nContext(), content), guildData, content);
+            CustomCmds.handle(prefix, cmdName, new Context(event, new I18nContext(), content, isMention), guildData, content);
             return;
         }
 
@@ -95,18 +94,11 @@ public class CommandRegistry {
         final var channel = event.getChannel();
         // Variable used in lambda expression should be final or effectively final...
         final var cmd = command;
+        final var guild = event.getGuild();
+        final var mantaroData = managedDatabase.getMantaroData();
 
-        if (managedDatabase.getMantaroData().getBlackListedUsers().contains(author.getId())) {
-            if (!rl.process(author)) {
-                return;
-            }
-
-            channel.sendMessage(
-                    """
-                    :x: You have been blacklisted from using all of Mantaro's functions, likely for botting or hitting the spam filter.
-                    If you wish to get more details on why, or appeal, don't hesitate to join the support server and ask, but be sincere.
-                    """
-            ).queue();
+        if (mantaroData.getBlackListedGuilds().contains(guild.getId())) {
+            log.debug("Got command from blacklisted guild {}, dropping", guild.getId());
             return;
         }
 
@@ -117,7 +109,6 @@ public class CommandRegistry {
         }
 
         final var member = event.getMember();
-        final var guild = event.getGuild();
         final var roles = member.getRoles();
         final var channelDisabledCommands = guildData.getChannelSpecificDisabledCommands().get(channel.getId());
         if (channelDisabledCommands != null && channelDisabledCommands.contains(name(cmd, cmdName))) {
@@ -172,6 +163,19 @@ public class CommandRegistry {
         if (roles.stream().anyMatch(r -> roleSpecificDisabledCategories.computeIfAbsent(
                 r.getId(), s -> new ArrayList<>()).contains(root(cmd).category())) && isNotAdmin(member)) {
             sendDisabledNotice(event, guildData, CommandDisableLevel.SPECIFIC_ROLE_CATEGORY);
+            return;
+        }
+
+        if (mantaroData.getBlackListedUsers().contains(author.getId())) {
+            if (!rl.process(author)) {
+                return;
+            }
+
+            channel.sendMessage("""
+                    :x: You have been blocked from using all of Mantaro's functions, likely for botting or hitting the spam filter.
+                    If you wish to get more details on why or appeal the ban, send an email to `contact@mantaro.site`. Make sure to be sincere.
+                    """
+            ).queue();
             return;
         }
 
@@ -250,18 +254,15 @@ public class CommandRegistry {
         }
 
         if (!executedNew) {
-            cmd.run(new Context(event, new I18nContext(guildData, userData), content), cmdName, content);
+            cmd.run(new Context(event, new I18nContext(guildData, userData), content, isMention), cmdName, content);
         }
 
-        log.debug("!! COMMAND INVOKE: command:{}, user:{}, guild:{}, channel:{}",
-                cmdName, author.getAsTag(), guild.getId(), channel.getId()
+        commandLog.debug("Command: {}, User: {} ({}), Guild: {}, Channel: {}, Message: {}" ,
+                cmdName, author.getAsTag(), author.getId(), guild.getId(), channel.getId(), event.getMessage().getId()
         );
 
         final var end = System.currentTimeMillis();
         final var category = root(cmd).category() == null ? "custom" : root(cmd).category().name().toLowerCase();
-
-        CommandStatsManager.log(name(cmd, cmdName));
-        CategoryStatsManager.log(category);
 
         Metrics.CATEGORY_COUNTER.labels(category).inc();
         Metrics.COMMAND_COUNTER.labels(name(cmd, cmdName)).inc();
@@ -409,5 +410,4 @@ public class CommandRegistry {
             return this.name;
         }
     }
-
 }

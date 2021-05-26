@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.game.core;
@@ -39,7 +39,8 @@ public abstract class Game<T> {
 
     public abstract String name();
 
-    protected int callDefault(GuildMessageReceivedEvent e, GameLobby lobby, List<String> players, List<T> expectedAnswer, int attempts, int maxAttempts, int extra) {
+    protected int callDefault(GuildMessageReceivedEvent e, GameLobby lobby, List<String> players, List<T> expectedAnswer,
+                              int attempts, int maxAttempts, int extra) {
         var channel = lobby.getChannel();
         if (!e.getChannel().getId().equals(channel.getId())) {
             return Operation.IGNORED;
@@ -75,6 +76,12 @@ public abstract class Game<T> {
                 lobby.startNextGame(true);
                 return Operation.COMPLETED;
             }
+
+            // iOS quotes keep screwing up stuff ;w;
+            contentRaw = contentRaw
+                    .replaceAll("’", "'")
+                    .replaceAll("‘", "'")
+                    .trim();
 
             if (expectedAnswer.stream().map(String::valueOf).anyMatch(contentRaw::equalsIgnoreCase)) {
                 var unifiedPlayer = UnifiedPlayer.of(e.getAuthor(), config.getCurrentSeason());

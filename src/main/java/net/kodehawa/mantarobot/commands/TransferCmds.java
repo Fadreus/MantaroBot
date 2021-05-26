@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ public class TransferCmds {
                     return;
                 }
 
-                Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(7, ChronoUnit.DAYS)));
+                Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(14, ChronoUnit.DAYS)));
                 if (!oldEnough.test(ctx.getAuthor())) {
                     ctx.sendLocalized("commands.transfer.new_account_notice_yourself", EmoteReference.ERROR);
                     return;
@@ -92,9 +92,21 @@ public class TransferCmds {
                     return;
                 }
 
+                if (args.length > 1) {
+                    var item = ItemHelper.fromAnyNoId(args[1], ctx.getLanguageContext());
+                    if (item.isPresent()) {
+                        ctx.sendLocalized("commands.transfer.item_transfer", EmoteReference.ERROR);
+                        return;
+                    }
+                }
+
+                if (ctx.isUserBlacklisted(giveTo.getId())) {
+                    ctx.sendLocalized("commands.transfer.blacklisted_transfer", EmoteReference.ERROR);
+                    return;
+                }
+
                 if (!RatelimitUtils.ratelimit(rateLimiter, ctx))
                     return;
-
 
                 var toSend = 0L; // = 0 at the start
 
@@ -108,11 +120,6 @@ public class TransferCmds {
 
                 if (toSend == 0) {
                     ctx.sendLocalized("commands.transfer.no_money_specified_notice", EmoteReference.ERROR);
-                    return;
-                }
-
-                if (ItemHelper.fromAnyNoId(args[1], ctx.getLanguageContext()).isPresent()) {
-                    ctx.sendLocalized("commands.transfer.item_transfer", EmoteReference.ERROR);
                     return;
                 }
 
@@ -182,6 +189,8 @@ public class TransferCmds {
                         .build();
             }
         });
+
+        cr.registerAlias("transfer", "give");
     }
 
     @Subscribe
@@ -224,7 +233,7 @@ public class TransferCmds {
                     return;
                 }
 
-                Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(7, ChronoUnit.DAYS)));
+                Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(14, ChronoUnit.DAYS)));
                 if (!oldEnough.test(ctx.getAuthor())) {
                     ctx.sendLocalized("commands.transfer.new_account_notice_yourself", EmoteReference.ERROR);
                     return;
@@ -232,6 +241,11 @@ public class TransferCmds {
 
                 if (!oldEnough.test(giveTo.getUser())) {
                     ctx.sendLocalized("commands.transfer.new_account_notice_other", EmoteReference.ERROR);
+                    return;
+                }
+
+                if (ctx.isUserBlacklisted(giveTo.getId())) {
+                    ctx.sendLocalized("commands.transfer.blacklisted_transfer", EmoteReference.ERROR);
                     return;
                 }
 
@@ -243,7 +257,7 @@ public class TransferCmds {
                 if (item == null) {
                     item = ItemHelper.fromAnyNoId(args[0], ctx.getLanguageContext()).orElse(null);
                     if (item == null) {
-                        ctx.sendLocalized("general.item_lookup.no_item_emoji");
+                        ctx.sendLocalized("general.item_lookup.not_found");
                         return;
                     }
                 }
@@ -327,10 +341,8 @@ public class TransferCmds {
                         .setUsage("`~>itemtransfer <@user> <item> <amount>` *or* " +
                                 "`~>itemtransfer <item> <@user> <amount>` - Transfers the item to a user.")
                         .addParameter("@user", "User mention or name.")
-                        .addParameter("item",
-                                "The item emoji or name. If the name contains spaces \"wrap it in quotes\"")
-                        .addParameter("amount", "" +
-                                "The amount of items you want to transfer. This is optional.")
+                        .addParameter("item", "The item emoji or name. If the name contains spaces \"wrap it in quotes\"")
+                        .addParameter("amount", "The amount of items you want to transfer. This is optional.")
                         .build();
             }
         });

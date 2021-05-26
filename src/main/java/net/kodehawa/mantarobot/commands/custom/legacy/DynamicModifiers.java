@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.custom.legacy;
@@ -20,11 +20,13 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.guild.GenericGuildEvent;
 import net.dv8tion.jda.api.events.guild.member.GenericGuildMemberEvent;
 import net.dv8tion.jda.api.events.message.guild.GenericGuildMessageEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.kodehawa.mantarobot.core.modules.commands.base.Context;
 import net.kodehawa.mantarobot.utils.Utils;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -64,18 +66,16 @@ public class DynamicModifiers extends LinkedHashMap<String, String> {
     }
 
     public DynamicModifiers mapGuild(String prefix, Guild guild) {
-        return this
-                .set(prefix, guild.getName())
+        return this.set(prefix, guild.getName())
                 .set(prefix, "name", guild.getName())
-                .mapMember(k(prefix, "owner"), guild.getOwner() == null ? guild.retrieveOwner(false).complete() : guild.getOwner())
+                .mapMember(k(prefix, "owner"), guild.retrieveOwner(false).complete())
                 .set(prefix, "region", guild.getRegion().getName())
                 .set(prefix, "totalusers", String.valueOf(guild.getMemberCount()))
                 .set(prefix, "icon", guild.getIconUrl() == null ? "https://i.imgur.com/k0V7Vnu.png" : guild.getIconUrl());
     }
 
     public DynamicModifiers mapUser(String prefix, User member) {
-        return this
-                .set(prefix, member.getAsMention())
+        return this.set(prefix, member.getAsMention())
                 .set(prefix, "tag", member.getAsTag())
                 .set(prefix, "username", member.getName())
                 .set(prefix, "discriminator", member.getDiscriminator())
@@ -86,20 +86,20 @@ public class DynamicModifiers extends LinkedHashMap<String, String> {
     }
 
     public DynamicModifiers mapMember(String prefix, Member member) {
-        return this
-                .mapUser(prefix, member.getUser())
+        return this.mapUser(prefix, member.getUser())
                 .set(prefix, "name", member.getEffectiveName())
                 .set(prefix, "nickname", member.getEffectiveName());
     }
 
-    public DynamicModifiers mapEvent(String botPrefix, String prefix, GuildMessageReceivedEvent event) {
-        return this.mapEvent(botPrefix, prefix, (GenericGuildMessageEvent) event)
-                .set(prefix, event.getMember().getAsMention() + "@" + event.getChannel().getAsMention())
-                .mapMember(k(prefix, "author"), event.getMember())
-                .mapMessage(k(prefix, "message"), new CustomMessage(event.getMessage(), botPrefix, event.getMessage().getMentionedMembers()));
+    public DynamicModifiers mapEvent(String botPrefix, String prefix, Context ctx) {
+        return this.mapEvent(prefix, ctx.getEvent())
+                .set(prefix, ctx.getMember().getAsMention() + "@" + ctx.getChannel().getAsMention())
+                .mapMember(k(prefix, "author"), ctx.getMember())
+                // This gets processed later on
+                .mapMessage(k(prefix, "message"), new CustomMessage(ctx.getContent(), ctx.getMessage().getMentionedMembers(), ctx.isMentionPrefix()));
     }
 
-    public DynamicModifiers mapEvent(String botPrefix, String prefix, GenericGuildMessageEvent event) {
+    public DynamicModifiers mapEvent(String prefix, GenericGuildMessageEvent event) {
         return this.set(prefix, "timestamp", Utils.formatDate(OffsetDateTime.now()))
                 .mapChannel(k(prefix, "channel"), event.getChannel())
                 .mapGuild(k(prefix, "guild"), event.getGuild())
@@ -107,36 +107,34 @@ public class DynamicModifiers extends LinkedHashMap<String, String> {
     }
 
     public DynamicModifiers mapEvent(String prefix, GenericGuildMemberEvent event) {
-        return this
-                .set(prefix, event.getMember().getAsMention() + "@" + event.getGuild().getName())
+        return this.set(prefix, event.getMember().getAsMention() + "@" + event.getGuild().getName())
                 .mapGuild(k(prefix, "guild"), event.getGuild())
                 .mapMember(k(prefix, "me"), event.getGuild().getSelfMember())
                 .mapMember(k(prefix, "user"), event.getMember());
     }
 
     public DynamicModifiers mapEvent(String prefix, GenericGuildEvent event) {
-        return this
-                .mapGuild(k(prefix, "guild"), event.getGuild())
+        return this.mapGuild(k(prefix, "guild"), event.getGuild())
                 .mapMember(k(prefix, "me"), event.getGuild().getSelfMember());
     }
 
-    public DynamicModifiers mapMessage(String prefix, Message message) {
-        return mapMessage(prefix, new CustomMessage(message, "", message.getMentionedMembers()));
+    public DynamicModifiers mapMessage(String prefix, Message message, boolean isMentionPrefix) {
+        return mapMessage(prefix, new CustomMessage(message.getContentRaw(), message.getMentionedMembers(), isMentionPrefix));
     }
 
     public DynamicModifiers mapMessage(String prefix, CustomMessage message) {
-        return this
-                .set(prefix, message.getContentRaw())
+        return this.set(prefix, message.getContentRaw())
                 .set(prefix, "raw", message.getContentRaw())
-                .set(prefix, "textual", message.getContentDisplay())
-                .set(prefix, "stripped", message.getContentStripped())
+                // textual and stripped are deprecated!
+                .set(prefix, "textual", message.getContentRaw())
+                .set(prefix, "stripped", message.getContentRaw())
                 .set(prefix, "mentionnames", message.getMentionedUsers().stream().map(Member::getEffectiveName).collect(Collectors.joining(", ")))
-                .set(prefix, "mentionids", message.getMentionedUsers().stream().map(Member::getId).collect(Collectors.joining(", ")));
+                .set(prefix, "mentionids", message.getMentionedUsers().stream().map(Member::getId).collect(Collectors.joining(", ")))
+                .set(prefix, "firstmentionid", message.getMentionedUsers().isEmpty() ? "" : message.getMentionedUsers().get(0).getId());
     }
 
     public DynamicModifiers mapChannel(String prefix, TextChannel channel) {
-        return this
-                .set(prefix, channel.getAsMention())
+        return this.set(prefix, channel.getAsMention())
                 .set(prefix, "topic", channel.getTopic())
                 .set(prefix, "name", channel.getName())
                 .set(prefix, "id", channel.getId())
@@ -144,8 +142,7 @@ public class DynamicModifiers extends LinkedHashMap<String, String> {
     }
 
     public DynamicModifiers mapFromJoinLeave(String prefix, TextChannel channel, User user, Guild guild) {
-        return this
-                .set(prefix, user.getName() + "@" + guild.getName())
+        return this.set(prefix, user.getName() + "@" + guild.getName())
                 .mapGuild(k(prefix, "guild"), guild)
                 .mapMember(k(prefix, "me"), guild.getSelfMember())
                 .mapUser(k(prefix, "user"), user)

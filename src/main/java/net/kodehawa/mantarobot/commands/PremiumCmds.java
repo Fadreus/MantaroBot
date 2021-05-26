@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -61,7 +61,6 @@ public class PremiumCmds {
             @Override
             protected void call(Context ctx, String content, String[] args) {
                 final var db = ctx.db();
-
                 if (config.isPremiumBot()) {
                     ctx.sendLocalized("commands.activatekey.mp", EmoteReference.WARNING);
                     return;
@@ -102,7 +101,7 @@ public class PremiumCmds {
                         return;
                     }
 
-                    //Add to keys claimed storage if it's NOT your first key (count starts at 2/2 = 1)
+                    // Add to keys claimed storage if it's NOT your first key (count starts at 2/2 = 1)
                     if (!ctx.getAuthor().getId().equals(key.getOwner())) {
                         var ownerUser = db.getUser(key.getOwner());
                         ownerUser.getData().getKeysClaimed().put(ctx.getAuthor().getId(), key.getId());
@@ -127,11 +126,12 @@ public class PremiumCmds {
                     }
 
                     if (ctx.getAuthor().getId().equals(key.getOwner())) {
-                        player.getData().addBadgeIfAbsent(Badge.DONATOR_2);
-                        player.saveUpdating();
+                        if (player.getData().addBadgeIfAbsent(Badge.DONATOR_2)) {
+                            player.saveUpdating();
+                        }
                     }
 
-                    //Add to keys claimed storage if it's NOT your first key (count starts at 2/2 = 1)
+                    // Add to keys claimed storage if it's NOT your first key (count starts at 2/2 = 1)
                     if (!ctx.getAuthor().getId().equals(key.getOwner())) {
                         var ownerUser = db.getUser(key.getOwner());
                         ownerUser.getData().getKeysClaimed().put(ctx.getAuthor().getId(), key.getId());
@@ -250,7 +250,7 @@ public class PremiumCmds {
                             return;
                         }
 
-                        ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                        ctx.findMember(content, members -> {
                             var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                             if (member == null)
                                 return;
@@ -311,19 +311,23 @@ public class PremiumCmds {
                                     var patreonAmount = Double.parseDouble(patreonInformation.getRight());
 
                                     if ((patreonAmount / 2) - amountClaimed < 0) {
-                                        LogUtils.log
-                                                (String.format("""
-                                                                %s has more keys claimed than given keys, dumping keys:
-                                                                %s
-                                                                Currently pledging: %s, Claimed keys: %s, Should have %s total keys.""",
-                                                        owner.getId(),
-                                                        Utils.paste(data.getKeysClaimed()
-                                                                .entrySet()
-                                                                .stream()
-                                                                .map(entry -> "to:" + entry.getKey() + ", key:" + entry.getValue())
-                                                                .collect(Collectors.joining("\n"))),
-                                                        patreonAmount, amountClaimed, (patreonAmount / 2))
-                                                );
+                                        var amount = amountClaimed - (patreonAmount / 2);
+                                        var keys = data.getKeysClaimed()
+                                                .values()
+                                                .stream()
+                                                .limit((long) amount)
+                                                .map(s -> "key:" + s)
+                                                .collect(Collectors.joining("\n"));
+
+                                        LogUtils.log(
+                                            """
+                                            %s has more keys claimed than given keys, dumping extra keys:
+                                            %s
+                                            Currently pledging: %s, Claimed keys: %s, Should have %s total keys.""".formatted(
+                                                    owner.getId(), Utils.paste(keys, true),
+                                                    patreonAmount, amountClaimed, (patreonAmount / 2)
+                                            )
+                                        );
                                     }
                                 }
                             } catch (Exception ignored) { }

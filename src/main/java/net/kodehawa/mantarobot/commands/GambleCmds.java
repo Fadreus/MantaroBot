@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 @Module
 public class GambleCmds {
     private static final int SLOTS_MAX_MONEY = 50_000;
-    private static final int TICKETS_MAX_AMOUNT = 50;
+    private static final int TICKETS_MAX_AMOUNT = 100; // Technically ~8,000 credits.
     private static final long GAMBLE_ABSOLUTE_MAX_MONEY = Integer.MAX_VALUE;
     private static final long GAMBLE_MAX_MONEY = 10_000;
 
@@ -142,7 +142,7 @@ public class GambleCmds {
                     return;
                 }
 
-                //Handle ratelimits after all of the exceptions/error messages could've been thrown already.
+                // Handle ratelimits after all of the exceptions/error messages could've been thrown already.
                 if (!RatelimitUtils.ratelimit(rateLimiter, ctx)) {
                     return;
                 }
@@ -166,6 +166,8 @@ public class GambleCmds {
                         .build();
             }
         });
+
+        cr.registerAlias("gamble", "bet");
     }
 
     @Subscribe
@@ -211,11 +213,15 @@ public class GambleCmds {
                     seasonalPlayer = ctx.getSeasonPlayer();
                 }
 
+                var playerInventory = season ? seasonalPlayer.getInventory() : player.getInventory();
                 if (opts.containsKey("useticket")) {
+                    if (!playerInventory.containsItem(ItemReference.SLOT_COIN)) {
+                        ctx.sendLocalized("commands.slots.errors.no_tickets", EmoteReference.SAD);
+                        return;
+                    }
+
                     coinSelect = true;
                 }
-
-                var playerInventory = season ? seasonalPlayer.getInventory() : player.getInventory();
 
                 if (opts.containsKey("amount") && opts.get("amount") != null) {
                     if (!coinSelect) {
@@ -224,14 +230,13 @@ public class GambleCmds {
                     }
 
                     var amount = opts.get("amount");
-
                     if (amount.isEmpty()) {
                         ctx.sendLocalized("commands.slots.errors.no_amount", EmoteReference.ERROR);
                         return;
                     }
 
                     try {
-                        coinAmount = Integer.parseInt(amount);
+                        coinAmount = Math.abs(Integer.parseInt(amount));
                     } catch (NumberFormatException e) {
                         ctx.sendLocalized("general.invalid_number", EmoteReference.ERROR);
                         return;
@@ -246,21 +251,17 @@ public class GambleCmds {
                         ctx.sendLocalized("commands.slots.errors.not_enough_tickets", EmoteReference.ERROR);
                         return;
                     }
-
-                    money += 58L * coinAmount;
                 }
 
                 if (args.length >= 1 && !coinSelect) {
                     try {
                         var parsed = new RoundedMetricPrefixFormat().parseObject(args[0], new ParsePosition(0));
-
                         if (parsed == null) {
                             ctx.sendLocalized("commands.slots.errors.no_valid_amount", EmoteReference.ERROR);
                             return;
                         }
 
                         money = Math.abs(parsed);
-
                         if (money < 25) {
                             ctx.sendLocalized("commands.slots.errors.below_minimum", EmoteReference.ERROR);
                             return;
@@ -277,7 +278,6 @@ public class GambleCmds {
                 }
 
                 var playerMoney = season ? seasonalPlayer.getMoney() : player.getCurrentMoney();
-
                 if (playerMoney < money && !coinSelect) {
                     ctx.sendLocalized("commands.slots.errors.not_enough_money", EmoteReference.SAD);
                     return;
@@ -288,30 +288,12 @@ public class GambleCmds {
                 }
 
                 if (coinSelect) {
-                    if (playerInventory.containsItem(ItemReference.SLOT_COIN)) {
-                        playerInventory.process(new ItemStack(ItemReference.SLOT_COIN, -coinAmount));
-                        if (season)
-                            seasonalPlayer.save();
-                        else
-                            player.save();
-
-                        slotsChance = slotsChance + 10;
-                    } else {
-                        ctx.sendLocalized("commands.slots.errors.no_tickets", EmoteReference.SAD);
-                        return;
-                    }
-                } else {
-                    if (season) {
-                        seasonalPlayer.removeMoney(money);
-                        seasonalPlayer.saveAsync();
-                    } else {
-                        player.removeMoney(money);
-                        player.saveUpdating();
-                    }
+                    playerInventory.process(new ItemStack(ItemReference.SLOT_COIN, -coinAmount));
+                    slotsChance = slotsChance + Math.max(6, random.nextInt(12) + 1);
+                    money = 70L * coinAmount;
                 }
 
                 var languageContext = ctx.getLanguageContext();
-
                 var message = new StringBuilder(
                         languageContext.withRoot("commands", "slots.roll").formatted(
                                 EmoteReference.DICE, coinSelect ? coinAmount + " " +
@@ -320,8 +302,6 @@ public class GambleCmds {
                 );
 
                 var builder = new StringBuilder();
-
-
                 for (int i = 0; i < 9; i++) {
                     if (i > 1 && i % 3 == 0) {
                         builder.append("\n");
@@ -334,13 +314,15 @@ public class GambleCmds {
                 var gains = 0;
                 var rows = toSend.split("\\r?\\n");
 
-                if (random.nextInt(100) < slotsChance) {
+                var chance = random.nextInt(100);
+                if (chance < slotsChance) {
                     rows[1] = winCombinations.get(random.nextInt(winCombinations.size()));
                 }
 
                 if (winCombinations.contains(rows[1])) {
                     isWin = true;
-                    gains = random.nextInt((int) Math.round(money * 1.76)) + 16;
+                    var maxGains = random.nextInt((int) Math.round(money * 1.76)) + 16;
+                    gains = (int) Math.max(money / 6, maxGains);
                 }
 
                 rows[1] = rows[1] + " \u2b05";
@@ -364,17 +346,25 @@ public class GambleCmds {
                     }
 
                     if (season) {
-                        seasonalPlayer.addMoney(gains + money);
-                        seasonalPlayer.saveUpdating();
+                        seasonalPlayer.addMoney(gains);
+                        seasonalPlayer.save();
                     } else {
-                        player.addMoney(gains + money);
-                        player.saveUpdating();
+                        player.addMoney(gains);
+                        player.save();
                     }
                 } else {
                     stats.getData().incrementSlotsLose();
                     message.append(toSend).append("\n\n").append(
                             languageContext.withRoot("commands", "slots.lose").formatted(EmoteReference.SAD)
                     );
+
+                    if (season) {
+                        seasonalPlayer.removeMoney(money);
+                        seasonalPlayer.save();
+                    } else {
+                        player.removeMoney(money);
+                        player.save();
+                    }
                 }
 
                 stats.saveUpdating();
@@ -386,14 +376,19 @@ public class GambleCmds {
             @Override
             public HelpContent help() {
                 return new HelpContent.Builder()
-                        .setDescription("Rolls the slot machine. Requires a default of 50 coins to roll.")
-                        .setUsage(
+                        .setDescription(
                                 """
-                                `~>slots` - Default one, 50 coins.
-                                `~>slots <credits>` - Puts x credits on the slot machine. You can put a maximum of 50,000 coins.
+                                Rolls the slot machine. Requires a default of 50 credits to roll.
+                                To win, you need to hit all 3 emojis of the same type on the middle row. 
+                                You can gain anywhere from ~15% to 175% of the money you put in. This is what you can *gain*, if you win you won't lose what you put in.
+                                """
+                        ).setUsage(
+                                """
+                                `~>slots` - Default one, 50 credits.
+                                `~>slots <credits>` - Puts x credits on the slot machine. You can put a maximum of 50,000 credits.
                                 `~>slots -useticket` - Rolls the slot machine with one slot coin.
                                 You can specify the amount of tickets to use using `-amount` (for example `~>slots -useticket -amount 10`).
-                                Using tickets increases your chance by 10%. Maximum amount of tickets allowed is 50.
+                                Using tickets increases your chance by 6 to 12%. Maximum amount of tickets allowed is 100.
                                 """
                         ).build();
             }
@@ -410,7 +405,6 @@ public class GambleCmds {
                 if (gains >= 4_950L) {
                     if (!data.hasBadge(Badge.GAMBLER)) {
                         data.addBadgeIfAbsent(Badge.GAMBLER);
-                        player.saveUpdating();
                     }
                 }
 

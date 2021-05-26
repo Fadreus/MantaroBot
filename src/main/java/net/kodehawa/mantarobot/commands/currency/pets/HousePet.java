@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.currency.pets;
@@ -33,6 +33,8 @@ public class HousePet {
     private int health = 100;
     private int hunger = 100;
     private int thirst = 100;
+    private int mood = 100;
+    private int dust = 0;
     private int patCounter;
     private long experience;
     private long level = 1;
@@ -100,7 +102,7 @@ public class HousePet {
             return;
         }
 
-        this. hunger = Math.max(1, hunger - defaultDecrease);
+        this.hunger = Math.max(1, hunger - defaultDecrease);
     }
 
     public void decreaseThirst() {
@@ -150,6 +152,42 @@ public class HousePet {
         this.thirst = Math.min(100, thirst + by);
     }
 
+    public void increaseDust() {
+        var defaultIncrease = random.nextInt(3);
+        if (dust >= 100) {
+            this.dust = 100;
+            return;
+        }
+
+        this.dust = Math.min(100, dust + defaultIncrease);
+    }
+
+    public void decreaseDust(int by) {
+        if (dust < 1) {
+            return;
+        }
+
+        this.dust = Math.max(1, dust - by);
+    }
+
+    public void increaseMood(int by) {
+        if (mood >= 100) {
+            this.mood = 100;
+            return;
+        }
+
+        this.mood = Math.min(100, mood + by);
+    }
+
+    public void decreaseMood() {
+        var defaultDecrease = 2;
+        if (mood < 1) {
+            return;
+        }
+
+        this.mood = Math.max(1, mood - defaultDecrease);
+    }
+
     public int getHunger() {
         return hunger;
     }
@@ -190,14 +228,36 @@ public class HousePet {
         this.level = level;
     }
 
+    public int getMood() {
+        return mood;
+    }
+
+    public void setMood(int mood) {
+        this.mood = mood;
+    }
+
+    public int getDust() {
+        return dust;
+    }
+
+    public void setDust(int dust) {
+        this.dust = dust;
+    }
+
     @JsonIgnore
-    public double experienceToNextLevel() {
-        return (getLevel() * Math.log10(getLevel()) * 1000) + (50 * getLevel() / 2D);
+    public long experienceToNextLevel() {
+        var level = getLevel();
+        var toNext = (long) ((level * Math.log10(level) * 1000) + (50 * level / 2D));
+        if (getLevel() > 300) {
+            toNext = (long) ((level * Math.log10(level) * 1400) + (200 * level / 2D));
+        }
+
+        return toNext;
     }
 
     @JsonIgnore
     public void increaseExperience() {
-        this.experience += Math.max(10, random.nextInt(50));
+        this.experience += Math.max(10, random.nextInt(40));
         var toNextLevel = experienceToNextLevel();
         if (experience > toNextLevel)
             level += 1;
@@ -220,10 +280,16 @@ public class HousePet {
         if (getThirst() < 20)
             return ActivityResult.LOW_THIRST;
 
+        if (getDust() > 90) {
+            return ActivityResult.DUSTY;
+        }
+
         decreaseStamina();
         decreaseHealth();
         decreaseHunger();
         decreaseThirst();
+        //decreaseMood();
+        increaseDust();
         increaseExperience();
 
         return neededAbility.getPassActivity();
@@ -292,6 +358,8 @@ public class HousePet {
         LOW_HEALTH(false, "commands.pet.activity.low_health"),
         LOW_HUNGER(false, "commands.pet.activity.low_hunger"),
         LOW_THIRST(false, "commands.pet.activity.low_thirst"),
+        LOW_MOOD(false, "commands.pet.activity.low_mood"),
+        DUSTY(false, "commands.pet.activity.dusty"),
         PASS(true, "commands.pet.activity.success"),
         PASS_MINE(true, "commands.pet.activity.success_mine"),
         PASS_CHOP(true, "commands.pet.activity.success_chop"),

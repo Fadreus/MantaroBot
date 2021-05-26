@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.utils.reminders;
@@ -29,6 +29,8 @@ import redis.clients.jedis.Jedis;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.TextStyle;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -73,10 +75,11 @@ public class ReminderTask {
                                                         %s**Reminder!**
                                                         
                                                         You asked me to remind you of: **%s**
-                                                        *Asked at:* %s%s""",
+                                                        Asked at: %s (%s)%s""",
                                                 EmoteReference.POPPER,
                                                 reminder, Utils.formatDate(scheduledTime),
-                                                (guild != null ? "\n*Asked on: %s*".formatted(guild.getName()) : "")
+                                                ZoneId.systemDefault().getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                                                (guild != null ? "\nAsked on: %s".formatted(guild.getName()) : "")
                                         )
                                 ).queue(success -> {
                                     log.debug("Reminded {}. Removing from remind database", fullId);

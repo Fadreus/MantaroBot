@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -144,6 +144,11 @@ public class DiscordUtils {
         }
 
         List<MessageEmbed> embeds = buildSplitEmbed(supplier, length, parts);
+        if (embeds.size() == 1) {
+            event.getChannel().sendMessage(embeds.get(0)).queue();
+            return null;
+        }
+
         var index = new AtomicInteger();
         var message = event.getChannel().sendMessage(embeds.get(0)).complete();
 
@@ -459,33 +464,38 @@ public class DiscordUtils {
         }, "\u2b05", "\u27a1");
     }
 
-    public static List<String> divideString(int max, StringBuilder builder) {
+    public static List<String> divideString(int max, char splitOn, StringBuilder builder) {
         List<String> list = new LinkedList<>();
         var str = builder.toString().trim();
         var stringBuilder = new StringBuilder();
 
+        // Since we remove data from the string, loop until there's nothing left.
         while (str.length() > 0) {
-            var index = str.indexOf('\n');
-
-            var line = index == -1 ?
-                    str : str.substring(0, index + 1);
+            // We're gonna split on the given split character. Most commonly newline.
+            var index = str.indexOf(splitOn);
+            // Split the string on the first occurrence of the split character
+            var line = index == -1 ? str : str.substring(0, index + 1);
 
             str = str.substring(line.length());
-            // Split on newline, if possible.
+            // Remove new lines at the end of a split.
             if (str.equals("\n")) {
                 str = "";
             }
 
+            // If the length of this line is more than the maximum, add another split
+            // and reset the StringBuilder, start all over again.
             if (stringBuilder.length() + line.length() > max) {
-                list.add(stringBuilder.toString());
+                list.add(stringBuilder.toString().trim());
                 stringBuilder = new StringBuilder();
             }
 
+            // Append the current line to the StringBuilder
             stringBuilder.append(line);
         }
 
+        // We have a dangling StringBuilder with actual content, add it to a new page.
         if (stringBuilder.length() != 0) {
-            list.add(stringBuilder.toString());
+            list.add(stringBuilder.toString().trim());
         }
 
         return list;
@@ -549,7 +559,6 @@ public class DiscordUtils {
             stringBuilder.append(part).append('\n');
         }
 
-
         // If we have a dangling builder, it means we didn't get to reset the builder
         // when building a new embed, and there's a dangling one:
         // Add it to the total.
@@ -564,29 +573,43 @@ public class DiscordUtils {
     }
 
     public static List<String> divideString(int max, String s) {
-        return divideString(max, new StringBuilder(s));
+        return divideString(max, '\n', new StringBuilder(s));
+    }
+
+    public static List<String> divideString(int max, char splitOn, String s) {
+        return divideString(max, splitOn, new StringBuilder(s));
+    }
+
+    public static List<String> divideString(char splitOn, StringBuilder builder) {
+        return divideString(1750, splitOn, builder);
     }
 
     public static List<String> divideString(StringBuilder builder) {
-        return divideString(1750, builder);
+        return divideString(1750, '\n', builder);
     }
 
     public static void sendPaginatedEmbed(final Context ctx, EmbedBuilder builder,
                                           List<List<MessageEmbed.Field>> splitFields, final String str) {
         final var languageContext = ctx.getLanguageContext();
-        final var show = "\n" + (str.isEmpty() ? "" : EmoteReference.TALKING + str);
+        final var show =  str.isEmpty() ? "" : EmoteReference.TALKING + str + "\n";
         final var newLine = builder.getDescriptionBuilder().length() > 0 ? "\n" : "";
 
         if (ctx.hasReactionPerms()) {
-            builder.appendDescription(
-                    newLine + String.format(languageContext.get("general.buy_sell_paged_react"), show)
-            );
+            if (splitFields.size() > 1) {
+                builder.appendDescription(
+                        newLine + String.format(languageContext.get("general.buy_sell_paged_react"), show + "\n" +
+                                EmoteReference.STOPWATCH + languageContext.get("general.reaction_timeout").formatted(120))
+                );
+            }
 
             list(ctx.getEvent(), 120, false, builder, splitFields);
         } else {
-            builder.appendDescription(
-                    newLine + String.format(languageContext.get("general.buy_sell_paged_text"), show)
-            );
+            if (splitFields.size() > 1) {
+                builder.appendDescription(
+                        newLine + String.format(languageContext.get("general.buy_sell_paged_text"), show + "\n" +
+                                EmoteReference.STOPWATCH + languageContext.get("general.timeout").formatted(120))
+                );
+            }
 
             listText(ctx.getEvent(), 120, false, builder, splitFields);
         }

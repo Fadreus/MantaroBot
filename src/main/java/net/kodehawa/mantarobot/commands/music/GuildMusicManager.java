@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.music;
@@ -51,10 +51,13 @@ public class GuildMusicManager {
 
         isAwaitingDeath = false;
 
-        if (trackScheduler.getRequestedTextChannel() != null) {
-            trackScheduler.getRequestedTextChannel().sendMessageFormat(
+        final var requestedTextChannel = trackScheduler.getRequestedTextChannel();
+        final var voiceState = guild.getSelfMember().getVoiceState();
+
+        if (requestedTextChannel != null && voiceState != null && voiceState.getChannel() != null) {
+            requestedTextChannel.sendMessageFormat(
                     trackScheduler.getLanguage().get("commands.music_general.listener.leave"),
-                    EmoteReference.SAD, guild.getSelfMember().getVoiceState().getChannel().getName()
+                    EmoteReference.SAD, voiceState.getChannel().getName()
             ).queue();
         }
 
@@ -87,7 +90,7 @@ public class GuildMusicManager {
         return this.trackScheduler;
     }
 
-    public void onDestroy() {
+    public void destroy() {
         getLavaLink().getPlayer().removeListener(trackScheduler);
         getLavaLink().resetPlayer();
         getLavaLink().destroy();

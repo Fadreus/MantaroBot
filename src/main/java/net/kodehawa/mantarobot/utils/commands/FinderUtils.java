@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,7 +67,13 @@ public class FinderUtils {
             return found.get(0);
         }
 
-        return event.getMember().getRoles().get(0);
+        final var roles = event.getMember().getRoles();
+        if (roles.isEmpty() && found.isEmpty()) {
+            event.getChannel().sendMessage("I can't find any suitable role with this search.").queue();
+            return null;
+        }
+
+        return roles.get(0);
     }
 
     public static Role findRoleSelect(GuildMessageReceivedEvent event,

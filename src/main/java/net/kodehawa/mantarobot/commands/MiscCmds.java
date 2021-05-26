@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -35,8 +35,6 @@ import net.kodehawa.mantarobot.core.modules.commands.i18n.I18nContext;
 import net.kodehawa.mantarobot.utils.Utils;
 import net.kodehawa.mantarobot.utils.commands.DiscordUtils;
 import net.kodehawa.mantarobot.utils.commands.EmoteReference;
-import net.kodehawa.mantarobot.utils.data.DataManager;
-import net.kodehawa.mantarobot.utils.data.SimpleFileDataManager;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
@@ -44,13 +42,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Pattern;
 
 @Module
 public class MiscCmds {
-    private final DataManager<List<String>> facts = new SimpleFileDataManager("assets/mantaro/texts/facts.txt");
-    private final Random rand = new Random();
     private final Pattern pollOptionSeparator = Pattern.compile(",\\s*");
 
     public static void iamFunction(String autoroleName, Context ctx) {
@@ -66,7 +61,7 @@ public class MiscCmds {
             if (role == null) {
                 ctx.sendLocalized("commands.iam.deleted_role", EmoteReference.ERROR);
 
-                //delete the non-existent autorole.
+                // delete the non-existent autorole.
                 dbGuild.getData().getAutoroles().remove(autoroleName);
                 dbGuild.saveAsync();
             } else {
@@ -76,7 +71,6 @@ public class MiscCmds {
                 }
                 try {
                     ctx.getGuild().addRoleToMember(ctx.getMember(), role)
-                            //don't translate the reason!
                             .reason("Auto-assignable roles assigner (~>iam)")
                             .queue(aVoid -> {
                                 if (message == null || message.isEmpty())
@@ -106,8 +100,6 @@ public class MiscCmds {
             Role role = ctx.getGuild().getRoleById(autoroles.get(autoroleName));
             if (role == null) {
                 ctx.sendLocalized("commands.iam.deleted_role", EmoteReference.ERROR);
-
-                //delete the non-existent autorole.
                 dbGuild.getData().getAutoroles().remove(autoroleName);
                 dbGuild.saveAsync();
             } else {
@@ -117,13 +109,12 @@ public class MiscCmds {
                 }
 
                 try {
-                    ctx.getGuild().removeRoleFromMember(ctx.getMember(), role)
-                            .queue(aVoid -> {
-                                if (message == null || message.isEmpty())
-                                    ctx.sendLocalized("commands.iamnot.success", EmoteReference.OK, ctx.getAuthor().getName(), role.getName());
-                                else
-                                    ctx.sendStrippedLocalized(message);
-                            });
+                    ctx.getGuild().removeRoleFromMember(ctx.getMember(), role).queue(__ -> {
+                        if (message == null || message.isEmpty())
+                            ctx.sendLocalized("commands.iamnot.success", EmoteReference.OK, ctx.getAuthor().getName(), role.getName());
+                        else
+                            ctx.sendStrippedLocalized(message);
+                    });
                 } catch (PermissionException pex) {
                     ctx.sendLocalized("commands.iam.error", EmoteReference.ERROR, role.getName());
                 }
@@ -197,7 +188,7 @@ public class MiscCmds {
             }
         });
 
-        iamCommand.addSubCommand("ls", new SubCommand() {
+        iamCommand.addSubCommand("list", new SubCommand() {
             @Override
             public String description() {
                 return "Lists all the available autoroles for this server.";
@@ -205,7 +196,6 @@ public class MiscCmds {
 
             @Override
             protected void call(Context ctx, I18nContext languageContext, String content) {
-                EmbedBuilder embed;
                 List<MessageEmbed.Field> fields = new LinkedList<>();
 
                 var dbGuild = ctx.getDBGuild();
@@ -213,9 +203,14 @@ public class MiscCmds {
 
                 var autoroles = guildData.getAutoroles();
                 var autorolesCategories = guildData.getAutoroleCategories();
-                embed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
+
+                var embed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
                         .setDescription(languageContext.get("commands.iam.list.description") + "")
                         .setThumbnail(ctx.getGuild().getIconUrl());
+
+                var emptyEmbed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
+                        .setThumbnail(ctx.getGuild().getIconUrl())
+                        .setDescription(languageContext.get("commands.iam.list.no_autoroles"));
 
                 if (autoroles.size() > 0) {
                     var categorizedRoles = new ArrayList<>();
@@ -229,16 +224,22 @@ public class MiscCmds {
                                 if (role == null)
                                     continue;
 
-                                roleString.append("`").append(iam).append("`. Gives role: ").append(role.getName()).append(", ");
+                                // Päin
+                                roleString.append(languageContext.get("commands.iam.list.role")).append(" `")
+                                        .append(iam)
+                                        .append("`, ")
+                                        .append(languageContext.get("commands.iam.list.role_give"))
+                                        .append(" `")
+                                        .append(role.getName())
+                                        .append("`\n");
+
                                 categorizedRoles.add(role.getId());
                             }
                         }
 
                         if (roleString.length() > 0) {
                             fields.add(new MessageEmbed.Field(
-                                    cat,
-                                    languageContext.get("commands.iam.list.role") + " `" + roleString + "`",
-                                    false)
+                                    languageContext.get("commands.iam.list.category") + " " + cat,  roleString.toString(), false)
                             );
                         }
                     });
@@ -255,20 +256,23 @@ public class MiscCmds {
                         }
                     });
 
+                    if (fields.isEmpty()) {
+                        ctx.send(emptyEmbed.build());
+                        return;
+                    }
+
                     DiscordUtils.sendPaginatedEmbed(ctx, embed, DiscordUtils.divideFields(6, fields));
                 } else {
-                    embed = baseEmbed(ctx, languageContext.get("commands.iam.list.header"))
-                            .setThumbnail(ctx.getGuild().getIconUrl())
-                            .setDescription(languageContext.get("commands.iam.list.no_autoroles"));
-
-                    ctx.send(embed.build());
+                    ctx.send(emptyEmbed.build());
                 }
             }
         });
 
         cr.registerAlias("iam", "autoroles");
-        iamCommand.createSubCommandAlias("ls", "list");
-        iamCommand.createSubCommandAlias("ls", "Is");
+        iamCommand.createSubCommandAlias("list", "1ist");
+        iamCommand.createSubCommandAlias("list", "ls");
+        iamCommand.createSubCommandAlias("list", "Is");
+        iamCommand.createSubCommandAlias("list", "1s");
     }
 
     @Subscribe
@@ -293,25 +297,6 @@ public class MiscCmds {
                         .build();
             }
         });
-    }
-
-    @Subscribe
-    public void randomFact(CommandRegistry cr) {
-        cr.register("randomfact", new SimpleCommand(CommandCategory.UTILS) {
-            @Override
-            protected void call(Context ctx, String content, String[] args) {
-                ctx.send(EmoteReference.TALKING + facts.get().get(rand.nextInt(facts.get().size() - 1)));
-            }
-
-            @Override
-            public HelpContent help() {
-                return new HelpContent.Builder()
-                        .setDescription("Sends a random fact.")
-                        .build();
-            }
-        });
-
-        cr.registerAlias("randomfact", "rf");
     }
 
     @Subscribe
@@ -367,12 +352,12 @@ public class MiscCmds {
                         .setUsage("""
                                 `~>poll [-options <options>] [-time <time>] [-name <name>] [-image <image>]`
                                 To cancel the running poll type &cancelpoll. Only the person who started it or an Admin can cancel it.
-                                Example: `~>poll -options "hi there","wew","owo what's this" -time 10m20s -name "test poll"`""")
+                                Example: `~>poll -options "hi there","wew","owo what's this" -time 10m30s -name "test poll"`""")
                         .addParameter("-options", "The options to add. Minimum is 2 and maximum is 9. " +
                                 "For instance: `Pizza,Spaghetti,Pasta,\"Spiral Nudels\"` " +
                                 "(Enclose options with multiple words in double quotes, there has to be no spaces between the commas)")
                         .addParameter("time", "The time the operation is gonna take. " +
-                                "The format is as follows `1m29s` for 1 minute and 21 seconds. Maximum poll runtime is 45 minutes.")
+                                "The format is as follows `1m30s` for 1 minute and 30 seconds. Maximum poll runtime is 45 minutes.")
                         .addParameter("-name", "The name of the poll.")
                         .addParameter("-image", "The image to embed to the poll.")
                         .build();

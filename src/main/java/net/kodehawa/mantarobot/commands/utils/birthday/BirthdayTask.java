@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands.utils.birthday;
@@ -29,6 +29,8 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.time.Year;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -124,9 +126,9 @@ public class BirthdayTask {
                         // Guild map is now created from allowed birthdays. This is a little hacky, but we don't really care.
                         // The other solution would have been just disabling this completely, which would have been worse.
                         // @formatter:off
-                        Map<String, BirthdayCacher.BirthdayData> guildMap = cached.entrySet()
+                        Map<Long, BirthdayCacher.BirthdayData> guildMap = cached.entrySet()
                                 .stream()
-                                .filter(map -> guildData.getAllowedBirthdays().contains(map.getKey()))
+                                .filter(map -> guildData.getAllowedBirthdays().contains(String.valueOf(map.getKey())))
                                 .filter(map ->
                                         // Only check for current month or last month!
                                         map.getValue().getBirthday().substring(3, 5).equals(month) ||
@@ -138,10 +140,10 @@ public class BirthdayTask {
                         birthdayAnnouncerText.append("**New birthdays for today, wish them Happy Birthday!**").append("\n\n");
                         int birthdayNumber = 0;
 
-                        List<String> nullMembers = new ArrayList<>();
+                        List<Long> nullMembers = new ArrayList<>();
                         for (var data : guildMap.entrySet()) {
-                            final var birthday = data.getValue().getBirthday();
-                            if (guildData.getBirthdayBlockedIds().contains(data.getKey())) {
+                            var birthday = data.getValue().getBirthday();
+                            if (guildData.getBirthdayBlockedIds().contains(String.valueOf(data.getKey()))) {
                                 continue;
                             }
 
@@ -161,7 +163,14 @@ public class BirthdayTask {
                                 continue;
                             }
 
-                            if (birthday.substring(0, 5).equals(now)) {
+                            // Make sure we announce on March 1st for birthdays on February 29 if the current
+                            // year is not a leap year.
+                            var compare = birthday.substring(0, 5);
+                            if (compare.equals("29-02") && !Year.isLeap(LocalDate.now().getYear())) {
+                                compare = "28-02";
+                            }
+
+                            if (compare.equals(now)) {
                                 log.debug("Assigning birthday role on guild {} (M: {})", guild.getId(), member.getEffectiveName());
                                 var tempBirthdayMessage =
                                         String.format(EmoteReference.POPPER + "**%s is a year older now! Wish them a happy birthday.** :tada:",
@@ -207,7 +216,7 @@ public class BirthdayTask {
 
                         // If any of the member lookups to discord returned null, remove them.
                         if (!nullMembers.isEmpty()) {
-                            guildData.getAllowedBirthdays().removeAll(nullMembers);
+                            guildData.getAllowedBirthdays().removeAll(nullMembers.stream().map(String::valueOf).collect(Collectors.toList()));
                             dbGuild.save();
                         }
                     }
@@ -245,7 +254,13 @@ public class BirthdayTask {
                         if (channel == null)
                             continue;
 
-                        messages.forEach(message -> channel.sendMessage(message).queue());
+                        messages.forEach(message -> channel.sendMessage(message)
+                                .allowedMentions(EnumSet.of(
+                                        Message.MentionType.USER, Message.MentionType.CHANNEL,
+                                        Message.MentionType.ROLE, Message.MentionType.EMOTE)
+                                )
+                                .queue()
+                        );
                         // If 100 guilds (about 1/10th of all the shard guilds! so very unlikely) do
                         // get a birthday now, the maximum delay will be 40,000ms, which is 40 seconds.
                         // Not much of an issue for the end user, but avoid sending too many requests

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -23,6 +23,7 @@ import com.rethinkdb.model.OptArgs;
 import com.rethinkdb.net.Connection;
 import com.rethinkdb.utils.Types;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.kodehawa.mantarobot.commands.currency.profile.Badge;
 import net.kodehawa.mantarobot.commands.utils.leaderboards.CachedLeaderboardMember;
 import net.kodehawa.mantarobot.core.CommandRegistry;
@@ -86,7 +87,14 @@ public class LeaderboardCmd {
             }
         });
 
-        leaderboards.setPredicate(ctx -> RatelimitUtils.ratelimit(rateLimiter, ctx, null));
+        leaderboards.setPredicate(ctx -> {
+            if (!ctx.getSelfMember().hasPermission(ctx.getChannel(), Permission.MESSAGE_EMBED_LINKS)) {
+                ctx.sendLocalized("general.missing_embed_permissions");
+                return false;
+            }
+
+            return RatelimitUtils.ratelimit(rateLimiter, ctx, null);
+        });
 
         leaderboards.addSubCommand("gamble", new SubCommand() {
             @Override
@@ -300,38 +308,6 @@ public class LeaderboardCmd {
             }
         });
 
-        leaderboards.addSubCommand("waifuvalue", new SubCommand() {
-            @Override
-            public String description() {
-                return "Returns the waifu value leaderboard";
-            }
-
-            @Override
-            protected void call(Context ctx, I18nContext languageContext, String content) {
-                var seasonal = ctx.isSeasonal();
-                var tableName = seasonal ? "seasonalplayers" : "players";
-
-                var waifuLeaderboard = getLeaderboard(tableName, "waifuCachedValue",
-                        player -> player.g("id"),
-                        player -> player.pluck("id", r.hashMap("data", "waifuCachedValue")));
-
-                ctx.send(
-                        generateLeaderboardEmbed(ctx,
-                        languageContext.get("commands.leaderboard.inner.waifu").formatted(EmoteReference.MONEY),
-                                "commands.leaderboard.waifu", waifuLeaderboard,
-                        map -> {
-                            @SuppressWarnings("unchecked")
-                            var waifuValue = ((Map<String, Object>) (map.get("data"))).get("waifuCachedValue").toString();
-                            return Pair.of(
-                                    getMember(ctx, map.get("id").toString().split(":")[0]),
-                                    waifuValue
-                            );
-                        }, "%s**%s#%s** - $%,d", seasonal)
-                        .build()
-                );
-            }
-        });
-
         leaderboards.addSubCommand("claim", new SubCommand() {
             @Override
             public String description() {
@@ -397,10 +373,11 @@ public class LeaderboardCmd {
         leaderboards.createSubCommandAlias("lvl", "level");
         leaderboards.createSubCommandAlias("streak", "daily");
         leaderboards.createSubCommandAlias("games", "wins");
-        leaderboards.createSubCommandAlias("waifuvalue", "waifu");
 
         cr.registerAlias("leaderboard", "richest");
+        cr.registerAlias("leaderboard", "top");
         cr.registerAlias("leaderboard", "lb");
+
     }
 
     private List<Map<String, Object>> getLeaderboard(String table, String index, ReqlFunction1 mapFunction) {
@@ -504,7 +481,7 @@ public class LeaderboardCmd {
                 // If no user was found, we need to return null. This is later handled on generateLeaderboardEmbed.
                 if (user == null) {
                     jedis.set(missed, "1");
-                    jedis.expire(missed, (int) TimeUnit.HOURS.toSeconds(12));
+                    jedis.expire(missed, TimeUnit.HOURS.toSeconds(12));
                     return null;
                 }
 
@@ -514,7 +491,7 @@ public class LeaderboardCmd {
                 jedis.set(savedTo, JsonDataManager.toJson(cached));
 
                 // Set the value to expire in 48 hours.
-                jedis.expire(savedTo, (int) TimeUnit.HOURS.toSeconds(48));
+                jedis.expire(savedTo, TimeUnit.HOURS.toSeconds(48));
                 return cached;
             } else {
                 return JsonDataManager.fromJson(json, CachedLeaderboardMember.class);

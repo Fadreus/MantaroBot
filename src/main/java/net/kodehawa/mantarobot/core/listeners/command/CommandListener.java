@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.core.listeners.command;
@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.IllegalFormatException;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -68,7 +69,9 @@ public class CommandListener implements EventListener {
         if (event instanceof GuildMessageReceivedEvent) {
             var msg = (GuildMessageReceivedEvent) event;
             // Ignore myself and bots.
-            if (msg.getAuthor().isBot() || msg.isWebhookMessage() || msg.getAuthor().equals(msg.getJDA().getSelfUser())) {
+            // Technically ignoring oneself is an extra step -- we're a bot, and we ignore bots.
+            var isSelf = msg.getAuthor().getIdLong() == msg.getJDA().getSelfUser().getIdLong();
+            if (msg.getAuthor().isBot() || msg.isWebhookMessage() || isSelf) {
                 return;
             }
 
@@ -110,8 +113,8 @@ public class CommandListener implements EventListener {
                             }
                         }
 
-                        //Don't run the experience handler on this channel if there's an InteractiveOperation running as there might be issues with
-                        //some nasty race conditions involving player save.
+                        // Don't run the experience handler on this channel if there's an InteractiveOperation running as there might be issues with
+                        // some nasty race conditions involving player save.
                         if (InteractiveOperations.get(event.getChannel()).size() > 0) {
                             return;
                         }
@@ -127,7 +130,7 @@ public class CommandListener implements EventListener {
                             return;
                         }
 
-                        //Set level to 1 if level is zero.
+                        // Set level to 1 if level is zero.
                         if (player.getLevel() == 0) {
                             player.setLevel(1);
                         }
@@ -143,11 +146,19 @@ public class CommandListener implements EventListener {
                     }
                 } catch (Exception ignored) { }
             }
+        } catch (IllegalFormatException e) {
+            var id = Snow64.toSnow64(event.getMessage().getIdLong());
+            event.getChannel().sendMessageFormat(
+                    "%sWe found at error when trying to format a String. Please report on the support server (At <https://support.mantaro.site>) with error ID `%s` (On Shard %s)",
+                    EmoteReference.ERROR, id, event.getJDA().getShardInfo().getShardId()
+            ).queue();
+
+            log.warn("Wrong String format. Check this. ID: {}", id, e);
         } catch (IndexOutOfBoundsException e) {
             var id = Snow64.toSnow64(event.getMessage().getIdLong());
             event.getChannel().sendMessageFormat(
-                    "%sYour query returned no results or you used the incorrect arguments, seemingly (Error ID: `%s`). Just in case, check command help!",
-                    EmoteReference.ERROR, id
+                    "%sYour query returned no results or you used the incorrect arguments, seemingly (Error ID: `%s`): Shard %s. Just in case, check command help!",
+                    EmoteReference.ERROR, id, event.getJDA().getShardInfo().getShardId()
             ).queue();
 
             log.warn("Exception caught and alternate message sent. We should look into this, anyway (ID: {})", id, e);
@@ -167,18 +178,19 @@ public class CommandListener implements EventListener {
         } catch (LanguageKeyNotFoundException e) {
             var id = Snow64.toSnow64(event.getMessage().getIdLong());
             event.getChannel().sendMessageFormat(
-                    "%sWrong I18n key found, please report on the support server (At <https://support.mantaro.site>) with error ID `%s`.\n%sMessage: *%s*",
-                    EmoteReference.ERROR, id, EmoteReference.ZAP, e.getMessage()
+                    "%sWrong I18n key found, please report on the support server (At <https://support.mantaro.site>) with error ID `%s` (On Shard %s).\n%sMessage: *%s*",
+                    EmoteReference.ERROR, id, event.getJDA().getShardInfo().getShardId(),
+                    EmoteReference.ZAP, e.getMessage()
             ).queue();
 
             log.warn("Missing i18n key. Check this. ID: {}", id, e);
         } catch (IllegalArgumentException e) { //NumberFormatException == IllegalArgumentException
             var id = Snow64.toSnow64(event.getMessage().getIdLong());
             event.getChannel().sendMessageFormat(
-                    "%sI think you forgot something on the floor. (Error ID: `%s`)\n" +
+                    "%sI think you forgot something on the floor. (Error ID: `%s`): Shard %s\n" +
                     "%sCould be an internal error, but check the command arguments or maybe the message I'm trying to send exceeds 2048 characters, " +
                     "Just in case, check command help! (If you need further help, go to <https://support.mantaro.site>)",
-                    EmoteReference.ERROR, id, EmoteReference.WARNING
+                    EmoteReference.ERROR, id, event.getJDA().getShardInfo().getShardId(), EmoteReference.WARNING
             ).queue();
 
             log.warn("Exception caught and alternate message sent. We should look into this, anyway (ID: {})", id, e);
@@ -191,8 +203,9 @@ public class CommandListener implements EventListener {
             var player = MantaroData.db().getPlayer(event.getAuthor());
 
             event.getChannel().sendMessageFormat(
-                    "%s%s (Unexpected error, ID: `%s`)\n%s",
-                    EmoteReference.ERROR, context.get("general.boom_quotes"), id, context.get("general.generic_error")
+                    "%s%s (Unexpected error, ID: `%s`): Shard %s\n%s",
+                    EmoteReference.ERROR, context.get("general.boom_quotes"), id,
+                    event.getJDA().getShardInfo().getShardId(), context.get("general.generic_error")
             ).queue();
 
             if (player.getData().addBadgeIfAbsent(Badge.FIRE)) {

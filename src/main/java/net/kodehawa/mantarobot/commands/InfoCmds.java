@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -97,7 +97,7 @@ public class InfoCmds {
         cr.register("avatar", new SimpleCommand(CommandCategory.INFO) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                     if (member == null) {
                         return;
@@ -143,12 +143,8 @@ public class InfoCmds {
                         .map(Role::getName)
                         .collect(Collectors.joining(", "));
 
-                var owner = guild.getOwner();
-                //This is wank lol
-                if (owner == null) {
-                    owner = guild.retrieveOwner(false).complete();
-                }
-
+                // Retrieves from cache if we have it.
+                var owner = guild.retrieveOwner(false).complete();
                 var languageContext = ctx.getLanguageContext();
                 var str = """
                         **%1$s**
@@ -175,7 +171,7 @@ public class InfoCmds {
 
                 ctx.send(new EmbedBuilder()
                         .setAuthor(languageContext.get("commands.serverinfo.header"), null, guild.getIconUrl())
-                        .setColor(guild.getOwner().getColor() == null ? Color.PINK: guild.getOwner().getColor())
+                        .setColor(owner.getColor() == null ? Color.PINK: owner.getColor())
                         .setDescription(str)
                         .setThumbnail(guild.getIconUrl())
                         .addField(
@@ -251,11 +247,11 @@ public class InfoCmds {
                         .collect(Collectors.joining(" "));
 
                 var guildPrefix = dbGuild.getData().getGuildCustomPrefix();
-
-                ctx.sendLocalized("commands.prefix.header", EmoteReference.HEART,
-                        defaultPrefix, guildPrefix == null ?
-                                ctx.getLanguageContext().get("commands.prefix.none") : guildPrefix
-                );
+                var guildPrefixString = ctx.getLanguageContext().get("commands.prefix.none");
+                if (guildPrefix != null) {
+                    guildPrefixString = ctx.getLanguageContext().get("commands.prefix.guild_prefix").formatted(guildPrefix);
+                }
+                ctx.sendLocalized("commands.prefix.header", EmoteReference.HEART, defaultPrefix, guildPrefixString);
             }
 
             @Override
@@ -277,7 +273,7 @@ public class InfoCmds {
         cr.register("userinfo", new SimpleCommand(CommandCategory.INFO) {
             @Override
             protected void call(Context ctx, String content, String[] args) {
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMemberDefault(content, members, ctx, ctx.getMember());
                     if (member == null)
                         return;

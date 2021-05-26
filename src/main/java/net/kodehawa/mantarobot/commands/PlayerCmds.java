@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.commands;
@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.kodehawa.mantarobot.commands.currency.item.ItemHelper;
+import net.kodehawa.mantarobot.commands.currency.item.ItemReference;
 import net.kodehawa.mantarobot.commands.currency.item.ItemStack;
 import net.kodehawa.mantarobot.commands.currency.item.PlayerEquipment;
 import net.kodehawa.mantarobot.commands.currency.item.special.helpers.Breakable;
@@ -98,7 +99,7 @@ public class PlayerCmds {
                 }
 
 
-                ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                ctx.findMember(content, members -> {
                     var member = CustomFinderUtil.findMember(content, members, ctx);
                     if (member == null) {
                         return;
@@ -106,9 +107,9 @@ public class PlayerCmds {
 
                     var usr = member.getUser();
                     var author = ctx.getAuthor();
-                    Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(5, ChronoUnit.DAYS)));
+                    Predicate<User> oldEnough = (u -> u.getTimeCreated().isBefore(OffsetDateTime.now().minus(30, ChronoUnit.DAYS)));
 
-                    //Didn't want to repeat the code twice, lol.
+                    // Didn't want to repeat the code twice, lol.
                     if (!oldEnough.test(usr)) {
                         ctx.sendLocalized("commands.rep.new_account_notice", EmoteReference.ERROR);
                         return;
@@ -139,7 +140,12 @@ public class PlayerCmds {
                         return;
                     }
 
-                    if (!RatelimitUtils.ratelimit(rateLimiter, ctx, false)) {
+                    if (ctx.isUserBlacklisted(usr.getId())) {
+                        ctx.sendLocalized("commands.rep.blacklisted_rep", EmoteReference.ERROR);
+                        return;
+                    }
+
+                    if (!RatelimitUtils.ratelimit(rateLimiter, ctx, languageContext.get("commands.rep.cooldown.explanation"), false)) {
                         return;
                     }
 
@@ -213,6 +219,13 @@ public class PlayerCmds {
                         seasonalPlayerInventory.process(new ItemStack(item, -1));
                         seasonalPlayer.save();
                     } else {
+                        if (item == ItemReference.HELLFIRE_PICK)
+                            player.getData().addBadgeIfAbsent(Badge.HOT_MINER);
+                        if (item == ItemReference.HELLFIRE_ROD)
+                            player.getData().addBadgeIfAbsent(Badge.HOT_FISHER);
+                        if (item == ItemReference.HELLFIRE_AXE)
+                            player.getData().addBadgeIfAbsent(Badge.HOT_CHOPPER);
+
                         playerInventory.process(new ItemStack(item, -1));
                         player.save();
                     }
@@ -365,7 +378,7 @@ public class PlayerCmds {
                         // Lambdas strike again.
                         var contentFinal = content;
 
-                        ctx.findMember(content, ctx.getMessage()).onSuccess(members -> {
+                        ctx.findMember(content, members -> {
                             var member = CustomFinderUtil.findMemberDefault(contentFinal, members, ctx, ctx.getMember());
                             if (member == null) {
                                 return;
@@ -412,7 +425,8 @@ public class PlayerCmds {
 
                             var common = languageContext.get("commands.badges.profile_notice") + languageContext.get("commands.badges.info_notice") +
                                     ((r.nextInt(2) == 0 && !dbUser.isPremium() ? languageContext.get("commands.badges.donate_notice") : "\n") +
-                                            String.format(languageContext.get("commands.badges.total_badges"), badges.size()) + "\n");
+                                            String.format(languageContext.get("commands.badges.total_badges"), badges.size())
+                                    );
 
                             DiscordUtils.sendPaginatedEmbed(ctx, embed, DiscordUtils.divideFields(6, fields), common);
                         });
@@ -472,6 +486,46 @@ public class PlayerCmds {
                         .queue();
             }
         });
+
+        badgeCommand.addSubCommand("list", new SubCommand() {
+            @Override
+            public String description() {
+                return "Lists all the obtainable badges.";
+            }
+
+            @Override
+            protected void call(Context ctx, I18nContext languageContext, String content) {
+                var badges = Badge.values();
+                var builder = new EmbedBuilder()
+                        .setAuthor(languageContext.get("commands.badges.ls.header"),
+                                null, ctx.getAuthor().getEffectiveAvatarUrl()
+                        )
+                        .setColor(Color.PINK)
+                        .setFooter(languageContext.get("general.requested_by").formatted(ctx.getMember().getEffectiveName()), null);
+
+                var player = ctx.getPlayer();
+                List<MessageEmbed.Field> fields = new LinkedList<>();
+                for (Badge badge : badges) {
+                    if (!badge.isObtainable()) {
+                        continue;
+                    }
+
+                    fields.add(new MessageEmbed.Field("%s\u2009\u2009\u2009%s".formatted(badge.unicode, badge.display),
+                            badge.getDescription() + "\n" +
+                                    String.format(languageContext.get("commands.badges.ls.obtained"), player.getData().hasBadge(badge)),
+                            false)
+                    );
+                }
+
+                DiscordUtils.sendPaginatedEmbed(ctx, builder, DiscordUtils.divideFields(7, fields), languageContext.get("commands.badges.ls.desc"));
+            }
+        });
+
+        badgeCommand.createSubCommandAlias("list", "ls");
+        badgeCommand.createSubCommandAlias("list", "1ist");
+        badgeCommand.createSubCommandAlias("list", "Is");
+        badgeCommand.createSubCommandAlias("list", "is");
+        badgeCommand.createSubCommandAlias("list", "1s");
 
         cr.registerAlias("badges", "badge");
     }

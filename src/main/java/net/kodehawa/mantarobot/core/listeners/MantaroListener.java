@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 David Rubio Escares / Kodehawa
+ * Copyright (C) 2016-2021 David Rubio Escares / Kodehawa
  *
  *  Mantaro is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mantaro.  If not, see http://www.gnu.org/licenses/
+ * along with Mantaro. If not, see http://www.gnu.org/licenses/
  */
 
 package net.kodehawa.mantarobot.core.listeners;
@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.*;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
@@ -59,7 +60,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.Color;
+import java.awt.*;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -215,7 +216,7 @@ public class MantaroListener implements EventListener {
                 }
 
                 // They still have a valid key.
-                if (currentKey != null && currentKey.validFor() > 20) {
+                if (currentKey != null && currentKey.validFor() > 10) {
                     return;
                 }
 
@@ -244,7 +245,9 @@ public class MantaroListener implements EventListener {
 
                     Metrics.PATRON_COUNTER.inc();
                     //Celebrate internally! \ o /
-                    LogUtils.log("Delivered premium key to " + user.getAsTag() + "(" + user.getId() + ")");
+                    LogUtils.log("Delivered premium key to %s(%s)".formatted(user.getAsTag(), user.getId()));
+                }, error -> {
+                    LogUtils.log("Failed to deliver premium key to %s(%s). Maybe they had DMs disabled?".formatted(user.getAsTag(), user.getId()));
                 }));
             });
         }
@@ -257,7 +260,7 @@ public class MantaroListener implements EventListener {
             final var logChannel = data.getGuildLogChannel();
 
             if (logChannel != null) {
-                final var hour = Utils.formatHours(OffsetDateTime.now(), data.getLang());
+                final var hour = Utils.formatHours(OffsetDateTime.now(), data.getLogTimezone(), data.getLang());
                 final var tc = event.getGuild().getTextChannelById(logChannel);
                 if (tc == null) {
                     return;
@@ -328,7 +331,7 @@ public class MantaroListener implements EventListener {
             final var logChannel = guildData.getGuildLogChannel();
 
             if (logChannel != null) {
-                final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLang());
+                final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLogTimezone(), guildData.getLang());
                 final var tc = event.getGuild().getTextChannelById(logChannel);
                 if (tc == null) {
                     return;
@@ -383,7 +386,7 @@ public class MantaroListener implements EventListener {
                             .mapEvent("event", event)
                             .mapChannel("event.channel", channel)
                             .mapUser("event.user", author)
-                            .mapMessage("event.message", originalMessage)
+                            .mapMessage("event.message", originalMessage, false)
                             .resolve(guildData.getEditMessageLog());
                 } else {
                     message = String.format(EmoteReference.WARNING +
@@ -462,7 +465,7 @@ public class MantaroListener implements EventListener {
                                 If you're interested in supporting Mantaro, check out our Patreon page below, it'll greatly help to improve the bot. 
                                 Check out the links below for some help resources and quick start guides.
                                 This message will only be shown once.""")
-                        .addField("Important Links",
+                        .addField(EmoteReference.PENCIL.toHeaderString() + "Important Links",
                         """
                                 [Support Server](https://support.mantaro.site) - The place to check if you're lost or if there's an issue with the bot.
                                 [Official Wiki](https://github.com/Mantaro/MantaroBot/wiki/) - Good place to check if you're lost.
@@ -520,7 +523,7 @@ public class MantaroListener implements EventListener {
 
             // Clear internal data we don't need anymore.
             guild.getTextChannelCache().stream().forEach(TextChannelGround::delete);
-            guildBirthdayCache.invalidate(guild.getId());
+            guildBirthdayCache.invalidate(guild.getIdLong());
             guildBirthdayCache.cleanUp();
 
             // Clean the internal music data.
@@ -544,29 +547,32 @@ public class MantaroListener implements EventListener {
         final var dbGuild = MantaroData.db().getGuild(guild);
         final var guildData = dbGuild.getData();
         final var role = guildData.getGuildAutoRole();
-        final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLang());
+        final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLogTimezone(), guildData.getLang());
         final var user = event.getUser();
         final var member = event.getMember();
+        final var selfMember = guild.getSelfMember();
 
-        if (role != null &&  !(user.isBot() && guildData.isIgnoreBotsAutoRole())) {
-            var toAssign = guild.getRoleById(role);
-            if (toAssign != null && guild.getSelfMember().canInteract(toAssign)) {
-                // This only throws if member == null (can't be!) or if role == null
-                // which we check above.
-                guild.addRoleToMember(member, toAssign).reason("Autorole assigner").queue();
-                Metrics.ACTIONS.labels("join_autorole").inc();
+        try {
+            if (role != null &&  !(user.isBot() && guildData.isIgnoreBotsAutoRole())) {
+                var toAssign = guild.getRoleById(role);
+                if (toAssign != null && selfMember.canInteract(toAssign) && selfMember.hasPermission(Permission.MANAGE_ROLES)) {
+                    guild.addRoleToMember(member, toAssign).reason("Autorole assigner").queue();
+                    Metrics.ACTIONS.labels("join_autorole").inc();
+                }
             }
-        }
+        } catch (Exception ignored) { }
 
         final var logChannel = guildData.getGuildLogChannel();
         if (logChannel != null) {
-            var tc = guild.getTextChannelById(logChannel);
-            if (tc != null && tc.canTalk()) {
-                tc.sendMessage(String.format("`[%s]` \uD83D\uDCE3 `%s#%s` just joined `%s` `(ID: %s)`",
-                        hour, event.getUser().getName(), event.getUser().getDiscriminator(),
-                        guild.getName(), event.getUser().getId())
-                ).queue();
-            }
+            try {
+                var tc = guild.getTextChannelById(logChannel);
+                if (tc != null && tc.canTalk()) {
+                    tc.sendMessage(String.format("`[%s]` \uD83D\uDCE3 `%s#%s` just joined `%s` `(ID: %s)`",
+                            hour, event.getUser().getName(), event.getUser().getDiscriminator(),
+                            guild.getName(), event.getUser().getId())
+                    ).queue();
+                }
+            } catch (Exception ignored) { }
         }
 
         if (user.isBot() && guildData.isIgnoreBotsWelcomeMessage()) {
@@ -598,7 +604,7 @@ public class MantaroListener implements EventListener {
         final var guildData = dbGuild.getData();
 
         try {
-            final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLang());
+            final var hour = Utils.formatHours(OffsetDateTime.now(), guildData.getLogTimezone(), guildData.getLang());
             if (user.isBot() && guildData.isIgnoreBotsWelcomeMessage()) {
                 return;
             }
